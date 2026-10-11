@@ -33,4 +33,4 @@ export interface NovoFeixeDto { numeroFeixe: string; quantidade: number; idEspec
 export interface NovaChegadaDto {
   idNota?: number | null; idArmazem: number; documentoOrigemTipo?: string | null; documentoOrigemNumero?: string | null;
   dataRecebimento?: string | null; quantidadeRecebida: number; observacao?: string | null; feixes: NovoFeixeDto[];
-}
+}export interface OfertaDto { id: number; idEmpresa: number; empresa: string; idEspecie: number; especie: string; classe: number; idTamanho: number; comprimentoM: number; volumeM3Disponivel: number; data: string; }

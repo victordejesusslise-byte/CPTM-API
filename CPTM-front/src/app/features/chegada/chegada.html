@@ -11,7 +11,7 @@
     @for (a of r.avisos; track $index) { <p class="aviso">{{ a }}</p> }
     <div class="acoes">
       <a mat-flat-button routerLink="/cadastro" [queryParams]="{ pedido: r.idPedido, chegada: r.id }">Cadastrar as peças</a>
-      <a mat-button [routerLink]="['/pedidos', r.idPedido]">Ver o pedido</a>
+      <a mat-button routerLink="/pedidos" [queryParams]="{ aberto: r.idPedido }">Ver o pedido</a>
     </div>
   </div>
 } @else {

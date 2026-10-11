@@ -1,0 +1,41 @@
+<p class="lbl">Itens · por tamanho e classe</p>
+@for (item of itens().controls; track item; let i = $index) {
+  <div class="linha-item" [formGroup]="item">
+    <mat-form-field appearance="outline">
+      <mat-label>Tamanho</mat-label>
+      <mat-select formControlName="idTamanho">
+        @for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }} · {{ m3(t.volumeM3) }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Classe</mat-label>
+      <mat-select formControlName="classe" (selectionChange)="classeMudou(i)">
+        <mat-option [value]="1">1ª classe</mat-option>
+        <mat-option [value]="2">2ª classe</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Espécie (opcional)</mat-label>
+      <mat-select formControlName="idEspecie">
+        <mat-option [value]="null">Qualquer da classe</mat-option>
+        @for (e of especiesDaClasse(item.controls.classe.value); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Peças</mat-label>
+      <input matInput class="mono" type="number" min="1" formControlName="quantidade" />
+    </mat-form-field>
+    <button type="button" class="tirar" (click)="tirar(i)" [disabled]="itens().length === 1" [attr.aria-label]="'Tirar o item ' + (i + 1)">×</button>
+  </div>
+}
+<div class="acoes">
+  <button mat-stroked-button type="button" (click)="adicionar()">Adicionar item</button>
+  <span>Total <b class="mono">{{ pecas() }}</b> peças · <b class="mono">{{ m3(volume()) }}</b></span>
+</div>
+@if (verificacao(); as v) {
+  <div class="chamada" [class.chamada--neutra]="v.segundaClasse.valido">
+    <b>{{ v.segundaClasse.mensagem }}</b>
+    @if (!v.segundaClasse.valido) { <span> Acima do limite o pedido não é registrado.</span> }
+  </div>
+  @for (o of v.oferta; track $index) { <p class="aviso">Oferta do fornecedor: {{ o.mensagem }}</p> }
+}

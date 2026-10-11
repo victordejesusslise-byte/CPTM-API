@@ -1,0 +1,68 @@
+<p class="sobre">Compra · 01</p>
+<h1>Acompanhar pedidos</h1>
+
+@if (registrado() && idAberto()) {
+  <p class="aviso aviso--ok" role="status">Pedido registrado.</p>
+}
+@if (idAberto(); as id) {
+  <app-pedido-aberto [id]="id" (fechar)="fechar()" (mudou)="pedidos.reload()" />
+}
+
+<section class="cartao">
+  <header><h2>Acompanhar pedidos</h2><span class="nota">{{ lista().length }} no filtro · toque num pedido para revisar</span></header>
+  <div class="totais">
+    <div class="t">Pediu<b>{{ totais().pediu }}</b></div>
+    <div class="t">Chegou<b>{{ totais().chegou }}</b></div>
+    <div class="t">Falta chegar<b>{{ totais().falta }}</b></div>
+    <div class="t">Entrega incompleta<b [class.vermelho]="totais().incompletas > 0">{{ totais().incompletas }}</b></div>
+  </div>
+
+  <div class="filtros">
+    <div class="cresce">
+      <p class="lbl">Período</p>
+      <div class="seg" role="group" aria-label="Período">
+        @for (o of periodos; track o.valor) {
+          <button type="button" [attr.aria-pressed]="periodo() === o.valor" (click)="periodo.set(o.valor)">{{ o.rotulo }} <span class="mono">{{ contagem()[o.valor] }}</span></button>
+        }
+      </div>
+    </div>
+    <mat-form-field appearance="outline" class="cresce" subscriptSizing="dynamic">
+      <mat-label>Buscar</mat-label>
+      <input matInput type="search" placeholder="código ou fornecedor" [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Situação</mat-label>
+      <mat-select [value]="filtroSituacao()" (selectionChange)="filtroSituacao.set($event.value)">
+        <mat-option value="all">Todas</mat-option>
+        <mat-option value="__falta">Só o que falta chegar</mat-option>
+        @for (s of situacoes; track s.valor) { <mat-option [value]="s.valor">{{ s.rotulo }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <app-estado [carregando]="pedidos.isLoading()" [erro]="erro()" />
+  @if (pedidos.hasValue()) {
+    @if (lista().length) {
+      <div class="tabela">
+        <table class="simples">
+          <thead><tr><th>Pedido</th><th class="so-computador">Fornecedor</th><th class="num">Pediu</th><th class="num">Chegou</th><th class="num">Falta</th><th class="so-computador">Situação</th><th class="so-computador"></th></tr></thead>
+          <tbody>
+            @for (p of lista(); track p.id) {
+              <tr class="clicavel" [class.selecionada]="idAberto() === p.id" tabindex="0" [attr.aria-label]="'Abrir ' + p.codigo" (click)="abrir(p)" (keydown.enter)="abrir(p)">
+                <td><span class="mono">{{ p.codigo }}</span><span class="sub">{{ data(p.dataCompra) }}</span></td>
+                <td class="so-computador">{{ p.empresa }}</td>
+                <td class="num">{{ p.quantidade }}</td>
+                <td class="num">{{ p.pecasRecebidas }}@if (p.pecasRecebidas) { <div class="barra"><i [style.width.%]="porcento(p)"></i></div> }</td>
+                <td class="num" [class.vermelho]="entregaIncompleta(p)">{{ faltaChegar(p) || '—' }}</td>
+                <td class="so-computador"><span class="pilula {{ situacao(p).pilula }}">{{ situacao(p).rotulo }}</span></td>
+                <td class="so-computador" style="text-align:right"><span class="nota">Revisar</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="aviso">{{ filtroSituacao() === 'all' && !busca().trim() ? 'Nenhum pedido neste período.' : 'Nenhum pedido bate com esses filtros.' }}</p>
+    }
+  }
+</section>

@@ -5,21 +5,23 @@
  * Paleta: madeira #563624 · areia #D5C4A1 · verde #64786E · mata #1E2A20 · vinho #512027, sobre o creme do papel.
  * Josefin Sans no texto de interface e nos dados. Tribo (nome da marca) e Obra Letra (assinatura) não estão
  * no Google Fonts: o nome YBYRA sai em Josefin Sans, caixa-alta e espaçado, como na página "A marca".
+ * Valores iguais aos do protótipo YBYRA Dormentes (artifact). A exceção é um vinho mais vivo (#A8323F), que o
+ * daltônico distingue do verde do texto; o vinho puro (#512027) fica no hover do perigo. IBM Plex Mono só em códigos e números.
  * Regras do protótipo mantidas: o vinho é a cor da exceção (erro, divergência, o que pede ação); toque de 44 px.
  * Sempre o tema claro (creme), mesmo com o Windows no modo escuro; o escuro (mata) só com data-theme="dark".
  */
 :root {
   --madeira: #563624; --areia: #D5C4A1; --verde: #64786E; --mata: #1E2A20; --vinho: #512027;
-  --plano: #F1E9DF; --superficie: #FAF6F0; --superficie-2: #F4EDE3; --superficie-3: #E9DDCB;
-  --tinta: #1E2A20; --tinta-2: #3B4A40; --tinta-3: #56685E;
-  --linha: #E3D7C6; --linha-2: #D5C4A1;
-  --vermelho: #512027; --vermelho-forte: #3E161C; --vermelho-tinta: #FAF6F0; --vermelho-suave: #F2E2DF; --vermelho-linha: #D9B9B8;
-  --bloco: #1E2A20; --sobre-escuro: #F1E9DF; --sobre-escuro-2: #D5C4A1; --sobre-escuro-3: #64786E;
+  --plano: #F1E9E0; --superficie: #FBF7F2; --superficie-2: #F6F0E8; --superficie-3: #EAE1D4;
+  --tinta: #1E2A20; --tinta-2: #46524A; --tinta-3: #55625A; --marcador: #563624;
+  --linha: #E2D8C8; --linha-2: #D5C4A1;
+  --vermelho: #A8323F; --vermelho-forte: #512027; --vermelho-tinta: #FBF7F2; --vermelho-suave: #F6E3E1; --vermelho-linha: #E4BFC0;
+  --bloco: #1E2A20; --sobre-escuro: #F1E9E0; --sobre-escuro-2: #D5C4A1; --sobre-escuro-3: #93A198;
   --sombra: 0 1px 2px rgba(30, 42, 32, .06), 0 6px 18px -12px rgba(30, 42, 32, .25);
   --anel: rgba(86, 54, 36, .35);
   --fonte-titulo: 'Josefin Sans', system-ui, sans-serif;
   --fonte-texto: 'Josefin Sans', system-ui, sans-serif;
-  --fonte-mono: 'Josefin Sans', system-ui, sans-serif;
+  --fonte-mono: 'IBM Plex Mono', ui-monospace, monospace;
   color-scheme: light;
 }
 
@@ -48,6 +50,8 @@ html {
     surface-container: var(--superficie-2), surface-container-high: var(--superficie-2), surface-container-highest: var(--superficie-3),
     outline: var(--linha-2), outline-variant: var(--linha), error: var(--vermelho), on-error: var(--vermelho-tinta),
   ));
+  @include mat.button-overrides((filled-container-shape: 3px, outlined-container-shape: 3px, text-container-shape: 3px, protected-container-shape: 3px));
+  @include mat.form-field-overrides((outlined-container-shape: 3px));
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -65,7 +69,8 @@ a { color: inherit; }
 .cartao { padding: 16px; border: 1px solid var(--linha); border-radius: 12px; background: var(--superficie); }
 .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .vermelho { color: var(--vermelho); font-weight: 600; }
-.mono { font-family: var(--fonte-mono); font-weight: 600; color: var(--madeira); letter-spacing: .02em; }
+.mono { font-family: var(--fonte-mono); font-variant-numeric: tabular-nums; }
+.num { text-align: right; font-family: var(--fonte-mono); font-variant-numeric: tabular-nums; }
 .marca { font-family: var(--fonte-titulo); font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
 .rotulo { font-size: 13px; color: var(--tinta-3); }
 .aviso { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); color: var(--tinta-2); }
@@ -94,3 +99,49 @@ details.cartao[open] summary { margin-bottom: 12px; }
 .feixe { display: flex; flex-direction: column; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; min-height: 44px; }
 .feixe--ativo { border-color: var(--tinta); box-shadow: var(--sombra); }
 .aba { padding-top: 16px; }
+
+/* Peças do protótipo YBYRA: faixa de totais, callout, pílulas de situação, rótulos, linha do tempo */
+.lbl { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tinta-3); }
+.nota { font-size: 13px; color: var(--tinta-3); }
+.cartao > header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; h2, h3 { margin: 0; } .nota { margin-left: auto; } }
+.pilha { display: flex; flex-direction: column; gap: 14px; }
+.totais { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; padding: 12px 14px; border: 1px dashed var(--linha-2); border-radius: 3px; }
+.totais .t { font-size: 13px; color: var(--tinta-3); }
+.totais .t b { display: block; font-weight: 700; font-size: 20px; color: var(--tinta); line-height: 1.2; }
+.totais .t b.vermelho { color: var(--vermelho); }
+.chamada { border-left: 3px solid var(--vermelho); background: var(--vermelho-suave); padding: 13px 16px; border-radius: 0 4px 4px 0; font-size: 14px; color: var(--tinta-2); b { color: var(--tinta); } }
+.chamada--neutra { border-left-color: var(--tinta); background: var(--superficie-3); }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; span { display: block; } b { display: block; font-size: 15px; font-weight: 600; } }
+.pilula { display: inline-flex; align-items: center; border-radius: 2px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--linha-2); white-space: nowrap; background: var(--superficie); color: var(--tinta-2); }
+.pilula--solida { background: var(--tinta); color: var(--superficie); border-color: var(--tinta); }
+.pilula--alerta { background: var(--vermelho-suave); color: var(--vermelho); border-color: var(--vermelho-linha); }
+.pilula--alerta-solida { background: var(--vermelho); color: var(--vermelho-tinta); border-color: var(--vermelho); }
+.pilula--quieta { color: var(--tinta-3); border-style: dashed; }
+.seg { display: flex; border: 1px solid var(--linha-2); border-radius: 3px; overflow: hidden; button { flex: 1; border: 0; border-right: 1px solid var(--linha-2); background: transparent; color: var(--tinta-2); padding: 10px 8px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; min-height: 44px; &:last-child { border-right: 0; } &[aria-pressed='true'] { background: var(--tinta); color: var(--superficie); } .mono { color: inherit; opacity: .75; font-weight: 400; } } }
+.filtros { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; margin: 14px 0; .cresce { flex: 1 1 220px; } }
+.barra { height: 6px; background: var(--superficie-3); border-radius: 2px; overflow: hidden; margin-top: 5px; min-width: 70px; i { display: block; height: 100%; background: var(--tinta); } }
+.difs { margin: 0; padding-left: 18px; li::marker { color: var(--vermelho); } }
+.linha-tempo { list-style: none; margin: 0 0 0 5px; padding: 0; border-left: 2px solid var(--linha-2); }
+.linha-tempo li { position: relative; padding: 0 0 16px 20px; display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 2px 14px; }
+.linha-tempo li::before { content: ''; position: absolute; left: -7px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--superficie); border: 2px solid var(--tinta); }
+.linha-tempo li.trava::before { background: var(--tinta); }
+.linha-tempo li.cancela::before { border-color: var(--vermelho); background: var(--vermelho); }
+.linha-tempo .quando { font-family: var(--fonte-mono); font-size: 12px; color: var(--tinta-3); padding-top: 2px; }
+.linha-tempo .motivo { margin: 4px 0 0; font-size: 13.5px; color: var(--tinta-2); border-left: 2px solid var(--linha-2); padding-left: 10px; }
+@media (max-width: 620px) { .linha-tempo li { grid-template-columns: 1fr; } }
+.linha-item { display: grid; grid-template-columns: 1.1fr 1fr 1.2fr 100px 44px; gap: 10px; align-items: start; padding: 12px 12px 0; border: 1px solid var(--linha); border-radius: 3px; background: var(--superficie-2); margin-bottom: 10px; }
+@media (max-width: 760px) { .linha-item { grid-template-columns: 1fr 1fr; } }
+.tirar { width: 44px; height: 44px; margin-top: 6px; border-radius: 3px; border: 1px solid var(--linha-2); background: var(--superficie); color: var(--tinta-3); cursor: pointer; font-size: 18px; &:hover:not(:disabled) { color: var(--vermelho); border-color: var(--vermelho); } &:disabled { opacity: .4; cursor: default; } }
+.escrita { font-family: var(--fonte-mono); font-size: 11px; color: var(--tinta-3); }
+.tabela table.simples { border-collapse: collapse; width: 100%; font-size: 14px; }
+.tabela table.simples th { text-align: left; font-size: 10.5px; font-weight: 600; letter-spacing: .11em; text-transform: uppercase; color: var(--tinta-3); padding: 9px 14px; background: var(--superficie-2); border-bottom: 1px solid var(--linha-2); white-space: nowrap; }
+.tabela table.simples td { padding: 10px 14px; border-bottom: 1px solid var(--linha); vertical-align: middle; }
+.tabela table.simples tr:last-child td { border-bottom: 0; }
+.tabela table.simples tr.total td { font-weight: 700; background: var(--superficie-2); }
+.tabela table.simples td .sub { display: block; font-size: 12.5px; color: var(--tinta-3); font-family: var(--fonte-texto); }
+.tabela table.simples th.num { text-align: right; }
+.tabela tr.selecionada td { background: var(--superficie-3); }
+.tabela tr.selecionada td:first-child { box-shadow: inset 3px 0 0 var(--marcador); }
+.pedido-aberto { margin-bottom: 20px; }
+button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-button-filled-label-text-color: var(--vermelho-tinta); }
+@media (max-width: 820px) { .so-computador { display: none; } }

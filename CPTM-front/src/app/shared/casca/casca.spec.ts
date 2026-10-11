@@ -31,6 +31,18 @@ describe('Casca', () => {
     expect(tela.querySelector('.topo__cargo')?.textContent).toBe('Operador da via');
   });
 
+  it('em Pedidos abre Cadastrar pedido e Acompanhar pedidos embaixo do item', async () => {
+    localStorage.clear();
+    entrarComo('Supervisor');
+    await TestBed.configureTestingModule({ imports: [Casca], providers: [provideRouter([{ path: 'pedidos', children: [] }, { path: 'pedidos/novo', children: [] }]), provideHttpClient()] }).compileComponents();
+    const fixture = TestBed.createComponent(Casca);
+    await TestBed.inject(Router).navigateByUrl('/pedidos/novo');
+    await fixture.whenStable();
+    const subs = [...(fixture.nativeElement as HTMLElement).querySelectorAll('.menu__sub')].map((a) => a.textContent?.trim());
+    expect(subs).toEqual(['Cadastrar pedido', 'Acompanhar pedidos']);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.menu__sub--ativo')?.textContent?.trim()).toBe('Cadastrar pedido');
+  });
+
   it('sair encerra a sessão e volta ao login', async () => {
     const tela = await abrir('Tecnico');
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);

@@ -1,0 +1,144 @@
+@if (pedido.value(); as p) {
+  <section class="cartao pilha pedido-aberto" aria-live="polite">
+    <header>
+      <h2 class="mono">{{ p.codigo }}</h2>
+      <span class="pilula {{ situacao(p).pilula }}">{{ situacao(p).rotulo }}</span>
+      <span class="nota"><button mat-button type="button" (click)="fechar.emit()">Fechar</button></span>
+    </header>
+    @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+    @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+    @switch (modo()) {
+      @case ('corrigir') {
+        <p class="lbl">Corrigir o pedido</p>
+        <form class="pilha" [formGroup]="correcao" (ngSubmit)="revisarCorrecao(p)" novalidate>
+          <div class="campos">
+            <mat-form-field appearance="outline"><mat-label>Fornecedor</mat-label><input matInput [value]="p.empresa" disabled /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Data da compra</mat-label><input matInput type="date" formControlName="dataCompra" [max]="hoje" /></mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Contrato</mat-label>
+              <mat-select formControlName="idContrato">
+                <mat-option [value]="null">Sem contrato</mat-option>
+                @for (c of contratos.value() ?? []; track c.id) { <mat-option [value]="c.id">{{ c.numeroContrato }} · ata {{ c.numeroAta }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <app-itens-pedido [itens]="itensCorrecao" [idEmpresa]="p.idEmpresa" (verificado)="bloqueado.set($event?.segundaClasse?.valido === false)" />
+          <mat-form-field appearance="outline">
+            <mat-label>Por que mudou</mat-label>
+            <textarea matInput rows="2" formControlName="motivo" placeholder="Ex.: o fornecedor avisou que só tem 2,00 m em estoque"></textarea>
+            <mat-error>Escreva o motivo — ele fica no histórico do pedido.</mat-error>
+          </mat-form-field>
+          <div class="acoes">
+            <button mat-stroked-button type="button" (click)="modo.set('ver'); limpar()">Desistir</button>
+            <button mat-flat-button type="submit">Revisar correção</button>
+          </div>
+        </form>
+      }
+      @case ('revisar') {
+        <p class="lbl">Revise a correção</p>
+        @if (diferencas().length) {
+          <ul class="difs">@for (d of diferencas(); track d) { <li>{{ d }}</li> }</ul>
+        } @else {
+          <p class="nota">Nada mudou.</p>
+        }
+        <app-tabela-itens [itens]="novosItens()" />
+        <div><p class="lbl">Motivo</p><p>{{ correcao.controls.motivo.value }}</p></div>
+        <div class="acoes">
+          <button mat-stroked-button type="button" (click)="modo.set('corrigir')">Voltar e corrigir</button>
+          <button mat-flat-button type="button" (click)="salvarCorrecao()" [disabled]="!diferencas().length || enviando()">Salvar a correção</button>
+        </div>
+      }
+      @case ('cancelar') {
+        <div class="chamada"><b>Cancelar {{ p.codigo }}?</b> O pedido continua no sistema, marcado como cancelado, com o motivo no histórico.</div>
+        <mat-form-field appearance="outline">
+          <mat-label>Por que cancelar</mat-label>
+          <textarea matInput rows="2" [formControl]="motivoCancela"></textarea>
+          <mat-error>Escreva o motivo.</mat-error>
+        </mat-form-field>
+        <div class="acoes">
+          <button mat-stroked-button type="button" (click)="modo.set('ver'); limpar()">Não cancelar</button>
+          <button mat-flat-button class="perigo" type="button" (click)="cancelar()" [disabled]="enviando()">Cancelar o pedido</button>
+        </div>
+      }
+      @default {
+        <div class="kv">
+          <div><span class="lbl">Fornecedor</span><b>{{ p.empresa }}</b></div>
+          <div><span class="lbl">Contrato</span><b class="mono">{{ p.contrato ?? '—' }}</b></div>
+          <div><span class="lbl">Data da compra</span><b>{{ data(p.dataCompra) }}</b></div>
+          <div><span class="lbl">Lote</span><b [class.mono]="lote()">{{ lote() ?? 'ainda não existe' }}</b></div>
+        </div>
+        <div class="totais">
+          <div class="t">Pediu<b>{{ p.quantidade }}</b></div>
+          <div class="t">Chegou<b>{{ p.pecasRecebidas }}</b></div>
+          <div class="t">Falta chegar<b [class.vermelho]="p.pecasRecebidas > 0 && faltaChegar(p) > 0">{{ faltaChegar(p) }}</b></div>
+          <div class="t">Cadastradas<b>{{ cadastradas() }}</b></div>
+        </div>
+        <app-tabela-itens [itens]="itensTabela()" />
+        <div class="chamada" [class.chamada--neutra]="p.segundaClasse.valido"><b>{{ p.segundaClasse.mensagem }}</b></div>
+
+        @if (notas.value()?.length) {
+          <div>
+            <p class="lbl">Nota fiscal</p>
+            <div class="tabela">
+              <table class="simples">
+                <thead><tr><th>Nota</th><th>Emissão</th><th class="num">m³</th><th>Conferência</th></tr></thead>
+                <tbody>
+                  @for (n of notas.value(); track n.id) {
+                    <tr><td class="mono">{{ n.numero }}</td><td>{{ data(n.dataEmissao) }}</td>
+                      <td class="num">{{ m3(volumeNota(n)) }}</td>
+                      <td [class.vermelho]="n.statusConferencia === 'Diverge'">{{ n.statusConferencia === 'Diverge' ? 'diverge: ' + n.divergencias.join(' ') : 'confere' }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+        @if (chegadas.value()?.length) {
+          <div>
+            <p class="lbl">Cargas recebidas · toque para abrir o boletim (BR) em PDF</p>
+            <div class="tabela">
+              <table class="simples">
+                <thead><tr><th>Chegou em</th><th>Armazém</th><th class="num">Peças</th><th>Lote</th><th>Conferência</th></tr></thead>
+                <tbody>
+                  @for (c of chegadas.value(); track c.id) {
+                    <tr class="clicavel" tabindex="0" (click)="abrirBoletim(c)" (keydown.enter)="abrirBoletim(c)">
+                      <td>{{ dataHora(c.dataRecebimento) }}</td><td>{{ c.armazem }}</td><td class="num">{{ c.quantidadeRecebida }}</td>
+                      <td class="mono">{{ c.lote }}</td><td [class.vermelho]="!c.confere">{{ c.confere ? 'confere' : c.divergencias.join(' ') }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        @if (p.situacao === 'Cancelado') {
+          <div class="chamada chamada--neutra"><b>Pedido cancelado.</b> Ele fica aqui para o histórico; não entra mais na chegada de carga.</div>
+        } @else if (editavel(p)) {
+          <div class="chamada chamada--neutra"><b>Ainda dá para corrigir.</b> Nenhuma carga deste pedido chegou. Quando a primeira chegar, ele trava.</div>
+          <div class="acoes">
+            <button mat-flat-button type="button" (click)="corrigir(p)">Corrigir o pedido</button>
+            <button mat-stroked-button type="button" (click)="modo.set('cancelar'); limpar()">Cancelar o pedido</button>
+          </div>
+        } @else {
+          <div class="chamada chamada--neutra"><b>Travado.</b> A primeira carga chegou. O que foi pedido fica como está — se faltar entrega, a falta aparece aqui e não some.</div>
+        }
+
+        <div>
+          <p class="lbl">O que teve</p>
+          <ol class="linha-tempo">
+            @for (e of eventos(); track $index) {
+              <li [class]="e.tipo ?? ''">
+                <span class="quando">{{ dataHora(e.data) }}</span>
+                <div><b>{{ e.titulo }}</b>@if (e.texto) { <span> — {{ e.texto }}</span> }
+                  @if (e.motivo) { <p class="motivo">“{{ e.motivo }}”</p> }</div>
+              </li>
+            }
+          </ol>
+        </div>
+      }
+    }
+  </section>
+} @else if (pedido.error()) {
+  <p class="aviso aviso--erro" role="alert">Não achei esse pedido.</p>
+}

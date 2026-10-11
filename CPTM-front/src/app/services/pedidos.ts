@@ -2,8 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ambiente } from '../../environments/ambiente';
+import { consulta } from '../helpers/consulta';
 import {
-  ChegadaDto, NotaDto, NovaChegadaDto, NovaNotaDto, NovoPedidoDto, NovoPedidoItemDto, PedidoDto, PedidoHistoricoDto, VerificacaoPedidoDto,
+  ChegadaDto, NotaDto, NovaChegadaDto, NovaNotaDto, NovoPedidoDto, NovoPedidoItemDto, OfertaDto, PedidoDto, PedidoHistoricoDto, VerificacaoPedidoDto,
 } from '../models/pedido';
 
 /** /api/pedidos com as notas e as chegadas de cada pedido. */
@@ -24,6 +25,13 @@ export class Pedidos {
   /** Sem gravar: a regra da 2ª classe (bloqueia) e a oferta do fornecedor (só avisa). */
   verificar(idEmpresa: number | null, itens: NovoPedidoItemDto[]): Observable<VerificacaoPedidoDto> {
     return this.http.post<VerificacaoPedidoDto>(`${this.url}/verificacao`, { idEmpresa, itens });
+  }
+  /** Só antes da primeira chegada, com motivo; os itens vêm completos e substituem os de antes. */
+  corrigir(id: number, correcao: { idContrato: number | null; dataCompra: string | null; itens: NovoPedidoItemDto[]; motivo: string }): Observable<PedidoDto> {
+    return this.http.post<PedidoDto>(`${this.url}/${id}/correcao`, correcao);
+  }
+  ofertas(idEmpresa: number): Observable<OfertaDto[]> {
+    return this.http.get<OfertaDto[]>(`${ambiente.api}/ofertas`, { params: consulta({ idEmpresa }) });
   }
   cancelar(id: number, motivo: string): Observable<PedidoDto> {
     return this.http.post<PedidoDto>(`${this.url}/${id}/cancelamento`, { motivo });
