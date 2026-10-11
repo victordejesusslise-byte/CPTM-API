@@ -1,8 +1,9 @@
 <main class="login">
   <section class="login__cartao">
-    <p class="login__sobre">CPTM · Via Permanente</p>
-    <h1>Controle de dormentes</h1>
-    <p class="login__texto">Entre com o e-mail cadastrado e a sua senha.</p>
+    <div class="login__marca"><app-marca [tamanho]="56" [comNome]="false" /></div>
+    <h1 class="marca login__nome">YBYRA</h1>
+    <p class="login__assinatura">qualidade e rastreamento de dormentes ferroviários</p>
+    <p class="login__texto">CPTM · Via Permanente. Entre com o e-mail cadastrado e a sua senha.</p>
 
     <form [formGroup]="form" (ngSubmit)="entrar()" novalidate>
       <mat-form-field appearance="outline">

@@ -1,33 +1,36 @@
 @use '@angular/material' as mat;
 
 /*
- * Sistema visual do protótipo (prototipo-dormentes-via-permanente.html): os mesmos tokens, com nomes em português.
- * Sempre o tema claro do protótipo (pedido do Victor em 2026-10-11), mesmo com o Windows no modo escuro;
- * o escuro só entra se alguém puser data-theme="dark" no html.
- * Vermelho é exceção: erro, divergência e o que pede ação. Alvo de toque mínimo de 44 px.
+ * Marca YBYRA (PDF da marca enviado pelo Victor em 2026-10-11): "ybyra" é árvore em tupi.
+ * Paleta: madeira #563624 · areia #D5C4A1 · verde #64786E · mata #1E2A20 · vinho #512027, sobre o creme do papel.
+ * Josefin Sans no texto de interface e nos dados. Tribo (nome da marca) e Obra Letra (assinatura) não estão
+ * no Google Fonts: o nome YBYRA sai em Josefin Sans, caixa-alta e espaçado, como na página "A marca".
+ * Regras do protótipo mantidas: o vinho é a cor da exceção (erro, divergência, o que pede ação); toque de 44 px.
+ * Sempre o tema claro (creme), mesmo com o Windows no modo escuro; o escuro (mata) só com data-theme="dark".
  */
 :root {
-  --plano: #F0F0EE; --superficie: #FFFFFF; --superficie-2: #F7F7F5; --superficie-3: #EDEDEA;
-  --tinta: #0D0D0D; --tinta-2: #494949; --tinta-3: #6B6B6B;
-  --linha: #E2E2DF; --linha-2: #C7C7C3;
-  --vermelho: #C8102E; --vermelho-forte: #9C0C23; --vermelho-tinta: #FFFFFF; --vermelho-suave: #FBEAEC; --vermelho-linha: #EFC3C9;
-  --bloco: #0D0D0D; --sobre-escuro: #F2F2F0; --sobre-escuro-2: #A9A9A6; --sobre-escuro-3: #7A7A77;
-  --sombra: 0 1px 2px rgba(13, 13, 13, .06), 0 6px 18px -12px rgba(13, 13, 13, .22);
-  --anel: rgba(13, 13, 13, .22);
-  --fonte-titulo: 'Archivo', system-ui, sans-serif;
-  --fonte-texto: 'Source Sans 3', system-ui, sans-serif;
-  --fonte-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --madeira: #563624; --areia: #D5C4A1; --verde: #64786E; --mata: #1E2A20; --vinho: #512027;
+  --plano: #F1E9DF; --superficie: #FAF6F0; --superficie-2: #F4EDE3; --superficie-3: #E9DDCB;
+  --tinta: #1E2A20; --tinta-2: #3B4A40; --tinta-3: #56685E;
+  --linha: #E3D7C6; --linha-2: #D5C4A1;
+  --vermelho: #512027; --vermelho-forte: #3E161C; --vermelho-tinta: #FAF6F0; --vermelho-suave: #F2E2DF; --vermelho-linha: #D9B9B8;
+  --bloco: #1E2A20; --sobre-escuro: #F1E9DF; --sobre-escuro-2: #D5C4A1; --sobre-escuro-3: #64786E;
+  --sombra: 0 1px 2px rgba(30, 42, 32, .06), 0 6px 18px -12px rgba(30, 42, 32, .25);
+  --anel: rgba(86, 54, 36, .35);
+  --fonte-titulo: 'Josefin Sans', system-ui, sans-serif;
+  --fonte-texto: 'Josefin Sans', system-ui, sans-serif;
+  --fonte-mono: 'Josefin Sans', system-ui, sans-serif;
   color-scheme: light;
 }
 
 @mixin escuro {
-  --plano: #0B0B0B; --superficie: #151515; --superficie-2: #1D1D1D; --superficie-3: #262626;
-  --tinta: #F2F2F0; --tinta-2: #AEAEAB; --tinta-3: #949491;
-  --linha: #282828; --linha-2: #3C3C3C;
-  --vermelho: #FF4D5E; --vermelho-forte: #FF7181; --vermelho-tinta: #1A0508; --vermelho-suave: #2B1013; --vermelho-linha: #4C1C22;
-  --bloco: #1F1F1F; --sobre-escuro-3: #9A9A97;
+  --plano: #161F18; --superficie: #1E2A20; --superficie-2: #243327; --superficie-3: #2C3D30;
+  --tinta: #F1E9DF; --tinta-2: #D5C4A1; --tinta-3: #A9B5AD;
+  --linha: #2E3E31; --linha-2: #46584B;
+  --vermelho: #D9848C; --vermelho-forte: #E7A2A8; --vermelho-tinta: #1E2A20; --vermelho-suave: #3A2226; --vermelho-linha: #5C2E34;
+  --bloco: #121A14; --sobre-escuro-3: #8FA197;
   --sombra: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 18px -12px rgba(0, 0, 0, .7);
-  --anel: rgba(242, 242, 240, .28);
+  --anel: rgba(213, 196, 161, .4);
   color-scheme: dark;
 }
 :root[data-theme='dark'] { @include escuro; }
@@ -36,7 +39,7 @@
 html {
   @include mat.theme((
     color: (primary: mat.$azure-palette, theme-type: color-scheme),
-    typography: (plain-family: 'Source Sans 3', brand-family: 'Archivo'),
+    typography: (plain-family: 'Josefin Sans', brand-family: 'Josefin Sans'),
     density: 0,
   ));
   @include mat.theme-overrides((
@@ -49,8 +52,8 @@ html {
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
-body { margin: 0; background: var(--plano); color: var(--tinta); font: 15px/1.45 var(--fonte-texto); -webkit-font-smoothing: antialiased; }
-h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 700; color: var(--tinta); letter-spacing: -.01em; }
+body { margin: 0; background: var(--plano); color: var(--tinta); font: 16px/1.45 var(--fonte-texto); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 700; color: var(--tinta); letter-spacing: .01em; }
 h1 { font-size: 26px; margin: 0 0 4px; }
 h2 { font-size: 18px; margin: 0 0 12px; }
 h3 { font-size: 16px; }
@@ -62,7 +65,8 @@ a { color: inherit; }
 .cartao { padding: 16px; border: 1px solid var(--linha); border-radius: 12px; background: var(--superficie); }
 .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .vermelho { color: var(--vermelho); font-weight: 600; }
-.mono { font-family: var(--fonte-mono); }
+.mono { font-family: var(--fonte-mono); font-weight: 600; color: var(--madeira); letter-spacing: .02em; }
+.marca { font-family: var(--fonte-titulo); font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
 .rotulo { font-size: 13px; color: var(--tinta-3); }
 .aviso { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); color: var(--tinta-2); }
 .aviso--erro { border-color: var(--vermelho-linha); background: var(--vermelho-suave); color: var(--vermelho); }

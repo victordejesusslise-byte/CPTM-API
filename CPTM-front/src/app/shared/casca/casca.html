@@ -2,7 +2,7 @@
   <button type="button" class="topo__menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-controls="menu-lateral">
     Menu
   </button>
-  <a class="topo__marca" routerLink="/painel">Via Permanente <span>Dormentes · CPTM</span></a>
+  <a class="topo__marca" routerLink="/painel" aria-label="YBYRA, ir ao painel"><app-marca [tamanho]="30" /> <span>Dormentes · CPTM</span></a>
   <div class="topo__quem">
     <span class="topo__nome">{{ usuario()?.nome }}</span>
     <span class="topo__cargo">{{ cargo() }}</span>

@@ -3,11 +3,12 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { Sessao } from '../../core/auth/sessao';
 import { ItemMenu, menuDoCargo } from '../../core/menu/menu';
 import { nomeDoCargo } from '../../helpers/formato';
+import { Marca } from '../marca/marca';
 
 /** A moldura das telas logadas: barra de cima com quem entrou, menu do cargo e o conteúdo. */
 @Component({
   selector: 'app-casca',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Marca],
   templateUrl: './casca.html',
   styleUrl: './casca.scss',
 })

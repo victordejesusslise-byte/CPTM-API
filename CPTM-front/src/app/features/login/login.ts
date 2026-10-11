@@ -3,12 +3,13 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Sessao } from '../../core/auth/sessao';
 import { mensagemDeErro } from '../../helpers/formato';
+import { Marca } from '../../shared/marca/marca';
 import { FORMULARIO } from '../../shared/ui';
 
 /** Entrar com o e-mail da pessoa e a senha dela (POST /api/auth/login). */
 @Component({
   selector: 'app-login',
-  imports: [FORMULARIO],
+  imports: [FORMULARIO, Marca],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

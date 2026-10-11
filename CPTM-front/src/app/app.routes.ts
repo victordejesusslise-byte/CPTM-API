@@ -3,7 +3,7 @@ import { cargoGuard } from './core/auth/cargo-guard';
 import { Cargo } from './models/usuario';
 
 const so = (...cargos: Cargo[]) => ({ cargos });
-const titulo = (nome: string) => `${nome} · Via Permanente`;
+const titulo = (nome: string) => `${nome} · YBYRA`;
 
 /** As rotas: o login fica fora da casca; o resto pede login e, quando tem data.cargos, o cargo certo. Cada tela carrega só quando abre. */
 export const routes: Routes = [
