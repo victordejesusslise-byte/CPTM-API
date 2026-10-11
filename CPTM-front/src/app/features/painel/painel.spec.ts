@@ -12,7 +12,7 @@ const indicador = (chave: string, vermelho: boolean): IndicadorDto => ({
 });
 
 describe('Painel', () => {
-  const abrir = async (cargo: Parameters<typeof entrarComo>[0]) => {
+  const abrir = async (cargo: Parameters<typeof entrarComo>[0], aba: 'hoje' | 'numeros' = 'numeros') => {
     localStorage.clear();
     entrarComo(cargo);
     await TestBed.configureTestingModule({
@@ -20,6 +20,7 @@ describe('Painel', () => {
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
     const fixture = TestBed.createComponent(Painel);
+    fixture.componentRef.setInput('aba', aba);
     // o indicador fica pendente até a resposta: whenStable só depois do flush
     fixture.detectChanges();
     return { fixture, tela: fixture.nativeElement as HTMLElement, http: TestBed.inject(HttpTestingController) };
@@ -35,7 +36,7 @@ describe('Painel', () => {
   });
 
   it('mostra os atalhos só do cargo', async () => {
-    const { fixture, tela, http } = await abrir('OperadorVia');
+    const { fixture, tela, http } = await abrir('OperadorVia', 'hoje');
     http.expectOne((r) => r.url === 'http://localhost:5169/api/indicadores').flush([]);
     await fixture.whenStable();
     const atalhos = [...tela.querySelectorAll('.atalho')].map((a) => a.textContent ?? '');

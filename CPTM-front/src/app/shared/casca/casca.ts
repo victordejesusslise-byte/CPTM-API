@@ -42,7 +42,8 @@ export class Casca {
   protected readonly grupos = computed(() => {
     const caminho = this.caminho();
     const itens: ItemVisivel[] = menuDoCargo(this.usuario()?.cargo).map((item) => {
-      const subs = (item.subs ?? []).filter((s) => !(s.soComputador && this.celular()));
+      const cargo = this.usuario()?.cargo;
+      const subs = (item.subs ?? []).filter((s) => !(s.soComputador && this.celular()) && !(s.cargos && cargo && !s.cargos.includes(cargo)));
       const abas = subs.length > 1 ? subs : [];
       const ativo = caminho === item.rota || caminho.startsWith(item.rota + '/');
       return { ...item, abas, ativo, link: subs[0]?.rota ?? item.rota };

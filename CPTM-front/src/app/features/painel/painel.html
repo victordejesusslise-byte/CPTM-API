@@ -1,5 +1,5 @@
 <header class="cabecalho">
-  <p class="sobre">Painel</p>
+  <p class="sobre">Painel · {{ aba() === 'hoje' ? 'O que fazer hoje' : 'Acompanhamento' }}</p>
   <h1>Olá, {{ usuario()?.nome }}</h1>
   @if (indicadores.hasValue()) {
     <p class="resumo">
@@ -12,6 +12,7 @@
   }
 </header>
 
+@if (aba() === 'hoje') {
 <section aria-labelledby="t-atalhos">
   <h2 id="t-atalhos">O que fazer</h2>
   <div class="atalhos">
@@ -20,7 +21,7 @@
     }
   </div>
 </section>
-
+} @else {
 <section aria-labelledby="t-indicadores">
   <h2 id="t-indicadores">Indicadores</h2>
   <app-estado [carregando]="indicadores.isLoading()" [erro]="erro()" [vazio]="indicadores.hasValue() && !indicadores.value().length" textoVazio="Sem indicadores no período." />
@@ -46,3 +47,4 @@
     </div>
   }
 </section>
+}

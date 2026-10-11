@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Sessao } from '../../core/auth/sessao';
@@ -16,6 +16,8 @@ import { Estado } from '../../shared/estado/estado';
   styleUrl: './painel.scss',
 })
 export class Painel {
+  /** O que fazer hoje (atalhos) ou Acompanhamento (indicadores): vem do data da rota */
+  readonly aba = input<'hoje' | 'numeros'>('hoje');
   private readonly sessao = inject(Sessao);
   private readonly servico = inject(Indicadores);
 

@@ -1,10 +1,10 @@
-<p class="sobre">Peça · 5</p>
-<h1>Armazém</h1>
+<p class="sobre">Armazém · 06</p>
+<h1>{{ titulos[aba()] }}</h1>
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
-<mat-tab-group mat-stretch-tabs="false" animationDuration="0ms">
-  <mat-tab label="Estoque">
+@switch (aba()) {
+  @case ('estoque') {
     <div class="campos aba">
       <mat-form-field appearance="outline">
         <mat-label>Armazém</mat-label>
@@ -31,9 +31,9 @@
     @if (estoque.value()?.length) {
       <app-tabela [colunas]="colunasEstoque" [linhas]="estoque.value() ?? []" />
     }
-  </mat-tab>
+  }
 
-  <mat-tab label="Pilha da peça">
+  @case ('guardar') {
     <div class="aba">
       <p class="rotulo">Entrada da peça aprovada na pilha, ou troca de pilha de uma peça que já está no armazém.</p>
       <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
@@ -57,9 +57,27 @@
         </div>
       }
     </div>
-  </mat-tab>
+  }
 
-  <mat-tab label="Conferência">
+  @case ('pilhas') {
+    @for (a of armazens.value() ?? []; track a.id) {
+      <section class="cartao">
+        <header><h2>{{ a.nome }}</h2><span class="nota">{{ a.linha }} · {{ a.pecas }} peças</span></header>
+        <div class="tabela">
+          <table class="simples">
+            <thead><tr><th>Pilha</th><th>Setor</th><th>Tamanho</th><th>Classe</th><th class="num">Peças</th></tr></thead>
+            <tbody>
+              @for (pl of a.pilhas; track pl.id) {
+                <tr><td class="mono">{{ pl.codigo }}</td><td>{{ pl.setor }}</td><td>{{ metros(pl.comprimentoM) }}</td><td>{{ pl.classe }}ª</td><td class="num">{{ pl.pecas }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+
+  @case ('conferencia') {
     <div class="aba">
       @if (conferencia(); as c) {
         <div class="cartao">
@@ -99,5 +117,5 @@
         <div class="acoes"><button mat-flat-button type="button" (click)="iniciarConferencia()" [disabled]="!idArmazemConferencia() || enviando()">Abrir conferência</button></div>
       }
     </div>
-  </mat-tab>
-</mat-tab-group>
+  }
+}

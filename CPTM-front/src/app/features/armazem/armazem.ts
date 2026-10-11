@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { dataHora, mensagemDeErro, metros } from '../../helpers/formato';
@@ -10,15 +10,18 @@ import { Conferencias } from '../../services/conferencias';
 import { Pecas } from '../../services/pecas';
 import { LeituraTag, leitura } from '../../shared/leitura-tag/leitura-tag';
 import { Coluna, Tabela } from '../../shared/tabela/tabela';
-import { ABAS, FORMULARIO } from '../../shared/ui';
+import { FORMULARIO } from '../../shared/ui';
 
 /** O armazém: estoque, entrada na pilha, troca de pilha e conferência pilha por pilha. */
 @Component({
   selector: 'app-armazem',
-  imports: [FormsModule, FORMULARIO, ABAS, LeituraTag, Tabela],
+  imports: [FormsModule, FORMULARIO, LeituraTag, Tabela],
   templateUrl: './armazem.html',
 })
 export class Armazem {
+  /** a aba vem do data da rota: Guardar na pilha, Pilhas dos armazéns, Estoque, Conferência */
+  readonly aba = input<'guardar' | 'pilhas' | 'estoque' | 'conferencia'>('guardar');
+  protected readonly titulos = { guardar: 'Guardar na pilha', pilhas: 'Pilhas dos armazéns', estoque: 'Estoque', conferencia: 'Conferência' };
   private readonly pecas = inject(Pecas);
   private readonly conferencias = inject(Conferencias);
   private readonly catalogos = inject(Catalogos);
