@@ -1,0 +1,22 @@
+.cabecalho { margin-bottom: 24px; }
+.resumo { margin: 4px 0 0; color: var(--tinta-2); }
+section { margin-bottom: 32px; }
+.atalhos { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.atalho {
+  display: flex; flex-direction: column; justify-content: center; min-height: 64px; padding: 10px 14px;
+  border: 1px solid var(--linha); border-radius: 10px; background: var(--superficie);
+  color: var(--tinta); font-weight: 600; text-decoration: none;
+  &:hover { border-color: var(--linha-2); box-shadow: var(--sombra); }
+}
+.atalho__grupo { font-size: 12px; font-weight: 400; color: var(--tinta-3); }
+.indicador h3 { margin: 0 0 8px; font-size: 15px; }
+.indicador__valor { margin: 0; font-family: var(--fonte-titulo); font-size: 28px; font-weight: 700; span { font-size: 14px; color: var(--tinta-3); font-weight: 600; } }
+.indicador__resumo { margin: 6px 0 0; color: var(--tinta-2); }
+.indicador__ref { margin: 4px 0 0; font-size: 13px; color: var(--tinta-3); }
+.indicador--vermelho { border-color: var(--vermelho-linha); .indicador__valor { color: var(--vermelho); } }
+.indicador__detalhes {
+  margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--linha); display: grid; gap: 4px; font-size: 13px;
+  div { display: flex; justify-content: space-between; gap: 12px; }
+  dt { color: var(--tinta-3); }
+  dd { margin: 0; font-family: var(--fonte-mono); }
+}

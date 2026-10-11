@@ -1,0 +1,51 @@
+using Microsoft.EntityFrameworkCore;
+using ViaPermanente.Dominio.Models.Catalogos;
+using ViaPermanente.Dominio.Models.Patio;
+using ViaPermanente.Dominio.Repositories;
+
+namespace ViaPermanente.Dados.Repositories;
+
+public class CatalogoRepository(ViaPermanenteContext db) : ICatalogoRepository
+{
+    public async Task<IReadOnlyList<TamanhoDormente>> ListarTamanhos()
+        => await db.Set<TamanhoDormente>().AsNoTracking().OrderBy(t => t.ComprimentoM).ToListAsync();
+
+    public async Task<IReadOnlyList<Especie>> ListarEspecies()
+        => await db.Set<Especie>().AsNoTracking().OrderBy(e => e.NomeCientifico).ToListAsync();
+
+    public async Task<IReadOnlyList<Armazem>> ListarArmazens()
+        => await db.Set<Armazem>().AsNoTracking().OrderBy(a => a.Km).ToListAsync();
+
+    public async Task<IReadOnlyList<Pilha>> ListarPilhas()
+        => await db.Set<Pilha>().AsNoTracking().OrderBy(p => p.IdArmazem).ThenBy(p => p.Codigo).ToListAsync();
+
+    public async Task<IReadOnlyList<Leitor>> ListarLeitores()
+        => await db.Set<Leitor>().AsNoTracking().OrderBy(l => l.Codigo).ToListAsync();
+
+    public async Task<IReadOnlyList<TipoLeitor>> ListarTiposLeitor()
+        => await db.Set<TipoLeitor>().AsNoTracking().OrderBy(t => t.IdTipoLeitor).ToListAsync();
+
+    public async Task<IReadOnlyList<ModoLeitura>> ListarModos()
+        => await db.Set<ModoLeitura>().AsNoTracking().OrderBy(m => m.IdModo).ToListAsync();
+
+    public async Task<IReadOnlyList<CodigoMaterial>> ListarCodigosMaterial()
+        => await db.Set<CodigoMaterial>().AsNoTracking().OrderBy(c => c.IdTamanho).ThenBy(c => c.Classe).ToListAsync();
+
+    public async Task AdicionarCodigoMaterial(CodigoMaterial codigo)
+    {
+        db.Add(codigo);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task AdicionarLeitor(Leitor leitor)
+    {
+        db.Add(leitor);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<IReadOnlyDictionary<int, int>> ContarPecasPorPilha()
+        => await db.Set<Dormente>().AsNoTracking()
+            .Where(d => d.IdPilha != null)
+            .GroupBy(d => d.IdPilha!.Value)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+}

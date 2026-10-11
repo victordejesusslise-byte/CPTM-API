@@ -1,0 +1,7 @@
+# Repositório CPTM-API: só o código do sistema (CPTM-back e CPTM-front).
+# O resto desta pasta é o cérebro do projeto no Obsidian e fica fora do git.
+# Os segredos (.env) e o que é gerado (bin, obj, node_modules, dist) saem pelos .gitignore de cada pasta.
+/*
+!/.gitignore
+!/CPTM-back/
+!/CPTM-front/

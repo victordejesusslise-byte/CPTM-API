@@ -1,0 +1,48 @@
+<header class="cabecalho">
+  <p class="sobre">Painel</p>
+  <h1>Olá, {{ usuario()?.nome }}</h1>
+  @if (indicadores.hasValue()) {
+    <p class="resumo">
+      @if (noVermelho()) {
+        <span class="vermelho">{{ noVermelho() }} {{ noVermelho() === 1 ? 'indicador pede' : 'indicadores pedem' }} atenção.</span>
+      } @else {
+        Nenhum indicador no vermelho.
+      }
+    </p>
+  }
+</header>
+
+<section aria-labelledby="t-atalhos">
+  <h2 id="t-atalhos">O que fazer</h2>
+  <div class="atalhos">
+    @for (a of atalhos(); track a.rota) {
+      <a class="atalho" [routerLink]="a.rota"><span class="atalho__grupo">{{ a.grupo }}</span>{{ a.rotulo }}</a>
+    }
+  </div>
+</section>
+
+<section aria-labelledby="t-indicadores">
+  <h2 id="t-indicadores">Indicadores</h2>
+  <app-estado [carregando]="indicadores.isLoading()" [erro]="erro()" [vazio]="indicadores.hasValue() && !indicadores.value().length" textoVazio="Sem indicadores no período." />
+  @if (indicadores.hasValue()) {
+    <div class="grade">
+      @for (i of indicadores.value(); track i.chave) {
+        <article class="cartao indicador" [class.indicador--vermelho]="i.vermelho">
+          <h3>{{ i.nome }}</h3>
+          <p class="indicador__valor">{{ valor(i) }} <span>{{ i.unidade }}</span></p>
+          <p class="indicador__resumo">{{ i.resumo }}</p>
+          @if (i.referencia) {
+            <p class="indicador__ref">Referência: {{ i.referencia }}</p>
+          }
+          @if (i.detalhes.length) {
+            <dl class="indicador__detalhes">
+              @for (d of i.detalhes; track d.rotulo) {
+                <div><dt>{{ d.rotulo }}</dt><dd>{{ d.valor }}</dd></div>
+              }
+            </dl>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>

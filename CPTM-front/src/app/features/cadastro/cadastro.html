@@ -1,0 +1,56 @@
+<p class="sobre">Peça · 3</p>
+<h1>Cadastro da peça</h1>
+
+<div class="campos">
+  <mat-form-field appearance="outline">
+    <mat-label>Pedido</mat-label>
+    <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value); idChegada.set(null); feixe.set(null)">
+      @for (p of comChegada(); track p.id) { <mat-option [value]="p.id">{{ p.codigo }} · {{ p.empresa }}</mat-option> }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label>Chegada</mat-label>
+    <mat-select [value]="idChegada()" (selectionChange)="idChegada.set($event.value); feixe.set(null)" [disabled]="!idPedido()">
+      @for (c of chegadas.value() ?? []; track c.id) { <mat-option [value]="c.id">Lote {{ c.lote }} · {{ c.quantidadeRecebida }} peças</mat-option> }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+@if (feixes().length) {
+  <h2>Feixes</h2>
+  <div class="atalhos">
+    @for (f of feixes(); track f.id) {
+      <button type="button" class="cartao feixe" [class.feixe--ativo]="feixe()?.id === f.id" (click)="escolherFeixe(f)">
+        <span class="mono">{{ f.numero }}</span>
+        <span class="rotulo">{{ f.especie }} · {{ metros(f.comprimentoM) }} · {{ f.classe }}ª</span>
+        <span>{{ f.cadastradas }} de {{ f.quantidade }} cadastradas</span>
+      </button>
+    }
+  </div>
+}
+
+@if (feixe(); as f) {
+  <section class="cartao">
+    <h2>Gravar a tag · feixe <span class="mono">{{ f.numero }}</span></h2>
+    <p class="rotulo">Grave no módulo o número abaixo, leia de novo e confira. Só uma tag pode estar no alcance.</p>
+    <app-leitura-tag rotulo="Tag gravada (próxima)" [(tag)]="tag" [(metodo)]="metodo" />
+    <mat-form-field appearance="outline">
+      <mat-label>Tag relida</mat-label>
+      <input matInput class="mono" [ngModel]="tagRelida()" (ngModelChange)="tagRelida.set($event)" (keydown.enter)="cadastrar()" autocomplete="off" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Tag do fornecedor (se a peça veio com uma)</mat-label>
+      <input matInput class="mono" [ngModel]="tagFornecedor()" (ngModelChange)="tagFornecedor.set($event)" autocomplete="off" />
+    </mat-form-field>
+    @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+    @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+    <div class="acoes">
+      <button mat-flat-button type="button" (click)="cadastrar()" [disabled]="enviando() || f.cadastradas >= f.quantidade">Cadastrar peça</button>
+      <button mat-button type="button" (click)="proximaTag()">Pegar outra tag</button>
+    </div>
+  </section>
+  @if (doFeixe.value()?.length) {
+    <h2>Peças do feixe</h2>
+    <app-tabela [colunas]="colunas" [linhas]="doFeixe.value() ?? []" />
+  }
+}

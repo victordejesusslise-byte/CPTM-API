@@ -1,0 +1,61 @@
+using Microsoft.EntityFrameworkCore;
+using ViaPermanente.Dominio.Models.Catalogos;
+using ViaPermanente.Dominio.Models.Compras;
+using ViaPermanente.Dominio.Models.Patio;
+using ViaPermanente.Dominio.Models.Pessoas;
+
+namespace ViaPermanente.Dados.Configuracoes;
+
+/// <summary>CONTRATO, EMPRESA, NOTA_FISCAL, NOTA_FISCAL_ITEM, OFERTA_FORNECEDOR, PEDIDO, PEDIDO_HISTORICO, PEDIDO_ITEM e RECEBIMENTO.</summary>
+internal static class ComprasConfiguracao
+{
+    public static void Aplicar(ModelBuilder mb)
+    {
+        mb.Entity<Empresa>(e => e.HasKey(x => x.IdEmpresa));
+
+        mb.Entity<Contrato>(e =>
+        {
+            e.HasKey(x => x.IdContrato);
+            e.HasIndex(x => x.NumeroContrato).IsUnique();
+        });
+        mb.Fk<Contrato, Empresa>(x => x.IdEmpresa);
+
+        mb.Entity<NotaFiscal>(e => e.HasKey(x => x.IdNota));
+        mb.Fk<NotaFiscal, Pedido>(x => x.IdPedido);
+        mb.Fk<NotaFiscal, Usuario>(x => x.IdUsuarioConferiu);
+
+        mb.Entity<NotaFiscalItem>(e => e.HasKey(x => x.IdNotaItem));
+        mb.Fk<NotaFiscalItem, NotaFiscal>(x => x.IdNota);
+        mb.Fk<NotaFiscalItem, Especie>(x => x.IdEspecie);
+        mb.Fk<NotaFiscalItem, TamanhoDormente>(x => x.IdTamanho);
+
+        mb.Entity<OfertaFornecedor>(e => e.HasKey(x => x.IdOferta));
+        mb.Fk<OfertaFornecedor, Empresa>(x => x.IdEmpresa);
+        mb.Fk<OfertaFornecedor, Especie>(x => x.IdEspecie);
+        mb.Fk<OfertaFornecedor, TamanhoDormente>(x => x.IdTamanho);
+
+        mb.Entity<Pedido>(e =>
+        {
+            e.HasKey(x => x.IdPedido);
+            e.HasIndex(x => x.Codigo).IsUnique();
+        });
+        mb.Fk<Pedido, Empresa>(x => x.IdEmpresa);
+        mb.Fk<Pedido, Usuario>(x => x.IdUsuario);
+        mb.Fk<Pedido, Contrato>(x => x.IdContrato);
+
+        mb.Entity<PedidoHistorico>(e => e.HasKey(x => x.IdHistorico));
+        mb.Fk<PedidoHistorico, Pedido>(x => x.IdPedido);
+        mb.Fk<PedidoHistorico, Usuario>(x => x.IdUsuario);
+
+        mb.Entity<PedidoItem>(e => e.HasKey(x => x.IdPedidoItem));
+        mb.Fk<PedidoItem, Pedido>(x => x.IdPedido);
+        mb.Fk<PedidoItem, TamanhoDormente>(x => x.IdTamanho);
+        mb.Fk<PedidoItem, Especie>(x => x.IdEspecie);
+
+        mb.Entity<Recebimento>(e => e.HasKey(x => x.IdRecebimento));
+        mb.Fk<Recebimento, Pedido>(x => x.IdPedido);
+        mb.Fk<Recebimento, Usuario>(x => x.IdUsuario);
+        mb.Fk<Recebimento, NotaFiscal>(x => x.IdNota);
+        mb.Fk<Recebimento, Armazem>(x => x.IdArmazem);
+    }
+}

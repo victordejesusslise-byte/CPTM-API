@@ -1,0 +1,31 @@
+<main class="login">
+  <section class="login__cartao">
+    <p class="login__sobre">CPTM · Via Permanente</p>
+    <h1>Controle de dormentes</h1>
+    <p class="login__texto">Entre com o e-mail cadastrado e a sua senha.</p>
+
+    <form [formGroup]="form" (ngSubmit)="entrar()" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>E-mail</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="username" />
+        @if (form.controls.email.hasError('email')) {
+          <mat-error>Confira o e-mail.</mat-error>
+        } @else {
+          <mat-error>Informe o e-mail.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Senha</mat-label>
+        <input matInput type="password" formControlName="senha" autocomplete="current-password" />
+        <mat-error>Informe a senha.</mat-error>
+      </mat-form-field>
+
+      @if (erro()) {
+        <p class="aviso aviso--erro" role="alert">{{ erro() }}</p>
+      }
+
+      <button mat-flat-button type="submit" [disabled]="enviando()">{{ enviando() ? 'Entrando…' : 'Entrar' }}</button>
+    </form>
+  </section>
+</main>

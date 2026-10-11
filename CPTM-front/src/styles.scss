@@ -1,0 +1,92 @@
+@use '@angular/material' as mat;
+
+/*
+ * Sistema visual do protótipo (prototipo-dormentes-via-permanente.html): os mesmos tokens, com nomes em português.
+ * Sempre o tema claro do protótipo (pedido do Victor em 2026-10-11), mesmo com o Windows no modo escuro;
+ * o escuro só entra se alguém puser data-theme="dark" no html.
+ * Vermelho é exceção: erro, divergência e o que pede ação. Alvo de toque mínimo de 44 px.
+ */
+:root {
+  --plano: #F0F0EE; --superficie: #FFFFFF; --superficie-2: #F7F7F5; --superficie-3: #EDEDEA;
+  --tinta: #0D0D0D; --tinta-2: #494949; --tinta-3: #6B6B6B;
+  --linha: #E2E2DF; --linha-2: #C7C7C3;
+  --vermelho: #C8102E; --vermelho-forte: #9C0C23; --vermelho-tinta: #FFFFFF; --vermelho-suave: #FBEAEC; --vermelho-linha: #EFC3C9;
+  --bloco: #0D0D0D; --sobre-escuro: #F2F2F0; --sobre-escuro-2: #A9A9A6; --sobre-escuro-3: #7A7A77;
+  --sombra: 0 1px 2px rgba(13, 13, 13, .06), 0 6px 18px -12px rgba(13, 13, 13, .22);
+  --anel: rgba(13, 13, 13, .22);
+  --fonte-titulo: 'Archivo', system-ui, sans-serif;
+  --fonte-texto: 'Source Sans 3', system-ui, sans-serif;
+  --fonte-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: light;
+}
+
+@mixin escuro {
+  --plano: #0B0B0B; --superficie: #151515; --superficie-2: #1D1D1D; --superficie-3: #262626;
+  --tinta: #F2F2F0; --tinta-2: #AEAEAB; --tinta-3: #949491;
+  --linha: #282828; --linha-2: #3C3C3C;
+  --vermelho: #FF4D5E; --vermelho-forte: #FF7181; --vermelho-tinta: #1A0508; --vermelho-suave: #2B1013; --vermelho-linha: #4C1C22;
+  --bloco: #1F1F1F; --sobre-escuro-3: #9A9A97;
+  --sombra: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 18px -12px rgba(0, 0, 0, .7);
+  --anel: rgba(242, 242, 240, .28);
+  color-scheme: dark;
+}
+:root[data-theme='dark'] { @include escuro; }
+
+/* Angular Material com as cores dos tokens (formulários e diálogos) */
+html {
+  @include mat.theme((
+    color: (primary: mat.$azure-palette, theme-type: color-scheme),
+    typography: (plain-family: 'Source Sans 3', brand-family: 'Archivo'),
+    density: 0,
+  ));
+  @include mat.theme-overrides((
+    primary: var(--tinta), on-primary: var(--superficie), primary-container: var(--superficie-3), on-primary-container: var(--tinta),
+    surface: var(--superficie), on-surface: var(--tinta), on-surface-variant: var(--tinta-3),
+    surface-container: var(--superficie-2), surface-container-high: var(--superficie-2), surface-container-highest: var(--superficie-3),
+    outline: var(--linha-2), outline-variant: var(--linha), error: var(--vermelho), on-error: var(--vermelho-tinta),
+  ));
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--plano); color: var(--tinta); font: 15px/1.45 var(--fonte-texto); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 700; color: var(--tinta); letter-spacing: -.01em; }
+h1 { font-size: 26px; margin: 0 0 4px; }
+h2 { font-size: 18px; margin: 0 0 12px; }
+h3 { font-size: 16px; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--anel); outline-offset: 2px; }
+
+/* Peças comuns do sistema visual */
+.sobre { margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); }
+.cartao { padding: 16px; border: 1px solid var(--linha); border-radius: 12px; background: var(--superficie); }
+.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.vermelho { color: var(--vermelho); font-weight: 600; }
+.mono { font-family: var(--fonte-mono); }
+.rotulo { font-size: 13px; color: var(--tinta-3); }
+.aviso { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); color: var(--tinta-2); }
+.aviso--erro { border-color: var(--vermelho-linha); background: var(--vermelho-suave); color: var(--vermelho); }
+.aviso--ok { border-color: var(--linha-2); color: var(--tinta); }
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.acoes button, .acoes a { min-height: 44px; }
+.etiqueta { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--linha-2); font-size: 12px; font-weight: 600; color: var(--tinta-2); white-space: nowrap; }
+.etiqueta--vermelha { border-color: var(--vermelho-linha); background: var(--vermelho-suave); color: var(--vermelho); }
+.campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 12px; }
+.mat-mdc-form-field { width: 100%; }
+
+/* Tabelas (shared/tabela, Angular Material) */
+.tabela { overflow-x: auto; border: 1px solid var(--linha); border-radius: 12px; background: var(--superficie); }
+.tabela table { width: 100%; background: transparent; }
+.tabela th.mat-mdc-header-cell { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); white-space: nowrap; }
+.tabela td.mat-mdc-cell { color: var(--tinta); border-bottom-color: var(--linha); }
+.tabela tr.clicavel { cursor: pointer; }
+.tabela tr.clicavel:hover td { background: var(--superficie-2); }
+.tabela tr.mat-mdc-row, .tabela tr.mat-mdc-header-row { height: 48px; }
+.item { margin-bottom: 10px; }
+section { margin-bottom: 28px; }
+details.cartao summary { cursor: pointer; min-height: 32px; font-weight: 600; }
+details.cartao[open] summary { margin-bottom: 12px; }
+.atalhos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.feixe { display: flex; flex-direction: column; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; min-height: 44px; }
+.feixe--ativo { border-color: var(--tinta); box-shadow: var(--sombra); }
+.aba { padding-top: 16px; }

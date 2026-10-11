@@ -1,0 +1,103 @@
+<p class="sobre">Peça · 5</p>
+<h1>Armazém</h1>
+@if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+@if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+<mat-tab-group mat-stretch-tabs="false" animationDuration="0ms">
+  <mat-tab label="Estoque">
+    <div class="campos aba">
+      <mat-form-field appearance="outline">
+        <mat-label>Armazém</mat-label>
+        <mat-select [value]="filtro().idArmazem" (selectionChange)="mudarFiltro('idArmazem', $event.value)">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (a of armazens.value() ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }} · {{ a.pecas }} peças</mat-option> }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Tamanho</mat-label>
+        <mat-select [value]="filtro().idTamanho" (selectionChange)="mudarFiltro('idTamanho', $event.value)">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Classe</mat-label>
+        <mat-select [value]="filtro().classe" (selectionChange)="mudarFiltro('classe', $event.value)">
+          <mat-option [value]="null">As duas</mat-option><mat-option [value]="1">1ª</mat-option><mat-option [value]="2">2ª</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <p class="rotulo">{{ estoque.value()?.length ?? 0 }} peças em estoque.</p>
+    @if (estoque.value()?.length) {
+      <app-tabela [colunas]="colunasEstoque" [linhas]="estoque.value() ?? []" />
+    }
+  </mat-tab>
+
+  <mat-tab label="Pilha da peça">
+    <div class="aba">
+      <p class="rotulo">Entrada da peça aprovada na pilha, ou troca de pilha de uma peça que já está no armazém.</p>
+      <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
+      <div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Buscar peça</button></div>
+      @if (peca(); as p) {
+        <div class="cartao">
+          <h2 class="mono">{{ p.codigo }}</h2>
+          <p class="rotulo">{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª · {{ p.armazem }} · pilha {{ p.pilha ?? 'nenhuma' }} · {{ p.situacao }}</p>
+          <mat-form-field appearance="outline">
+            <mat-label>Pilha</mat-label>
+            <mat-select [value]="idPilha()" (selectionChange)="idPilha.set($event.value)">
+              @if (!p.idPilha) { <mat-option [value]="null">A API escolhe a pilha certa</mat-option> }
+              @for (pl of pilhasDaPeca(); track pl.id) {
+                <mat-option [value]="pl.id">{{ pl.codigo }} · {{ pl.setor }} · {{ metros(pl.comprimentoM) }} · {{ pl.classe }}ª · {{ pl.pecas }} peças</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <div class="acoes">
+            <button mat-flat-button type="button" (click)="guardar()" [disabled]="enviando()">{{ p.entradaArmazemEm && p.idPilha ? 'Trocar de pilha' : 'Guardar na pilha' }}</button>
+          </div>
+        </div>
+      }
+    </div>
+  </mat-tab>
+
+  <mat-tab label="Conferência">
+    <div class="aba">
+      @if (conferencia(); as c) {
+        <div class="cartao">
+          <h2>{{ c.armazem }} · {{ c.concluidaEm ? 'concluída' : 'aberta' }} em {{ dataHora(c.iniciadaEm) }}</h2>
+          <p>{{ c.lidas }} de {{ c.esperadas }} peças lidas · pilhas lidas: {{ c.pilhasLidas.join(', ') || 'nenhuma' }}</p>
+          @if (c.pilhasFaltando.length) { <p class="rotulo">Faltam as pilhas: {{ c.pilhasFaltando.join(', ') }}</p> }
+          @if (!c.concluidaEm) {
+            <mat-form-field appearance="outline">
+              <mat-label>Pilha que está sendo lida</mat-label>
+              <mat-select [value]="pilhaConferida()" (selectionChange)="pilhaConferida.set($event.value)">
+                @for (pl of pilhasDaConferencia(); track pl.id) { <mat-option [value]="pl.id">{{ pl.codigo }} · {{ pl.pecas }} peças</mat-option> }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Tags lidas (uma por linha)</mat-label>
+              <textarea matInput rows="5" class="mono" [ngModel]="tagsLidas()" (ngModelChange)="tagsLidas.set($event)"></textarea>
+            </mat-form-field>
+            <div class="acoes">
+              <button mat-stroked-button type="button" (click)="lerPilha()" [disabled]="enviando()">Registrar a pilha</button>
+              <button mat-flat-button type="button" (click)="concluir()" [disabled]="enviando()">Concluir conferência</button>
+            </div>
+          } @else {
+            @for (f of c.faltando; track f.idDormente) { <p class="aviso aviso--erro">Falta: tag {{ f.tag ?? '—' }} (pilha {{ f.pilhaDela ?? '—' }})</p> }
+            @for (m of c.aMais; track m.idDormente) { <p class="aviso aviso--erro">Fora do lugar: tag {{ m.tag ?? '—' }} é da pilha {{ m.pilhaDela ?? '—' }}, respondeu na {{ m.pilhaOndeRespondeu ?? '—' }}</p> }
+            @for (t of c.tagsSemCadastro; track t) { <p class="aviso aviso--erro">Tag sem cadastro: <span class="mono">{{ t }}</span></p> }
+            @if (!c.faltando.length && !c.aMais.length && !c.tagsSemCadastro.length) { <p class="aviso aviso--ok">Tudo no lugar.</p> }
+            <div class="acoes"><button mat-stroked-button type="button" (click)="conferencia.set(null)">Nova conferência</button></div>
+          }
+        </div>
+      } @else {
+        <mat-form-field appearance="outline">
+          <mat-label>Armazém</mat-label>
+          <mat-select [value]="idArmazemConferencia()" (selectionChange)="idArmazemConferencia.set($event.value)">
+            @for (a of armazens.value() ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <div class="acoes"><button mat-flat-button type="button" (click)="iniciarConferencia()" [disabled]="!idArmazemConferencia() || enviando()">Abrir conferência</button></div>
+      }
+    </div>
+  </mat-tab>
+</mat-tab-group>

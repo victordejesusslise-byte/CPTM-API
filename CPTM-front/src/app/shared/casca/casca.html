@@ -1,0 +1,25 @@
+<header class="topo">
+  <button type="button" class="topo__menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-controls="menu-lateral">
+    Menu
+  </button>
+  <a class="topo__marca" routerLink="/painel">Via Permanente <span>Dormentes · CPTM</span></a>
+  <div class="topo__quem">
+    <span class="topo__nome">{{ usuario()?.nome }}</span>
+    <span class="topo__cargo">{{ cargo() }}</span>
+  </div>
+  <button type="button" class="topo__sair" (click)="sair()">Sair</button>
+</header>
+
+<div class="corpo">
+  <nav id="menu-lateral" class="menu" [class.menu--aberto]="menuAberto()" aria-label="Menu do cargo">
+    @for (grupo of grupos(); track grupo.nome) {
+      <p class="menu__grupo">{{ grupo.nome }}</p>
+      @for (item of grupo.itens; track item.rota) {
+        <a class="menu__item" [routerLink]="item.rota" routerLinkActive="menu__item--ativo" (click)="menuAberto.set(false)">{{ item.rotulo }}</a>
+      }
+    }
+  </nav>
+  <main class="conteudo">
+    <router-outlet />
+  </main>
+</div>

@@ -1,0 +1,38 @@
+<p class="sobre">Peça · 4</p>
+<h1>Verificação de qualidade</h1>
+
+<app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
+<div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Buscar peça</button></div>
+@if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+@if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+@if (peca(); as p) {
+  <form class="cartao" [formGroup]="form" (ngSubmit)="registrar()" novalidate>
+    <h2 class="mono">{{ p.codigo }}</h2>
+    <p class="rotulo">{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª classe · feixe {{ p.numeroFeixe }} · {{ p.situacao }}</p>
+    <div class="campos">
+      <mat-form-field appearance="outline">
+        <mat-label>Ataque biológico</mat-label>
+        <mat-select formControlName="ataqueBiologico">
+          <mat-option value="Nenhum">Nenhum</mat-option><mat-option value="Suspeito">Suspeito</mat-option><mat-option value="Presente">Presente</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Rachadura</mat-label>
+        <mat-select formControlName="rachadura">
+          <mat-option value="Nenhuma">Nenhuma</mat-option><mat-option value="Leve">Leve</mat-option><mat-option value="Grave">Grave</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Resultado</mat-label>
+        <mat-select formControlName="resultado">
+          <mat-option value="Aprovada">Aprovada</mat-option><mat-option value="Reprovada">Reprovada</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <p><mat-checkbox formControlName="placaAntirrachante">Tem placa antirrachante</mat-checkbox></p>
+    <p><mat-checkbox formControlName="placaConfere">A placa confere com o feixe</mat-checkbox></p>
+    <mat-form-field appearance="outline"><mat-label>Motivo (obrigatório se reprovar)</mat-label><input matInput formControlName="motivo" /></mat-form-field>
+    <div class="acoes"><button mat-flat-button type="submit" [disabled]="enviando()">Registrar verificação</button></div>
+  </form>
+}

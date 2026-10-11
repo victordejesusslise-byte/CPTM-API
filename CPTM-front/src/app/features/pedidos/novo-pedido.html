@@ -1,0 +1,93 @@
+<p class="sobre">Peça · 1</p>
+<h1>Novo pedido</h1>
+
+<form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+  <div class="campos">
+    <mat-form-field appearance="outline">
+      <mat-label>Código do pedido</mat-label>
+      <input matInput formControlName="codigo" class="mono" />
+      <mat-error>Informe o código.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Fornecedor</mat-label>
+      <mat-select formControlName="idEmpresa">
+        @for (f of fornecedores.value() ?? []; track f.id) {
+          <mat-option [value]="f.id" [disabled]="!f.ativo">{{ f.nome }}</mat-option>
+        }
+      </mat-select>
+      <mat-error>Escolha o fornecedor.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Contrato (opcional)</mat-label>
+      <mat-select formControlName="idContrato">
+        <mat-option [value]="null">Sem contrato</mat-option>
+        @for (c of contratos.value() ?? []; track c.id) {
+          <mat-option [value]="c.id">{{ c.numeroContrato }} · ata {{ c.numeroAta }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Data da compra</mat-label>
+      <input matInput type="date" formControlName="dataCompra" />
+      <mat-hint>Sem data, vale a de hoje.</mat-hint>
+    </mat-form-field>
+  </div>
+
+  <h2>Itens</h2>
+  <div formArrayName="itens">
+    @for (item of itens.controls; track item; let i = $index) {
+      <div class="cartao item" [formGroupName]="i">
+        <div class="campos">
+          <mat-form-field appearance="outline">
+            <mat-label>Tamanho</mat-label>
+            <mat-select formControlName="idTamanho">
+              @for (t of tamanhos(); track t.id) {
+                <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option>
+              }
+            </mat-select>
+            <mat-error>Escolha o tamanho.</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Espécie (opcional)</mat-label>
+            <mat-select formControlName="idEspecie" (selectionChange)="especieMudou(i, $event.value)">
+              <mat-option [value]="null">Qualquer da classe</mat-option>
+              @for (e of especies(); track e.id) {
+                <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }} · {{ e.classe }}ª</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Classe</mat-label>
+            <mat-select formControlName="classe">
+              <mat-option [value]="1">1ª classe</mat-option>
+              <mat-option [value]="2">2ª classe</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Quantidade</mat-label>
+            <input matInput type="number" min="1" formControlName="quantidade" />
+          </mat-form-field>
+        </div>
+        @if (itens.length > 1) {
+          <button mat-button type="button" (click)="removerItem(i)">Tirar este item</button>
+        }
+      </div>
+    }
+  </div>
+  <div class="acoes"><button mat-stroked-button type="button" (click)="adicionarItem()">Mais um item</button></div>
+
+  @if (verificacao(); as v) {
+    <p class="aviso" [class.aviso--erro]="!v.segundaClasse.valido">{{ v.segundaClasse.mensagem }}</p>
+    @for (o of v.oferta; track $index) {
+      <p class="aviso">Oferta: {{ o.mensagem }}</p>
+    }
+  }
+  @if (erro()) {
+    <p class="aviso aviso--erro" role="alert">{{ erro() }}</p>
+  }
+
+  <div class="acoes">
+    <button mat-flat-button type="submit" [disabled]="enviando() || bloqueado()">{{ enviando() ? 'Gravando…' : 'Registrar pedido' }}</button>
+    <a mat-button routerLink="/pedidos">Voltar</a>
+  </div>
+</form>
