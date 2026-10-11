@@ -28,5 +28,6 @@ CPTM-front/src/app/
 
 ## Histórico
 
+- 2026-10-11 — Pedidos como no protótipo YBYRA: o item do menu abre as abas Cadastrar pedido e Acompanhar pedidos (`subs` em `core/menu/menu.ts`; no celular, abas no alto). Tokens iguais aos do protótipo. 31 testes.
 - 2026-10-11 — Marca YBYRA aplicada (PDF do Victor): paleta, Josefin Sans, logo. PrimeNG retirado (licença paga; decisão do Victor): tabelas no Angular Material. Telas do fluxo da peça: pedidos (lista, novo, aberto com notas, chegadas, BR em PDF, cancelamento), chegada, cadastro da peça, qualidade, armazém (estoque, pilha, conferência) e consulta da peça. 28 testes.
 - 2026-10-11 — Criação: Angular 22.2.2, Angular Material 22.2.2, PrimeNG 22.1.2. Decisões do Victor: as três bases visuais, telas de login, fluxo da peça, campo e supervisor, pastas por etapa, `ng test` padrão.
