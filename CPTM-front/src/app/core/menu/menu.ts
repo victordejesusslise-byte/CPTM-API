@@ -24,7 +24,11 @@ const todos: Cargo[] = ['Supervisor', 'Tecnico', 'Especialista', 'OperadorPatio'
 export const MENU: ItemMenu[] = [
   {
     rota: '/painel', rotulo: 'Painel', grupo: 'Início', cargos: todos,
-    subs: [{ rota: '/painel', rotulo: 'O que fazer hoje', curto: 'Hoje' }, { rota: '/painel/numeros', rotulo: 'Acompanhamento', curto: 'Números' }],
+    subs: [
+      { rota: '/painel', rotulo: 'O que fazer hoje', curto: 'Hoje' },
+      { rota: '/painel/sequencia', rotulo: 'Sequência e história', curto: 'Sequência' },
+      { rota: '/painel/numeros', rotulo: 'Acompanhamento', curto: 'Números' },
+    ],
   },
   {
     rota: '/pedidos', rotulo: 'Pedidos', grupo: 'Peça', cargos: ['Supervisor', 'OperadorPatio'],

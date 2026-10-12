@@ -1,5 +1,5 @@
 <header class="cabecalho">
-  <p class="sobre">Painel · {{ aba() === 'hoje' ? 'O que fazer hoje' : 'Acompanhamento' }}</p>
+  <p class="sobre">Painel · {{ aba() === 'hoje' ? 'O que fazer hoje' : aba() === 'sequencia' ? 'Sequência e história' : 'Acompanhamento' }}</p>
   <h1>Olá, {{ usuario()?.nome }}</h1>
   @if (indicadores.hasValue()) {
     <p class="resumo">
@@ -18,6 +18,21 @@
   <div class="atalhos">
     @for (a of atalhos(); track a.rota) {
       <a class="atalho" [routerLink]="a.rota"><span class="atalho__grupo">{{ a.grupo }}</span>{{ a.rotulo }}</a>
+    }
+  </div>
+</section>
+} @else if (aba() === 'sequencia') {
+<section aria-labelledby="t-sequencia">
+  <h2 id="t-sequencia">O caminho da peça</h2>
+  <div class="grade">
+    @for (e of fluxo.value() ?? []; track e.etapa) {
+      <article class="cartao indicador">
+        <p class="sobre">Etapa {{ e.etapa }} · {{ e.quemFaz }}</p>
+        <h3>{{ e.nome }}</h3>
+        <p class="indicador__valor">{{ e.linhas }} <span>{{ e.linhas === 1 ? 'registro' : 'registros' }}</span></p>
+        <p class="indicador__resumo">{{ e.resumo }}</p>
+        <p class="indicador__ref mono">{{ e.tabelas.join(' · ') }}</p>
+      </article>
     }
   </div>
 </section>

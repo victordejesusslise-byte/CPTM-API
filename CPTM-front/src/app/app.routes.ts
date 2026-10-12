@@ -17,6 +17,7 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'painel' },
       { path: 'painel', title: titulo('O que fazer hoje'), data: { aba: 'hoje' }, loadComponent: () => import('./features/painel/painel').then((m) => m.Painel) },
+      { path: 'painel/sequencia', title: titulo('Sequência e história'), data: { aba: 'sequencia' }, loadComponent: () => import('./features/painel/painel').then((m) => m.Painel) },
       { path: 'painel/numeros', title: titulo('Acompanhamento'), data: { aba: 'numeros' }, loadComponent: () => import('./features/painel/painel').then((m) => m.Painel) },
       { path: 'pedidos', title: titulo('Acompanhar pedidos'), data: so('Supervisor', 'OperadorPatio'), loadComponent: () => import('./features/pedidos/acompanhar-pedidos').then((m) => m.AcompanharPedidos) },
       { path: 'pedidos/novo', title: titulo('Cadastrar pedido'), data: so('Supervisor', 'OperadorPatio'), loadComponent: () => import('./features/pedidos/cadastrar-pedido').then((m) => m.CadastrarPedido) },

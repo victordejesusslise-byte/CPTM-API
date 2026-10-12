@@ -5,6 +5,7 @@ import { Sessao } from '../../core/auth/sessao';
 import { menuDoCargo } from '../../core/menu/menu';
 import { mensagemDeErro } from '../../helpers/formato';
 import { IndicadorDto } from '../../models/indicador';
+import { Apresentacao } from '../../services/apresentacao';
 import { Indicadores } from '../../services/indicadores';
 import { Estado } from '../../shared/estado/estado';
 
@@ -17,7 +18,9 @@ import { Estado } from '../../shared/estado/estado';
 })
 export class Painel {
   /** O que fazer hoje (atalhos) ou Acompanhamento (indicadores): vem do data da rota */
-  readonly aba = input<'hoje' | 'numeros'>('hoje');
+  readonly aba = input<'hoje' | 'sequencia' | 'numeros'>('hoje');
+  private readonly apresentacao = inject(Apresentacao);
+  protected readonly fluxo = rxResource({ params: () => (this.aba() === 'sequencia' ? true : undefined), stream: () => this.apresentacao.fluxo() });
   private readonly sessao = inject(Sessao);
   private readonly servico = inject(Indicadores);
 
