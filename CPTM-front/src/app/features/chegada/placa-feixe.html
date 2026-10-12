@@ -1,0 +1,39 @@
+<p class="sobre">Pátio · 02</p>
+<h1>Placa do feixe</h1>
+@if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+@if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+<section class="cartao pilha">
+  <header><h2>Ler a placa</h2><span class="nota">o servidor lê a foto; você confere</span></header>
+  <mat-form-field appearance="outline">
+    <mat-label>Pedido (para conferir a placa)</mat-label>
+    <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value)">
+      <mat-option [value]="null">Sem pedido</mat-option>
+      @for (p of abertos(); track p.id) { <mat-option [value]="p.id">{{ p.codigo }} · {{ p.empresa }}</mat-option> }
+    </mat-select>
+  </mat-form-field>
+  <div class="acoes">
+    <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolher($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto da placa' }}</label>
+    <button mat-flat-button type="button" (click)="ler()" [disabled]="enviando()">{{ enviando() ? 'Lendo…' : 'Ler a placa' }}</button>
+  </div>
+</section>
+
+@if (leitura(); as l) {
+  <section class="cartao pilha">
+    <header><h2>O que o OCR leu</h2><span class="nota">modelo v{{ l.versaoModelo }} · confiança média {{ l.confiancaMedia !== null ? (l.confiancaMedia | number: '1.0-0') + '%' : '—' }}</span></header>
+    <div class="tabela"><table class="simples">
+      <thead><tr><th>Campo</th><th>Valor</th><th class="num">Confiança</th><th>Pedido</th></tr></thead>
+      <tbody>@for (c of l.campos; track c.id) {
+        <tr>
+          <td>{{ nomes[c.campo] ?? c.campo }}</td>
+          <td><input class="mono campo-tabela" [ngModel]="valores[c.campo]" (ngModelChange)="valores[c.campo] = $event" [disabled]="l.confirmada" [attr.aria-label]="nomes[c.campo] ?? c.campo" /></td>
+          <td class="num" [class.vermelho]="!c.pronto">{{ confianca(c) }}</td>
+          <td [class.vermelho]="c.conferePedido === false">{{ c.conferePedido === null ? 'sem pedido' : c.conferePedido ? 'confere' : 'não bate' }}</td>
+        </tr>
+      }</tbody>
+    </table></div>
+    @if (!l.confirmada) {
+      <div class="acoes"><button mat-flat-button type="button" (click)="confirmar(l)" [disabled]="enviando()">Confirmar a placa</button></div>
+    }
+  </section>
+}

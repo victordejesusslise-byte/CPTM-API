@@ -22,6 +22,7 @@ export const routes: Routes = [
       { path: 'pedidos/novo', title: titulo('Cadastrar pedido'), data: so('Supervisor', 'OperadorPatio'), loadComponent: () => import('./features/pedidos/cadastrar-pedido').then((m) => m.CadastrarPedido) },
       { path: 'pedidos/:id', redirectTo: ({ params }) => inject(Router).createUrlTree(['/pedidos'], { queryParams: { aberto: params['id'] } }) },
       { path: 'chegadas', title: titulo('Chegada da carga'), data: so('Supervisor', 'OperadorPatio'), loadComponent: () => import('./features/chegada/chegada').then((m) => m.Chegada) },
+      { path: 'chegadas/placa', title: titulo('Placa do feixe'), data: so('Supervisor', 'OperadorPatio'), loadComponent: () => import('./features/chegada/placa-feixe').then((m) => m.PlacaFeixe) },
       { path: 'chegadas/entregas', title: titulo('Entregas recebidas'), data: { ...so('Supervisor', 'OperadorPatio'), modo: 'entregas' }, loadComponent: () => import('./features/chegada/lista-chegadas').then((m) => m.ListaChegadas) },
       { path: 'cadastro', title: titulo('Cadastro da peça'), data: so('Supervisor', 'OperadorPatio'), loadComponent: () => import('./features/cadastro/cadastro').then((m) => m.Cadastro) },
       { path: 'cadastro/andamento', title: titulo('Andamento da carga'), data: { ...so('Supervisor', 'OperadorPatio'), modo: 'andamento' }, loadComponent: () => import('./features/chegada/lista-chegadas').then((m) => m.ListaChegadas) },
