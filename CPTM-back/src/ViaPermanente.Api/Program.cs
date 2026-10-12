@@ -98,8 +98,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
+// Origens do appsettings; em desenvolvimento (Cors:RedeLocal) também o front aberto pelo celular no mesmo Wi-Fi.
+var origens = builder.Configuration.GetSection("Cors:Origens").Get<string[]>() ?? [];
+var redeLocal = builder.Configuration.GetValue<bool>("Cors:RedeLocal");
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
-    .WithOrigins(builder.Configuration.GetSection("Cors:Origens").Get<string[]>() ?? [])
+    .SetIsOriginAllowed(origem => origens.Contains(origem) || (redeLocal && RedeLocalHelper.EhFrontDaRede(origem)))
     .AllowAnyHeader()
     .AllowAnyMethod()));
 

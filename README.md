@@ -58,3 +58,22 @@ npx ng serve
 ### 7. Entre
 
 Abra http://localhost:4200 e entre com o e-mail e a senha do supervisor que você pôs no `.env`. Depois, o supervisor cadastra as outras pessoas, cada uma com a própria senha.
+
+## No celular (mesmo Wi-Fi)
+
+1. No PC, rode `ipconfig` e anote o **Endereço IPv4** (ex.: `192.168.0.10`).
+2. Ligue a API aberta para a rede, dentro de `CPTM-back`:
+
+```bash
+dotnet run --project src/ViaPermanente.Api --launch-profile celular
+```
+
+3. Ligue o site aberto para a rede, dentro de `CPTM-front`:
+
+```bash
+npm run celular
+```
+
+4. No celular, abra `http://SEU-IP:4200` (ex.: `http://192.168.0.10:4200`) e entre com o seu e-mail e senha.
+
+Se o Windows perguntar sobre o firewall, permita em **redes privadas**. Funciona só no mesmo Wi-Fi; para usar fora, o sistema precisa ir para um servidor.
