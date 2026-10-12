@@ -54,10 +54,32 @@ export const MENU: ItemMenu[] = [
       { rota: '/armazem/conferencia', rotulo: 'Conferência', curto: 'Conferir' },
     ],
   },
+  {
+    rota: '/separar', rotulo: 'Separar peça', grupo: 'Peça', cargos: ['Supervisor', 'OperadorPatio'],
+    subs: [
+      { rota: '/separar', rotulo: 'Trocas para separar', curto: 'Separar' },
+      { rota: '/separar/separadas', rotulo: 'Separadas, esperando a via', curto: 'Separadas' },
+    ],
+  },
   { rota: '/pecas', rotulo: 'Consultar peça', grupo: 'Peça', cargos: todos },
-  { rota: '/alertas', rotulo: 'Alertas', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico', 'OperadorVia'] },
+  {
+    rota: '/alertas', rotulo: 'Alertas', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico', 'OperadorVia'],
+    subs: [
+      { rota: '/alertas', rotulo: 'Alertas da câmera', curto: 'Câmera' },
+      { rota: '/alertas/sensores', rotulo: 'Alertas dos sensores', curto: 'Sensores' },
+      { rota: '/alertas/tags', rotulo: 'Tags sem cadastro', curto: 'Tags', cargos: ['OperadorVia', 'Tecnico'] },
+    ],
+  },
+  {
+    rota: '/trocas-trecho', rotulo: 'Trocas do trecho', grupo: 'Campo', cargos: ['Supervisor', 'OperadorVia'],
+    subs: [
+      { rota: '/trocas-trecho', rotulo: 'A trocar', curto: 'A trocar' },
+      { rota: '/trocas-trecho/recusas', rotulo: 'Recusas enviadas ao técnico', curto: 'Recusas' },
+      { rota: '/trocas-trecho/feitas', rotulo: 'Trocas feitas', curto: 'Feitas' },
+    ],
+  },
   { rota: '/inspecoes', rotulo: 'Inspeção', grupo: 'Campo', cargos: ['Tecnico'] },
-  { rota: '/trocas', rotulo: 'Trocas', grupo: 'Campo', cargos: todos },
+  { rota: '/trocas', rotulo: 'Trocas e laudos', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico'] },
   { rota: '/indicadores', rotulo: 'Indicadores', grupo: 'Supervisão', cargos: todos },
   { rota: '/relatorio-ambiental', rotulo: 'Relatório ambiental', grupo: 'Supervisão', cargos: ['Supervisor', 'Especialista'] },
   { rota: '/cadastros', rotulo: 'Cadastros', grupo: 'Supervisão', cargos: ['Supervisor'] },

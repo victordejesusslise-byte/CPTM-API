@@ -1,0 +1,78 @@
+<p class="sobre">Campo · 09</p>
+<h1>{{ titulo() }}</h1>
+@if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+@if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+@if (aba() === 'tags') {
+  <section class="cartao pilha">
+    <header><h2>Tag respondeu sem cadastro</h2><span class="nota">o técnico vincula a tag à peça certa</span></header>
+    <app-leitura-tag rotulo="Tag lida" [(tag)]="tagAviso" [(metodo)]="metodoAviso" />
+    <div class="campos">
+      <mat-form-field appearance="outline"><mat-label>Km (opcional)</mat-label><input matInput type="number" step="0.001" class="mono" [ngModel]="kmAviso()" (ngModelChange)="kmAviso.set($event)" /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Observação</mat-label><input matInput [ngModel]="obsAviso()" (ngModelChange)="obsAviso.set($event)" /></mat-form-field>
+    </div>
+    <div class="acoes"><button mat-flat-button type="button" (click)="avisar()" [disabled]="enviando()">Avisar o técnico</button></div>
+  </section>
+} @else {
+  @if (alerta.value(); as a) {
+    @if (idAberto()) {
+      <section class="cartao pilha alerta-aberto">
+        <header>
+          <h2>{{ rotuloTipo(a) }}</h2>
+          <span class="pilula" [class.pilula--alerta]="a.status === 'Aberto'" [class.pilula--quieta]="a.status === 'Descartado'">{{ a.status }}</span>
+          <span class="nota"><button mat-button type="button" (click)="fechar()">Fechar</button></span>
+        </header>
+        <div class="kv">
+          <div><span class="lbl">Km</span><b class="mono">{{ a.km !== null ? km(a.km) : '—' }}</b></div>
+          <div><span class="lbl">Peça</span><b class="mono">{{ a.codigoPeca ?? '—' }}</b></div>
+          <div><span class="lbl">Tag</span><b class="mono">{{ a.tag ?? 'sem tag' }}</b></div>
+          <div><span class="lbl">Quando</span><b>{{ dataHora(a.data) }}</b></div>
+          @if (a.desvioMm !== null) { <div><span class="lbl">Desvio</span><b class="mono" [class.vermelho]="a.desvioMm > 40">{{ a.desvioMm }} mm</b></div> }
+          <div><span class="lbl">Vistorias</span><b>{{ a.vistorias }}</b></div>
+        </div>
+        @if (a.deteccao; as d) {
+          <div class="chamada chamada--neutra"><b>A câmera viu {{ d.defeito.toLowerCase() }} grau {{ d.grau }}</b> · confiança {{ (d.confianca * 100).toFixed(0) }}% · quadro <span class="mono">{{ d.quadroArquivo }}</span> · modelo {{ d.versaoModelo }}</div>
+        }
+        @if (a.motivoDescarte) { <p class="nota">Descartado: {{ a.motivoDescarte }}</p> }
+
+        @if (a.status === 'Aberto' && podeVistoriar()) {
+          <p class="lbl">Vistoria no local</p>
+          <div class="seg" role="group" aria-label="Viu a peça?">
+            <button type="button" [attr.aria-pressed]="viu()" (click)="viu.set(true)">Achei a peça</button>
+            <button type="button" [attr.aria-pressed]="!viu()" (click)="viu.set(false)">Não achei</button>
+          </div>
+          @if (viu()) {
+            @if (!tagNaoResponde()) { <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" /> }
+            <mat-checkbox [checked]="tagNaoResponde()" (change)="tagNaoResponde.set($event.checked)">A tag não responde</mat-checkbox>
+          }
+          <div>
+            <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto' }}</label>
+          </div>
+          <mat-form-field appearance="outline"><mat-label>Observação</mat-label><textarea matInput rows="2" [ngModel]="observacao()" (ngModelChange)="observacao.set($event)"></textarea></mat-form-field>
+          <div class="acoes"><button mat-flat-button type="button" (click)="vistoriar(a)" [disabled]="enviando()">Registrar vistoria</button></div>
+        }
+      </section>
+    }
+  }
+
+  <section class="cartao">
+    <header>
+      <h2>{{ titulo() }}</h2>
+      <span class="nota">{{ lista.value()?.length ?? 0 }} · toque para abrir</span>
+    </header>
+    <div class="seg filtro-status" role="group" aria-label="Quais alertas">
+      <button type="button" [attr.aria-pressed]="so() === 'abertos'" (click)="so.set('abertos')">Abertos</button>
+      <button type="button" [attr.aria-pressed]="so() === 'todos'" (click)="so.set('todos')">Todos</button>
+    </div>
+    <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length" textoVazio="Nenhum alerta aqui." />
+    <div class="cartoes-alerta">
+      @for (a of lista.value() ?? []; track a.id) {
+        <button type="button" class="cartao-alerta" [class.urgente]="a.status === 'Aberto'" [class.selecionado]="idAberto() === a.id" (click)="abrir(a)">
+          <span class="topo-alerta"><b class="mono">{{ a.tag ?? 'sem tag' }}</b><span class="mono nota">{{ a.km !== null ? 'km ' + km(a.km) : '' }}</span></span>
+          <span class="tipo" [class.vermelho]="a.status === 'Aberto'">{{ rotuloTipo(a) }}</span>
+          <span class="nota">{{ dataHora(a.data) }} · {{ a.status }} · {{ a.vistorias }} vistoria(s)</span>
+        </button>
+      }
+    </div>
+  </section>
+}

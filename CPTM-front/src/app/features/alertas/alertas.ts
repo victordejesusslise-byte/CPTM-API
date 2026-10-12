@@ -1,0 +1,148 @@
+import { Component, computed, inject, input, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Sessao } from '../../core/auth/sessao';
+import { novoIdCliente } from '../../helpers/arquivo';
+import { nomeDaFoto } from '../../helpers/foto';
+import { dataHora, km, mensagemDeErro } from '../../helpers/formato';
+import { AlertaDto } from '../../models/campo';
+import { MetodoCaptura } from '../../models/enums';
+import { Alertas as AlertasApi } from '../../services/alertas';
+import { Estado } from '../../shared/estado/estado';
+import { LeituraTag, leitura } from '../../shared/leitura-tag/leitura-tag';
+import { FORMULARIO } from '../../shared/ui';
+
+type Aba = 'imagem' | 'sensores' | 'tags';
+const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: 'Alertas dos sensores', tags: 'Tags sem cadastro' };
+
+/**
+ * Alertas (protótipo YBYRA, etapa 09): câmera, sensores e tags sem cadastro.
+ * O operador da via vai ver e registra a vistoria; quem decide é o técnico.
+ */
+@Component({
+  selector: 'app-alertas',
+  imports: [FormsModule, FORMULARIO, Estado, LeituraTag],
+  templateUrl: './alertas.html',
+})
+export class Alertas {
+  readonly aba = input<Aba>('imagem');
+  /** ?aberto= */
+  readonly aberto = input<string>();
+  private readonly api = inject(AlertasApi);
+  private readonly router = inject(Router);
+  private readonly sessao = inject(Sessao);
+
+  protected readonly titulo = computed(() => TITULOS[this.aba()]);
+  protected readonly so = signal<'abertos' | 'todos'>('abertos');
+  protected readonly lista = rxResource({
+    params: () => (this.aba() === 'tags' ? undefined : { origem: this.aba() === 'imagem' ? ('Imagem' as const) : ('Sensor' as const), status: this.so() === 'abertos' ? ('Aberto' as const) : null }),
+    stream: ({ params }) => this.api.listar(params.origem, params.status),
+  });
+  protected readonly erroLista = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
+  protected readonly idAberto = computed(() => (this.aberto() ? Number(this.aberto()) : null));
+  protected readonly alerta = rxResource({ params: () => this.idAberto() ?? undefined, stream: ({ params }) => this.api.buscar(params) });
+  protected readonly podeVistoriar = computed(() => this.sessao.temCargo('OperadorVia', 'Tecnico'));
+
+  protected readonly dataHora = dataHora;
+  protected readonly km = km;
+
+  // vistoria
+  protected readonly viu = signal(true);
+  protected readonly tagNaoResponde = signal(false);
+  protected readonly tag = signal('');
+  protected readonly metodo = signal<MetodoCaptura>('ModuloUhf');
+  protected readonly foto = signal<File | null>(null);
+  protected readonly observacao = signal('');
+  // aviso de tag
+  protected readonly tagAviso = signal('');
+  protected readonly metodoAviso = signal<MetodoCaptura>('ModuloUhf');
+  protected readonly kmAviso = signal<number | null>(null);
+  protected readonly obsAviso = signal('');
+
+  protected readonly mensagem = signal<string | null>(null);
+  protected readonly erro = signal<string | null>(null);
+  protected readonly enviando = signal(false);
+
+  protected rotuloTipo(a: AlertaDto): string {
+    const t: Record<string, string> = { Rachadura: 'Rachadura', Posicao: 'Peça fora de posição', TagMuda: 'Tag não respondeu', Fenda: 'Fenda', Quebra: 'Quebra' };
+    return t[a.tipo] ?? a.tipo;
+  }
+
+  protected abrir(a: AlertaDto): void {
+    this.limpar();
+    this.router.navigate([], { queryParams: { aberto: a.id } });
+  }
+
+  protected fechar(): void {
+    this.router.navigate([], { queryParams: {} });
+  }
+
+  protected escolherFoto(evento: Event): void {
+    this.foto.set((evento.target as HTMLInputElement).files?.[0] ?? null);
+  }
+
+  protected vistoriar(a: AlertaDto): void {
+    if (this.viu() && !this.tagNaoResponde() && !this.tag().trim()) {
+      this.erro.set('Leia a tag da peça ou marque que ela não responde.');
+      return;
+    }
+    if (!this.foto()) {
+      this.erro.set('Tire a foto da peça.');
+      return;
+    }
+    this.enviar(
+      this.api.vistoriar(a.id, {
+        viu: this.viu(),
+        leitura: this.viu() && !this.tagNaoResponde() ? leitura(this.tag(), this.metodo()) : null,
+        tagNaoResponde: this.viu() && this.tagNaoResponde(),
+        fotoArquivo: nomeDaFoto(this.foto(), `vistoria-${a.id}`),
+        observacao: this.observacao().trim() || null,
+        idCliente: novoIdCliente(),
+      }),
+      () => {
+        this.alerta.reload();
+        this.lista.reload();
+        return 'Vistoria registrada. O técnico decide o alerta.';
+      },
+    );
+  }
+
+  protected avisar(): void {
+    if (!this.tagAviso().trim()) {
+      this.erro.set('Leia a tag que respondeu sem cadastro.');
+      return;
+    }
+    this.enviar(this.api.avisarTag({ tag: this.tagAviso().trim(), km: this.kmAviso(), observacao: this.obsAviso().trim() || null }), (r) => {
+      this.tagAviso.set('');
+      this.obsAviso.set('');
+      return `Aviso enviado ao técnico: tag ${r.tag}.`;
+    });
+  }
+
+  protected limpar(): void {
+    this.mensagem.set(null);
+    this.erro.set(null);
+    this.viu.set(true);
+    this.tagNaoResponde.set(false);
+    this.tag.set('');
+    this.foto.set(null);
+    this.observacao.set('');
+  }
+
+  private enviar<T>(acao: import('rxjs').Observable<T>, ok: (r: T) => string): void {
+    this.enviando.set(true);
+    this.erro.set(null);
+    this.mensagem.set(null);
+    acao.subscribe({
+      next: (r) => {
+        this.enviando.set(false);
+        this.mensagem.set(ok(r));
+      },
+      error: (e) => {
+        this.enviando.set(false);
+        this.erro.set(mensagemDeErro(e));
+      },
+    });
+  }
+}

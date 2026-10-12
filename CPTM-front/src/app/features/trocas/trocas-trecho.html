@@ -1,0 +1,68 @@
+<p class="sobre">Via · 13</p>
+<h1>{{ titulo() }}</h1>
+@if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+@if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+@if (idAberta() && troca.value(); as t) {
+  <section class="cartao pilha">
+    <header>
+      <h2>Troca {{ t.id }}</h2><span class="pilula" [class.pilula--solida]="t.status === 'Feita'" [class.pilula--alerta]="t.status === 'Recusada'">{{ rotulo[t.status] }}</span>
+      <span class="nota"><button mat-button type="button" (click)="fechar()">Fechar</button></span>
+    </header>
+    <app-resumo-troca [t]="t" />
+    @if (t.ultimaRecusa; as r) {
+      <div class="chamada"><b>Recusada em {{ dataHora(r.data) }}:</b> {{ r.motivo }}@if (r.descricao) { — {{ r.descricao }} }
+        @if (r.decisao) { <br />Técnico: {{ r.decisao === 'Manter' ? 'manteve a troca' : 'aceitou a recusa' }}@if (r.resposta) { — {{ r.resposta }} } } @else { <br />Esperando o técnico. }
+      </div>
+    }
+    @if (t.status === 'Separada') {
+      @switch (acao()) {
+        @case ('executar') {
+          <p class="lbl">Fazer a troca</p>
+          @if (!saiNaoResponde()) { <app-leitura-tag rotulo="Tag da peça que sai" [(tag)]="tagSai" [(metodo)]="metodoSai" /> }
+          <mat-checkbox [checked]="saiNaoResponde()" (change)="saiNaoResponde.set($event.checked)">A tag da peça que sai não responde</mat-checkbox>
+          <app-leitura-tag rotulo="Tag da peça que entra" [(tag)]="tagEntra" [(metodo)]="metodoEntra" />
+          <div class="campos">
+            <mat-form-field appearance="outline"><mat-label>Equipe</mat-label><input matInput [ngModel]="equipe()" (ngModelChange)="equipe.set($event)" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Km onde trocou</mat-label><input matInput type="number" step="0.001" class="mono" [ngModel]="kmFeito() ?? t.km" (ngModelChange)="kmFeito.set($event)" /></mat-form-field>
+          </div>
+          <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto da troca' }}</label>
+          <div class="acoes">
+            <button mat-stroked-button type="button" (click)="acao.set(null)">Voltar</button>
+            <button mat-flat-button type="button" (click)="executar(t)" [disabled]="enviando()">Registrar a troca</button>
+          </div>
+        }
+        @case ('recusar') {
+          <p class="lbl">Recusar a troca</p>
+          <mat-form-field appearance="outline"><mat-label>Motivo</mat-label><input matInput [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" placeholder="Ex.: a peça separada está rachada" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Descrição (opcional)</mat-label><textarea matInput rows="2" [ngModel]="descricao()" (ngModelChange)="descricao.set($event)"></textarea></mat-form-field>
+          <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto' }}</label>
+          <div class="acoes">
+            <button mat-stroked-button type="button" (click)="acao.set(null)">Voltar</button>
+            <button mat-flat-button class="perigo" type="button" (click)="recusar(t)" [disabled]="enviando()">Enviar a recusa ao técnico</button>
+          </div>
+        }
+        @default {
+          <div class="acoes">
+            <button mat-flat-button type="button" (click)="acao.set('executar')">Fazer a troca</button>
+            <button mat-stroked-button type="button" (click)="acao.set('recusar')">Recusar</button>
+          </div>
+        }
+      }
+    }
+  </section>
+}
+
+<section class="cartao">
+  <header><h2>{{ titulo() }}</h2><span class="nota">{{ lista.value()?.length ?? 0 }} · toque para abrir</span></header>
+  <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length" textoVazio="Nenhuma troca aqui." />
+  <div class="cartoes-alerta">
+    @for (t of lista.value() ?? []; track t.id) {
+      <button type="button" class="cartao-alerta" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
+        <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
+        <span class="tipo">{{ rotulo[t.status] }}@if (t.codigoEntrou) { · entra {{ t.codigoEntrou }} }</span>
+        <span class="nota">pedida há {{ t.diasDesdeOPedido }} dias</span>
+      </button>
+    }
+  </div>
+</section>

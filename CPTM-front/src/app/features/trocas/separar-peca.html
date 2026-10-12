@@ -1,0 +1,49 @@
+<p class="sobre">Armazém · 12</p>
+<h1>{{ titulo() }}</h1>
+@if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+@if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+@if (idAberta() && troca.value(); as t) {
+  <section class="cartao pilha">
+    <header>
+      <h2>Troca {{ t.id }}</h2><span class="pilula">{{ rotulo[t.status] }}</span>
+      <span class="nota"><button mat-button type="button" (click)="fechar()">Fechar</button></span>
+    </header>
+    <app-resumo-troca [t]="t" />
+    @if (aba() === 'fila' && (t.status === 'Aprovada' || t.status === 'AguardandoPeca')) {
+      <p class="lbl">Peças compatíveis · mesmo comprimento, classe que o trecho aceita</p>
+      @if (compativeis.value()?.length) {
+        <div class="opcoes">
+          @for (c of compativeis.value(); track c.peca.id) {
+            <label class="opcao" [class.marcada]="escolhida()?.peca?.id === c.peca.id">
+              <input type="radio" name="compativel" [checked]="escolhida()?.peca?.id === c.peca.id" (change)="escolhida.set(c)" />
+              <span class="mono">{{ c.peca.codigo }}</span>
+              <span>{{ c.peca.especie }} · {{ metros(c.peca.comprimentoM) }} · {{ c.peca.classe }}ª · pilha {{ c.peca.pilha ?? '—' }}</span>
+              <span class="nota">{{ c.sugerida ? 'sugerida · ' : '' }}{{ c.idadeDias }} dias no armazém</span>
+            </label>
+          }
+        </div>
+        @if (escolhida(); as c) {
+          <app-leitura-tag [rotulo]="'Leia a tag da peça ' + c.peca.codigo" [(tag)]="tag" [(metodo)]="metodo" (lida)="separar(t)" />
+          <div class="acoes"><button mat-flat-button type="button" (click)="separar(t)" [disabled]="enviando()">Separar esta peça</button></div>
+        }
+      } @else if (compativeis.hasValue()) {
+        <p class="aviso aviso--erro">Não há peça compatível no armazém. A troca fica esperando peça.</p>
+      }
+    }
+  </section>
+}
+
+<section class="cartao">
+  <header><h2>{{ titulo() }}</h2><span class="nota">{{ lista.value()?.length ?? 0 }} · toque para abrir</span></header>
+  <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length" textoVazio="Nenhuma troca aqui." />
+  <div class="cartoes-alerta">
+    @for (t of lista.value() ?? []; track t.id) {
+      <button type="button" class="cartao-alerta" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
+        <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
+        <span class="tipo">{{ rotulo[t.status] }}@if (t.codigoEntrou) { · separada {{ t.codigoEntrou }} }</span>
+        <span class="nota">pedida há {{ t.diasDesdeOPedido }} dias</span>
+      </button>
+    }
+  </div>
+</section>

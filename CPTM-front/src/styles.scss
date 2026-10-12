@@ -145,3 +145,18 @@ details.cartao[open] summary { margin-bottom: 12px; }
 .pedido-aberto { margin-bottom: 20px; }
 button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-button-filled-label-text-color: var(--vermelho-tinta); }
 @media (max-width: 820px) { .so-computador { display: none; } }
+
+/* Campo: cartões de alerta e de troca, foto, opções (protótipo YBYRA) */
+.cartoes-alerta { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.cartao-alerta { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; font: inherit; color: inherit; background: var(--superficie); border: 1px solid var(--linha); border-radius: 4px; padding: 12px 14px; cursor: pointer; min-height: 44px; &:hover { border-color: var(--tinta-3); } }
+.cartao-alerta.urgente { border-left: 3px solid var(--vermelho); }
+.cartao-alerta.selecionado { background: var(--superficie-3); box-shadow: inset 3px 0 0 var(--marcador); }
+.topo-alerta { display: flex; align-items: baseline; gap: 8px; b { flex-grow: 1; } }
+.cartao-alerta .tipo { font-weight: 600; }
+.filtro-status { max-width: 320px; }
+.alerta-aberto, .cartao.pilha { margin-bottom: 16px; }
+.btn-foto { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--linha-2); border-radius: 3px; background: var(--superficie); cursor: pointer; font-weight: 600; input { position: absolute; width: 1px; height: 1px; opacity: 0; } &:focus-within { outline: 3px solid var(--anel); } }
+.opcoes { display: flex; flex-direction: column; gap: 6px; }
+.opcao { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; align-items: center; min-height: 44px; padding: 8px 12px; border: 1px solid var(--linha-2); border-radius: 3px; background: var(--superficie); cursor: pointer; font-size: 14px; input { width: 18px; height: 18px; accent-color: var(--tinta); } }
+.opcao.marcada { border-color: var(--tinta); box-shadow: inset 3px 0 0 var(--tinta); }
+@media (max-width: 620px) { .opcao { grid-template-columns: auto 1fr; } }
