@@ -93,4 +93,23 @@
       </table></div>
     </section>
   }
+  @case ('leitores') {
+    <section class="cartao pilha">
+      <header><h2>Novo leitor</h2><span class="nota">o módulo do celular é reconhecido pelo número de série</span></header>
+      <div class="campos">
+        <mat-form-field appearance="outline"><mat-label>Tipo</mat-label>
+          <mat-select [(ngModel)]="leitor.idTipoLeitor">@for (t of tiposLeitor; track t.id) { <mat-option [value]="t.id">{{ t.nome }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Código</mat-label><input matInput class="mono" [(ngModel)]="leitor.codigo" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Número de série</mat-label><input matInput class="mono" [(ngModel)]="leitor.numeroSerie" /></mat-form-field>
+      </div>
+      <div class="acoes"><button mat-flat-button type="button" (click)="salvarLeitor()" [disabled]="enviando()">Cadastrar leitor</button></div>
+    </section>
+    <section class="cartao">
+      <div class="tabela"><table class="simples">
+        <thead><tr><th>Código</th><th>Tipo</th><th>Número de série</th><th>Situação</th></tr></thead>
+        <tbody>@for (l of leitores.value() ?? []; track l.id) { <tr><td class="mono">{{ l.codigo }}</td><td>{{ l.tipo }}</td><td class="mono">{{ l.numeroSerie ?? '—' }}</td><td>{{ l.ativo ? 'Ativo' : 'Inativo' }}</td></tr> }
+          @empty { <tr><td colspan="4">Nenhum leitor ainda.</td></tr> }</tbody>
+      </table></div>
+    </section>
+  }
 }

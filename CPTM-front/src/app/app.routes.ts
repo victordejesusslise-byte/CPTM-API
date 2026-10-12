@@ -55,6 +55,7 @@ export const routes: Routes = [
       { path: 'cadastros/contratos', title: titulo('Contratos'), data: { ...so('Supervisor'), aba: 'contratos' }, loadComponent: () => import('./features/cadastros/cadastros').then((m) => m.Cadastros) },
       { path: 'cadastros/via', title: titulo('Estações e trechos'), data: { ...so('Supervisor'), aba: 'via' }, loadComponent: () => import('./features/cadastros/cadastros').then((m) => m.Cadastros) },
       { path: 'cadastros/parametros', title: titulo('Parâmetros'), data: { ...so('Supervisor'), aba: 'parametros' }, loadComponent: () => import('./features/cadastros/cadastros').then((m) => m.Cadastros) },
+      { path: 'cadastros/leitores', title: titulo('Leitores de tag'), data: { ...so('Supervisor'), aba: 'leitores' }, loadComponent: () => import('./features/cadastros/cadastros').then((m) => m.Cadastros) },
       { path: 'integracoes', title: titulo('Notas pela planilha'), data: { ...so('Supervisor', 'OperadorPatio'), aba: 'notas' }, loadComponent: () => import('./features/integracoes/integracoes').then((m) => m.Integracoes) },
       { path: 'integracoes/erp', title: titulo('Estoque para o ERP'), data: { ...so('Supervisor', 'OperadorPatio'), aba: 'erp' }, loadComponent: () => import('./features/integracoes/integracoes').then((m) => m.Integracoes) },
       { path: 'integracoes/historico', title: titulo('Histórico'), data: { ...so('Supervisor', 'OperadorPatio'), aba: 'historico' }, loadComponent: () => import('./features/integracoes/integracoes').then((m) => m.Integracoes) },

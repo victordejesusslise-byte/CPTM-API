@@ -113,6 +113,7 @@ export const MENU: ItemMenu[] = [
       { rota: '/cadastros/contratos', rotulo: 'Contratos', curto: 'Contratos' },
       { rota: '/cadastros/via', rotulo: 'Estações e trechos', curto: 'Via' },
       { rota: '/cadastros/parametros', rotulo: 'Parâmetros', curto: 'Parâmetros' },
+      { rota: '/cadastros/leitores', rotulo: 'Leitores de tag', curto: 'Leitores' },
     ],
   },
   {

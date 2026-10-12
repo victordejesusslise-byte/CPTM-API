@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { data, dataHora, km, mensagemDeErro } from '../../helpers/formato';
 import { PapelEmpresa } from '../../models/enums';
 import { Cadastros as CadastrosApi } from '../../services/cadastros';
+import { Catalogos } from '../../services/catalogos';
 import { FORMULARIO } from '../../shared/ui';
 
-type Aba = 'empresas' | 'contratos' | 'via' | 'parametros';
-const TITULOS: Record<Aba, string> = { empresas: 'Empresas', contratos: 'Contratos', via: 'Estações e trechos', parametros: 'Parâmetros' };
+type Aba = 'empresas' | 'contratos' | 'via' | 'parametros' | 'leitores';
+const TITULOS: Record<Aba, string> = { empresas: 'Empresas', contratos: 'Contratos', via: 'Estações e trechos', parametros: 'Parâmetros', leitores: 'Leitores de tag' };
 
 /** Cadastros de apoio (supervisor): empresas, contratos, estações e trechos, parâmetros do sistema. */
 @Component({
@@ -24,6 +25,10 @@ export class Cadastros {
   protected readonly estacoes = rxResource({ stream: () => this.api.estacoes() });
   protected readonly trechos = rxResource({ stream: () => this.api.trechos() });
   protected readonly parametros = rxResource({ stream: () => this.api.parametros() });
+  private readonly catalogos = inject(Catalogos);
+  protected readonly leitores = rxResource({ params: () => (this.aba() === 'leitores' ? true : undefined), stream: () => this.catalogos.leitores() });
+  protected readonly leitor = { idTipoLeitor: 2, codigo: '', numeroSerie: '' };
+  protected readonly tiposLeitor = [{ id: 1, nome: 'Pistola' }, { id: 2, nome: 'Módulo do celular' }, { id: 3, nome: 'Carro' }];
   protected readonly fornecedores = computed(() => (this.empresas.value() ?? []).filter((e) => e.papel === 'Fornecedor'));
   protected readonly data = data;
   protected readonly dataHora = dataHora;
@@ -83,6 +88,16 @@ export class Cadastros {
     const t = this.trecho;
     if (!t.idEstacaoInicio || !t.idEstacaoFim || t.idEstacaoInicio === t.idEstacaoFim) return this.erro.set('Escolha duas estações diferentes.');
     this.enviar(this.api.novoTrecho({ ...t }), 'Trecho cadastrado.', () => this.trechos.reload());
+  }
+
+  protected salvarLeitor(): void {
+    const l = this.leitor;
+    if (!l.codigo.trim()) return this.erro.set('Informe o código do leitor.');
+    this.enviar(this.catalogos.novoLeitor({ idTipoLeitor: l.idTipoLeitor, codigo: l.codigo.trim(), numeroSerie: l.numeroSerie.trim() || null }), 'Leitor cadastrado.', () => {
+      l.codigo = '';
+      l.numeroSerie = '';
+      this.leitores.reload();
+    });
   }
 
   protected salvarParametro(chave: string, atual: string): void {

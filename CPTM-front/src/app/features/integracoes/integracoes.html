@@ -26,6 +26,25 @@
       <p>A planilha traz o estoque do armazém por código de material (tamanho e classe), para subir no ERP.</p>
       <div class="acoes"><button mat-flat-button type="button" (click)="baixarErp()">Baixar a planilha do ERP</button></div>
     </section>
+    <section class="cartao pilha">
+      <header><h2>Códigos de material</h2><span class="nota">um por tamanho e classe</span></header>
+      @if (feito()) { <p class="aviso aviso--ok" role="status">{{ feito() }}</p> }
+      <div class="tabela"><table class="simples">
+        <thead><tr><th>Tamanho</th><th>Classe</th><th>Código no ERP</th></tr></thead>
+        <tbody>@for (c of codigos.value() ?? []; track c.id) { <tr><td>{{ metros(c.comprimentoM) }}</td><td>{{ c.classe }}ª</td><td class="mono">{{ c.codigoErp }}</td></tr> }
+          @empty { <tr><td colspan="3">Nenhum código ainda.</td></tr> }</tbody>
+      </table></div>
+      @if (ehSupervisor) {
+        <div class="campos">
+          <mat-form-field appearance="outline"><mat-label>Tamanho</mat-label>
+            <mat-select [(ngModel)]="novo.idTamanho">@for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }</mat-select></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Classe</mat-label>
+            <mat-select [(ngModel)]="novo.classe"><mat-option [value]="1">1ª classe</mat-option><mat-option [value]="2">2ª classe</mat-option></mat-select></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Código no ERP</mat-label><input matInput class="mono" [(ngModel)]="novo.codigoErp" /></mat-form-field>
+        </div>
+        <div class="acoes"><button mat-stroked-button type="button" (click)="salvarCodigo()">Cadastrar código</button></div>
+      }
+    </section>
   }
   @case ('historico') {
     <section class="cartao">
