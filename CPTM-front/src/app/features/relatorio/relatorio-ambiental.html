@@ -1,0 +1,90 @@
+<p class="sobre">Acompanhamento</p>
+<h1>{{ aba() === 'mes' ? 'Relatório do mês' : 'Por espécie' }}</h1>
+@if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+@if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+<section class="cartao pilha">
+  <header><h2>Mês de referência</h2><span class="nota">o rascunho pode ser gerado de novo até o envio</span></header>
+  <div class="filtros">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Mês</mat-label>
+      <input matInput type="month" [ngModel]="mes()" (ngModelChange)="mes.set($event); escolhido.set(null)" />
+    </mat-form-field>
+    @if (aba() === 'mes') {
+      <button mat-flat-button type="button" (click)="gerar()" [disabled]="enviando() || relatorio()?.status === 'Enviado'">{{ relatorio() ? 'Gerar de novo' : 'Gerar o relatório do mês' }}</button>
+    }
+  </div>
+
+  @if (relatorio(); as r) {
+    <div class="kv">
+      <div><span class="lbl">Mês</span><b>{{ nomeDoMes(r.mesReferencia) }}</b></div>
+      <div><span class="lbl">Situação</span><b><span class="pilula" [class.pilula--solida]="r.status === 'Enviado'" [class.pilula--quieta]="r.status === 'Rascunho'">{{ r.status }}</span></b></div>
+      <div><span class="lbl">Gerado em</span><b>{{ dataHora(r.geradoEm) }}</b></div>
+      <div><span class="lbl">Estoque</span><b class="mono">{{ m3(r.volumeM3Estoque) }}</b></div>
+    </div>
+
+    @if (aba() === 'mes') {
+      <div class="tabela">
+        <table class="simples">
+          <thead><tr><th>Espécie</th><th class="num">Estoque</th><th class="num">Entrada</th><th class="num">Saída</th><th class="num">Idade média</th></tr></thead>
+          <tbody>
+            @for (i of r.itens; track i.idEspecie) {
+              <tr><td>{{ i.especie }}</td><td class="num">{{ m3(i.volumeM3Estoque) }}</td><td class="num">{{ m3(i.volumeM3Entrada) }}</td><td class="num">{{ m3(i.volumeM3Saida) }}</td><td class="num">{{ i.idadeMediaDias }} dias</td></tr>
+            } @empty {
+              <tr><td colspan="5">Nenhuma madeira no estoque neste mês.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="acoes">
+        <button mat-stroked-button type="button" (click)="baixar(r)">Baixar a planilha do IBAMA</button>
+        @if (r.status === 'Rascunho') {
+          @if (confirmarEnvio()) {
+            <span class="chamada">Enviado, o relatório fica <b>congelado</b> e não pode ser gerado de novo.</span>
+            <button mat-flat-button type="button" (click)="enviar(r)" [disabled]="enviando()">Confirmar o envio</button>
+            <button mat-button type="button" (click)="confirmarEnvio.set(false)">Ainda não</button>
+          } @else {
+            <button mat-flat-button type="button" (click)="confirmarEnvio.set(true)">Enviar o relatório</button>
+          }
+        } @else {
+          <span class="nota">Enviado em {{ dataHora(r.enviadoEm) }}.</span>
+        }
+      </div>
+    } @else {
+      <div class="pilha especies">
+        @for (i of r.itens; track i.idEspecie) {
+          <div class="especie">
+            <span>{{ i.especie }}</span>
+            <div class="barra"><i [style.width.%]="i.volumeM3Estoque / maiorEstoque() * 100"></i></div>
+            <span class="mono">{{ m3(i.volumeM3Estoque) }}</span>
+          </div>
+        } @empty {
+          <p class="nota">Nenhuma madeira no estoque neste mês.</p>
+        }
+      </div>
+    }
+  } @else {
+    <p class="aviso">Ainda não há relatório de {{ nomeDoMes(mes()) }}. @if (aba() === 'mes') { Gere o rascunho acima. }</p>
+  }
+</section>
+
+@if (aba() === 'mes') {
+  <section class="cartao">
+    <header><h2>Relatórios anteriores</h2><span class="nota">toque para abrir</span></header>
+    <app-estado [carregando]="relatorios.isLoading()" [erro]="erroLista()" [vazio]="relatorios.hasValue() && !relatorios.value().length" textoVazio="Nenhum relatório ainda." />
+    @if (relatorios.value()?.length) {
+      <div class="tabela">
+        <table class="simples">
+          <thead><tr><th>Mês</th><th>Situação</th><th class="num">Estoque</th><th>Gerado em</th></tr></thead>
+          <tbody>
+            @for (r of relatorios.value(); track r.id) {
+              <tr class="clicavel" tabindex="0" [class.selecionada]="relatorio()?.id === r.id" (click)="abrir(r)" (keydown.enter)="abrir(r)">
+                <td>{{ nomeDoMes(r.mesReferencia) }}</td><td>{{ r.status }}</td><td class="num">{{ m3(r.volumeM3Estoque) }}</td><td>{{ dataHora(r.geradoEm) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

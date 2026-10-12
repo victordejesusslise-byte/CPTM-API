@@ -81,7 +81,13 @@ export const MENU: ItemMenu[] = [
   { rota: '/inspecoes', rotulo: 'Inspeção', grupo: 'Campo', cargos: ['Tecnico'] },
   { rota: '/trocas', rotulo: 'Trocas e laudos', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico'] },
   { rota: '/indicadores', rotulo: 'Indicadores', grupo: 'Supervisão', cargos: todos },
-  { rota: '/relatorio-ambiental', rotulo: 'Relatório ambiental', grupo: 'Supervisão', cargos: ['Supervisor', 'Especialista'] },
+  {
+    rota: '/relatorio-ambiental', rotulo: 'Relatório ambiental', grupo: 'Supervisão', cargos: ['Supervisor', 'Especialista'],
+    subs: [
+      { rota: '/relatorio-ambiental', rotulo: 'Relatório do mês', curto: 'Mês' },
+      { rota: '/relatorio-ambiental/especies', rotulo: 'Por espécie', curto: 'Espécies' },
+    ],
+  },
   { rota: '/cadastros', rotulo: 'Cadastros', grupo: 'Supervisão', cargos: ['Supervisor'] },
   {
     rota: '/usuarios', rotulo: 'Usuários', grupo: 'Supervisão', cargos: ['Supervisor'],
