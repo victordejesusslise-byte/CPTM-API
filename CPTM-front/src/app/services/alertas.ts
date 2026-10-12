@@ -21,6 +21,9 @@ export class Alertas {
   vistoriar(id: number, vistoria: NovaVistoriaDto): Observable<AlertaDto> {
     return this.http.post<AlertaDto>(`${this.url}/${id}/vistoria`, vistoria);
   }
+  descartar(id: number, motivo: string): Observable<AlertaDto> {
+    return this.http.post<AlertaDto>(this.url + '/' + id + '/descarte', { motivo });
+  }
   avisarTag(aviso: NovoAvisoTagDto): Observable<AvisoTagDto> {
     return this.http.post<AvisoTagDto>(`${ambiente.api}/tags/avisos`, aviso);
   }

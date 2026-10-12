@@ -35,6 +35,14 @@
         }
         @if (a.motivoDescarte) { <p class="nota">Descartado: {{ a.motivoDescarte }}</p> }
 
+        @if (a.status === 'Aberto' && ehTecnico()) {
+          <p class="lbl">Decisão do técnico</p>
+          <div class="acoes">
+            <a mat-flat-button routerLink="/inspecoes" [queryParams]="{ alerta: a.id }">Inspecionar a peça</a>
+          </div>
+          <mat-form-field appearance="outline"><mat-label>Motivo para descartar</mat-label><input matInput [ngModel]="motivoDescarte()" (ngModelChange)="motivoDescarte.set($event)" /></mat-form-field>
+          <div class="acoes"><button mat-stroked-button type="button" (click)="descartar(a)" [disabled]="enviando()">Descartar o alerta</button></div>
+        }
         @if (a.status === 'Aberto' && podeVistoriar()) {
           <p class="lbl">Vistoria no local</p>
           <div class="seg" role="group" aria-label="Viu a peça?">

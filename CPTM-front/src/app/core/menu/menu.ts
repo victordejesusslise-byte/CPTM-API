@@ -78,8 +78,22 @@ export const MENU: ItemMenu[] = [
       { rota: '/trocas-trecho/feitas', rotulo: 'Trocas feitas', curto: 'Feitas' },
     ],
   },
-  { rota: '/inspecoes', rotulo: 'Inspeção', grupo: 'Campo', cargos: ['Tecnico'] },
-  { rota: '/trocas', rotulo: 'Trocas e laudos', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico'] },
+  {
+    rota: '/inspecoes', rotulo: 'Inspeção', grupo: 'Campo', cargos: ['Tecnico'],
+    subs: [{ rota: '/inspecoes', rotulo: 'Fazer a inspeção', curto: 'Inspecionar' }, { rota: '/inspecoes/feitas', rotulo: 'Inspeções feitas', curto: 'Feitas' }],
+  },
+  {
+    rota: '/aprovar', rotulo: 'Aprovar trocas', grupo: 'Campo', cargos: ['Supervisor'],
+    subs: [{ rota: '/aprovar', rotulo: 'Para aprovar', curto: 'Aprovar' }, { rota: '/aprovar/decididas', rotulo: 'Decididas', curto: 'Decididas' }],
+  },
+  {
+    rota: '/trocas', rotulo: 'Trocas e laudos', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico'],
+    subs: [
+      { rota: '/trocas', rotulo: 'Em andamento', curto: 'Andamento' },
+      { rota: '/trocas/recusas', rotulo: 'Recusas da via', curto: 'Recusas' },
+      { rota: '/trocas/feitas', rotulo: 'Trocas feitas', curto: 'Feitas' },
+    ],
+  },
   { rota: '/indicadores', rotulo: 'Indicadores', grupo: 'Supervisão', cargos: todos },
   {
     rota: '/relatorio-ambiental', rotulo: 'Relatório ambiental', grupo: 'Supervisão', cargos: ['Supervisor', 'Especialista'],

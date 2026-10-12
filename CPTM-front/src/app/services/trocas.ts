@@ -27,6 +27,15 @@ export class Trocas {
   executar(id: number, dto: ExecutarTrocaDto): Observable<TrocaDto> {
     return this.http.post<TrocaDto>(`${this.url}/${id}/execucao`, dto);
   }
+  pedir(idDormente: number, idInspecao: number | null, motivo: string | null, km: number | null): Observable<TrocaDto> {
+    return this.http.post<TrocaDto>(this.url, { idDormente, idInspecao, motivo, km });
+  }
+  decidir(id: number, aprovar: boolean, motivo: string | null): Observable<TrocaDto> {
+    return this.http.post<TrocaDto>(this.url + '/' + id + '/decisao', { aprovar, motivo });
+  }
+  decidirRecusa(id: number, decisao: 'Manter' | 'Aceitar', resposta: string | null): Observable<TrocaDto> {
+    return this.http.post<TrocaDto>(this.url + '/' + id + '/recusa/decisao', { decisao, resposta });
+  }
   recusar(id: number, dto: RecusarTrocaDto): Observable<TrocaDto> {
     return this.http.post<TrocaDto>(`${this.url}/${id}/recusa`, dto);
   }

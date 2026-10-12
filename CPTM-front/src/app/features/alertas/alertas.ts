@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Sessao } from '../../core/auth/sessao';
 import { novoIdCliente } from '../../helpers/arquivo';
 import { nomeDaFoto } from '../../helpers/foto';
@@ -22,7 +22,7 @@ const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: '
  */
 @Component({
   selector: 'app-alertas',
-  imports: [FormsModule, FORMULARIO, Estado, LeituraTag],
+  imports: [FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag],
   templateUrl: './alertas.html',
 })
 export class Alertas {
@@ -43,6 +43,8 @@ export class Alertas {
   protected readonly idAberto = computed(() => (this.aberto() ? Number(this.aberto()) : null));
   protected readonly alerta = rxResource({ params: () => this.idAberto() ?? undefined, stream: ({ params }) => this.api.buscar(params) });
   protected readonly podeVistoriar = computed(() => this.sessao.temCargo('OperadorVia', 'Tecnico'));
+  protected readonly ehTecnico = computed(() => this.sessao.temCargo('Tecnico'));
+  protected readonly motivoDescarte = signal('');
 
   protected readonly dataHora = dataHora;
   protected readonly km = km;
@@ -106,6 +108,19 @@ export class Alertas {
         return 'Vistoria registrada. O técnico decide o alerta.';
       },
     );
+  }
+
+  /** Técnico: descarta o alerta com motivo (quem confirma é a inspeção reprovada). */
+  protected descartar(a: AlertaDto): void {
+    if (!this.motivoDescarte().trim()) {
+      this.erro.set('Escreva por que o alerta é descartado.');
+      return;
+    }
+    this.enviar(this.api.descartar(a.id, this.motivoDescarte().trim()), () => {
+      this.alerta.reload();
+      this.lista.reload();
+      return 'Alerta descartado.';
+    });
   }
 
   protected avisar(): void {

@@ -1,0 +1,47 @@
+<p class="sobre">Campo · 10</p>
+<h1>{{ aba() === 'checklist' ? 'Fazer a inspeção' : 'Inspeções feitas' }}</h1>
+@if (alerta() && aba() === 'checklist') { <p class="chamada chamada--neutra">Inspeção do alerta {{ alerta() }}: o resultado decide o alerta.</p> }
+@if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
+@if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
+
+<app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
+<div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Ler a peça</button></div>
+
+@if (peca(); as p) {
+  <section class="cartao pilha">
+    <header><h2 class="mono">{{ p.codigo }}</h2><span class="nota">{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª @if (p.kmProjeto !== null) { · km {{ km(p.kmProjeto) }} }</span></header>
+    @if (aba() === 'historico') {
+      @for (i of feitas(); track i.id) {
+        <div class="cartao-alerta" (click)="laudo(i)" tabindex="0" (keydown.enter)="laudo(i)" role="button">
+          <span class="topo-alerta"><b>{{ dataHora(i.finalizadoEm) }}</b><span class="pilula" [class.pilula--alerta]="i.resultado === 'Reprovada'">{{ i.resultado }}</span></span>
+          <span class="nota">{{ i.estadoConservacao }} · rachadura {{ i.rachadura.toLowerCase() }} · {{ i.motivosDeReprovacao.join('; ') || 'sem motivo de reprovação' }} · toque para o laudo (LI)</span>
+        </div>
+      } @empty {
+        <p class="nota">Nenhuma inspeção desta peça.</p>
+      }
+    } @else if (resultado(); as i) {
+      <div class="chamada" [class.chamada--neutra]="i.resultado === 'Aprovada'"><b>{{ i.resultado }}</b>@if (i.motivosDeReprovacao.length) { — {{ i.motivosDeReprovacao.join('; ') }} }</div>
+      <div class="acoes">
+        <button mat-stroked-button type="button" (click)="laudo(i)">Laudo da inspeção (LI)</button>
+        @if (i.resultado === 'Reprovada' && !trocaPedida()) {
+          <button mat-flat-button type="button" (click)="pedirTroca(p, i)" [disabled]="enviando()">Pedir a troca</button>
+        }
+      </div>
+    } @else {
+      <div class="campos">
+        <mat-form-field appearance="outline"><mat-label>Estado de conservação</mat-label>
+          <mat-select [value]="estado()" (selectionChange)="estado.set($event.value)"><mat-option value="Bom">Bom</mat-option><mat-option value="Regular">Regular</mat-option><mat-option value="Ruim">Ruim</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Rachadura</mat-label>
+          <mat-select [value]="rachadura()" (selectionChange)="rachadura.set($event.value)"><mat-option value="Nenhuma">Nenhuma</mat-option><mat-option value="Leve">Leve</mat-option><mat-option value="Media">Média</mat-option><mat-option value="Grave">Grave</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Ataque biológico</mat-label>
+          <mat-select [value]="ataque()" (selectionChange)="ataque.set($event.value)"><mat-option value="Nenhum">Nenhum</mat-option><mat-option value="Inicio">Início</mat-option><mat-option value="Avancado">Avançado</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Umidade (%)</mat-label><input matInput type="number" [ngModel]="umidade()" (ngModelChange)="umidade.set($event)" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Vida útil (meses)</mat-label><input matInput type="number" [ngModel]="vidaUtil()" (ngModelChange)="vidaUtil.set($event)" /></mat-form-field>
+      </div>
+      <mat-checkbox [checked]="madeiraConfere()" (change)="madeiraConfere.set($event.checked)">O tipo de madeira confere</mat-checkbox>
+      <mat-form-field appearance="outline"><mat-label>Observação</mat-label><textarea matInput rows="2" [ngModel]="observacao()" (ngModelChange)="observacao.set($event)"></textarea></mat-form-field>
+      <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto da peça' }}</label>
+      <div class="acoes"><button mat-flat-button type="button" (click)="registrar(p)" [disabled]="enviando()">Registrar a inspeção</button></div>
+    }
+  </section>
+}
