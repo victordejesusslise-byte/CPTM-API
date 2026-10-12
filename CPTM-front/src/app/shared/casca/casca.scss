@@ -23,6 +23,8 @@
 .corpo { display: grid; grid-template-columns: 232px 1fr; min-height: calc(100vh - 56px); }
 .menu {
   padding: 16px 12px; border-right: 1px solid var(--linha); background: var(--superficie);
+  /* o menu rola sozinho, sem depender da página */
+  position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; overscroll-behavior: contain;
   display: flex; flex-direction: column; gap: 2px;
 }
 .menu__grupo { margin: 14px 8px 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); }
@@ -45,7 +47,7 @@
   .topo__menu { display: inline-flex; align-items: center; }
   .topo__marca span, .topo__nome { display: none; }
   .corpo { grid-template-columns: 1fr; }
-  .menu { display: none; position: fixed; inset: 56px 0 0 0; z-index: 9; overflow: auto; border-right: 0; }
+  .menu { display: none; position: fixed; inset: 56px 0 0 0; height: auto; z-index: 9; overflow: auto; border-right: 0; }
   .menu--aberto { display: flex; }
   .conteudo { padding: 16px; }
 }
