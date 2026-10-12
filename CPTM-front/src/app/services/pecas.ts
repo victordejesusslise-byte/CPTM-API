@@ -17,6 +17,10 @@ export class Pecas {
   porTag(tag: string): Observable<PecaDto> {
     return this.http.get<PecaDto>(`${this.api}/tags/${encodeURIComponent(tag.trim())}`);
   }
+  /** Pelo código impresso na peça (DM-E01-L02-0034). */
+  porCodigo(codigo: string): Observable<PecaDto> {
+    return this.http.get<PecaDto>(`${this.api}/dormentes/codigo/${encodeURIComponent(codigo.trim())}`);
+  }
   buscar(id: number): Observable<PecaDto> {
     return this.http.get<PecaDto>(`${this.api}/dormentes/${id}`);
   }

@@ -6,7 +6,9 @@ import { Sessao } from '../../core/auth/sessao';
 import { novoIdCliente } from '../../helpers/arquivo';
 import { nomeDaFoto } from '../../helpers/foto';
 import { dataHora, km, mensagemDeErro } from '../../helpers/formato';
-import { AlertaDto } from '../../models/campo';
+import { AlertaDto, AvisoTagDto } from '../../models/campo';
+import { PecaDto } from '../../models/peca';
+import { Pecas } from '../../services/pecas';
 import { MetodoCaptura } from '../../models/enums';
 import { Alertas as AlertasApi } from '../../services/alertas';
 import { Estado } from '../../shared/estado/estado';
@@ -45,6 +47,16 @@ export class Alertas {
   protected readonly podeVistoriar = computed(() => this.sessao.temCargo('OperadorVia', 'Tecnico'));
   protected readonly ehTecnico = computed(() => this.sessao.temCargo('Tecnico'));
   protected readonly motivoDescarte = signal('');
+  // tags sem cadastro: o técnico acha a peça pelo código e vincula a tag lida no local
+  protected readonly podeVincular = computed(() => this.sessao.temCargo('Tecnico', 'Supervisor'));
+  protected readonly podeAvisar = computed(() => this.sessao.temCargo('OperadorVia', 'Tecnico'));
+  protected readonly avisos = rxResource({ params: () => (this.aba() === 'tags' && this.podeVincular() ? true : undefined), stream: () => this.api.avisos() });
+  private readonly pecas = inject(Pecas);
+  protected readonly avisoAberto = signal<AvisoTagDto | null>(null);
+  protected readonly codigoPeca = signal('');
+  protected readonly pecaDoVinculo = signal<PecaDto | null>(null);
+  protected readonly tagVinculo = signal('');
+  protected readonly metodoVinculo = signal<MetodoCaptura>('ModuloUhf');
 
   protected readonly dataHora = dataHora;
   protected readonly km = km;
@@ -120,6 +132,38 @@ export class Alertas {
       this.alerta.reload();
       this.lista.reload();
       return 'Alerta descartado.';
+    });
+  }
+
+  protected abrirAviso(a: AvisoTagDto): void {
+    this.avisoAberto.set(a);
+    this.tagVinculo.set(a.tag);
+    this.pecaDoVinculo.set(null);
+    this.codigoPeca.set('');
+    this.erro.set(null);
+    this.mensagem.set(null);
+  }
+
+  protected buscarPeca(): void {
+    if (!this.codigoPeca().trim()) return;
+    this.erro.set(null);
+    this.pecas.porCodigo(this.codigoPeca()).subscribe({
+      next: (p) => this.pecaDoVinculo.set(p),
+      error: (e) => {
+        this.pecaDoVinculo.set(null);
+        this.erro.set(e?.status === 404 ? 'Nenhuma peça com esse código. Confira o código impresso na peça (ex.: DM-E01-L02-0034).' : mensagemDeErro(e));
+      },
+    });
+  }
+
+  protected vincular(): void {
+    const p = this.pecaDoVinculo();
+    if (!p || !this.tagVinculo().trim()) return this.erro.set('Ache a peça e leia a tag dela no local.');
+    this.enviar(this.api.vincular(p.id, leitura(this.tagVinculo(), this.metodoVinculo())), (r) => {
+      this.avisoAberto.set(null);
+      this.pecaDoVinculo.set(null);
+      this.avisos.reload();
+      return `Tag ${r.tag} vinculada à peça ${r.codigo}.`;
     });
   }
 

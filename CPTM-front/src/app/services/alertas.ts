@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { ambiente } from '../../environments/ambiente';
 import { consulta } from '../helpers/consulta';
 import { AlertaDto, AvisoTagDto, NovaVistoriaDto, NovoAvisoTagDto } from '../models/campo';
+import { LeituraDto } from '../models/enums';
+import { PecaDto } from '../models/peca';
 import { OrigemAlerta, StatusAlerta } from '../models/enums';
 
 /** /api/alertas (técnico, operador da via, supervisor) e o aviso de tag sem cadastro. */
@@ -23,6 +25,12 @@ export class Alertas {
   }
   descartar(id: number, motivo: string): Observable<AlertaDto> {
     return this.http.post<AlertaDto>(this.url + '/' + id + '/descarte', { motivo });
+  }
+  avisos(): Observable<AvisoTagDto[]> {
+    return this.http.get<AvisoTagDto[]>(`${ambiente.api}/tags/avisos`);
+  }
+  vincular(idDormente: number, leitura: LeituraDto): Observable<PecaDto> {
+    return this.http.post<PecaDto>(`${ambiente.api}/tags/vinculos`, { idDormente, leitura });
   }
   avisarTag(aviso: NovoAvisoTagDto): Observable<AvisoTagDto> {
     return this.http.post<AvisoTagDto>(`${ambiente.api}/tags/avisos`, aviso);

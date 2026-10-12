@@ -103,6 +103,22 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo)
     public async Task<PecaDto?> BuscarPorTag(string numero)
         => await pecas.BuscarTag(numero.Trim()) is { } tag ? await BuscarPorId(tag.IdDormente) : null;
 
+    /// <summary>Abre a peça pelo código impresso (DM-E01-L02-0034). Nulo quando o código não é de nenhuma peça.</summary>
+    public async Task<PecaDto?> BuscarPorCodigo(string codigo)
+    {
+        var id = IdDoCodigo(codigo);
+        if (id is null) return null;
+        var peca = await BuscarPorId(id.Value);
+        return peca is not null && string.Equals(peca.Codigo, codigo.Trim(), StringComparison.OrdinalIgnoreCase) ? peca : null;
+    }
+
+    /// <summary>O número da peça no fim do código (DM-E01-L02-0034 → 34); nulo se o código não tem esse formato.</summary>
+    public static int? IdDoCodigo(string? codigo)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(codigo?.Trim() ?? "", @"^DM-E\d+-L\d+-(\d+)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return m.Success && int.TryParse(m.Groups[1].Value, out var id) ? id : null;
+    }
+
     /// <summary>Várias peças de uma vez, pelo id (para as listas de alertas e trocas).</summary>
     public async Task<IReadOnlyDictionary<int, PecaDto>> PorIds(IReadOnlyCollection<int> ids)
         => ids.Count == 0 ? new Dictionary<int, PecaDto>() : (await Montar(await pecas.Resumos(ids: ids))).ToDictionary(p => p.Id);

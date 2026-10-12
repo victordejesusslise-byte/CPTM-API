@@ -24,6 +24,14 @@ public class DormenteHandler(PecaService pecas, QualidadeService qualidade, Arma
     [HttpGet]
     public Task<IReadOnlyList<PecaDto>> DoFeixe([FromQuery] int idFeixe) => pecas.DoFeixe(idFeixe);
 
+    /// <summary>A peça pelo código impresso nela (DM-E01-L02-0034): é como o técnico acha a peça no campo.</summary>
+    [HttpGet("codigo/{codigo}")]
+    public async Task<ActionResult<PecaDto>> BuscarPorCodigo(string codigo)
+    {
+        var peca = await pecas.BuscarPorCodigo(codigo);
+        return peca is null ? NotFound() : peca;
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<PecaDto>> Buscar(int id)
     {

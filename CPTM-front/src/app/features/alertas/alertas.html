@@ -4,6 +4,38 @@
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
 @if (aba() === 'tags') {
+  @if (podeVincular()) {
+    @if (avisoAberto(); as av) {
+      <section class="cartao pilha">
+        <header><h2>Vincular a tag <span class="mono">{{ av.tag }}</span></h2><span class="nota"><button mat-button type="button" (click)="avisoAberto.set(null)">Fechar</button></span></header>
+        <p class="nota">Avisada em {{ dataHora(av.data) }}@if (av.km !== null) { · km {{ km(av.km) }} }@if (av.observacao) { · {{ av.observacao }} }</p>
+        <div class="filtros">
+          <mat-form-field appearance="outline" class="cresce" subscriptSizing="dynamic"><mat-label>Código impresso na peça</mat-label>
+            <input matInput class="mono" placeholder="DM-E01-L02-0034" [ngModel]="codigoPeca()" (ngModelChange)="codigoPeca.set($event)" (keydown.enter)="buscarPeca()" /></mat-form-field>
+          <button mat-stroked-button type="button" (click)="buscarPeca()">Achar a peça</button>
+        </div>
+        @if (pecaDoVinculo(); as p) {
+          <p><b class="mono">{{ p.codigo }}</b> · {{ p.especie }} · {{ p.classe }}ª · tag hoje: <span class="mono" [class.vermelho]="!!p.tag">{{ p.tag ?? 'nenhuma' }}</span></p>
+          <app-leitura-tag rotulo="Tag lida na peça, no local" [(tag)]="tagVinculo" [(metodo)]="metodoVinculo" />
+          <div class="acoes"><button mat-flat-button type="button" (click)="vincular()" [disabled]="enviando()">Vincular a tag a esta peça</button></div>
+        }
+      </section>
+    }
+    <section class="cartao">
+      <header><h2>Avisos da via</h2><span class="nota">{{ avisos.value()?.length ?? 0 }} esperando vínculo · toque para abrir</span></header>
+      <div class="cartoes-alerta">
+        @for (av of avisos.value() ?? []; track av.idLeitura) {
+          <button type="button" class="cartao-alerta urgente" [class.selecionado]="avisoAberto()?.idLeitura === av.idLeitura" (click)="abrirAviso(av)">
+            <span class="topo-alerta"><b class="mono">{{ av.tag }}</b><span class="mono nota">{{ av.km !== null ? 'km ' + km(av.km) : '' }}</span></span>
+            <span class="nota">{{ dataHora(av.data) }}@if (av.observacao) { · {{ av.observacao }} }</span>
+          </button>
+        } @empty {
+          <p class="aviso">Nenhuma tag esperando vínculo.</p>
+        }
+      </div>
+    </section>
+  }
+  @if (podeAvisar()) {
   <section class="cartao pilha">
     <header><h2>Tag respondeu sem cadastro</h2><span class="nota">o técnico vincula a tag à peça certa</span></header>
     <app-leitura-tag rotulo="Tag lida" [(tag)]="tagAviso" [(metodo)]="metodoAviso" />
@@ -13,6 +45,7 @@
     </div>
     <div class="acoes"><button mat-flat-button type="button" (click)="avisar()" [disabled]="enviando()">Avisar o técnico</button></div>
   </section>
+  }
 } @else {
   @if (alerta.value(); as a) {
     @if (idAberto()) {

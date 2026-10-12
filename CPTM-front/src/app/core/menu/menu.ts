@@ -54,6 +54,13 @@ export const MENU: ItemMenu[] = [
     subs: [{ rota: '/qualidade', rotulo: 'Verificar a peça', curto: 'Verificar' }, { rota: '/qualidade/cargas', rotulo: 'Cargas e boletins', curto: 'Cargas' }],
   },
   {
+    rota: '/classificar', rotulo: 'Classificar', grupo: 'Peça', cargos: ['Especialista', 'Supervisor'],
+    subs: [
+      { rota: '/classificar', rotulo: 'Classificar a peça', curto: 'Classificar', cargos: ['Especialista'] },
+      { rota: '/classificar/feitas', rotulo: 'Classificações feitas', curto: 'Feitas' },
+    ],
+  },
+  {
     rota: '/armazem', rotulo: 'Armazém', grupo: 'Peça', cargos: ['Supervisor', 'OperadorPatio', 'Especialista'],
     subs: [
       { rota: '/armazem', rotulo: 'Guardar na pilha', curto: 'Guardar', cargos: ['Supervisor', 'OperadorPatio'] },
@@ -75,7 +82,7 @@ export const MENU: ItemMenu[] = [
     subs: [
       { rota: '/alertas', rotulo: 'Alertas da câmera', curto: 'Câmera' },
       { rota: '/alertas/sensores', rotulo: 'Alertas dos sensores', curto: 'Sensores' },
-      { rota: '/alertas/tags', rotulo: 'Tags sem cadastro', curto: 'Tags', cargos: ['OperadorVia', 'Tecnico'] },
+      { rota: '/alertas/tags', rotulo: 'Tags sem cadastro', curto: 'Tags', cargos: ['OperadorVia', 'Tecnico', 'Supervisor'] },
     ],
   },
   {
