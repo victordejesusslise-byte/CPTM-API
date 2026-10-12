@@ -78,6 +78,14 @@ export const MENU: ItemMenu[] = [
   },
   { rota: '/pecas', rotulo: 'Consultar peça', grupo: 'Peça', cargos: todos },
   {
+    rota: '/passagem', rotulo: 'Passagem', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico', 'OperadorVia'],
+    subs: [
+      { rota: '/passagem', rotulo: 'Passagem da noite', curto: 'Noite' },
+      { rota: '/passagem/anteriores', rotulo: 'Passagens anteriores', curto: 'Anteriores' },
+      { rota: '/passagem/numeros', rotulo: 'Números do período', curto: 'Números' },
+    ],
+  },
+  {
     rota: '/alertas', rotulo: 'Alertas', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico', 'OperadorVia'],
     subs: [
       { rota: '/alertas', rotulo: 'Alertas da câmera', curto: 'Câmera' },
