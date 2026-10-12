@@ -62,6 +62,7 @@ builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<CatalogoService>();
 builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<ApresentacaoService>();
+builder.Services.AddScoped<DemonstracaoService>();
 builder.Services.AddScoped<PedidoService>();
 builder.Services.AddScoped<OfertaService>();
 builder.Services.AddScoped<NotaFiscalService>();

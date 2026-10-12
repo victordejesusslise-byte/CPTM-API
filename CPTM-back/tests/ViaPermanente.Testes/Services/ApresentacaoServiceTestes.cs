@@ -43,6 +43,8 @@ public class ApresentacaoServiceTestes
         public Task AdicionarVarios<T>(IReadOnlyList<T> entidades) where T : class => throw new NotImplementedException();
         public Task Salvar() => throw new NotImplementedException();
         public Task<string?> UltimaTag() => throw new NotImplementedException();
+        public Task<List<TId>> Ids<T, TId>(Expression<Func<T, bool>> filtro, Expression<Func<T, TId>> id) where T : class => throw new NotImplementedException();
+        public Task<int> Apagar<T>(Expression<Func<T, bool>> filtro) where T : class => throw new NotImplementedException();
         public Task EmTransacao(Func<Task> acao) => throw new NotImplementedException();
     }
 }

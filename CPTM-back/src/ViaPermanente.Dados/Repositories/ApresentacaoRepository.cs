@@ -65,6 +65,12 @@ public class ApresentacaoRepository(ViaPermanenteContext db) : IApresentacaoRepo
     public Task<string?> UltimaTag()
         => db.Set<Rfid>().AsNoTracking().OrderByDescending(r => r.TagRfid).Select(r => r.TagRfid).FirstOrDefaultAsync();
 
+    public Task<List<TId>> Ids<T, TId>(Expression<Func<T, bool>> filtro, Expression<Func<T, TId>> id) where T : class
+        => db.Set<T>().AsNoTracking().Where(filtro).Select(id).ToListAsync();
+
+    public Task<int> Apagar<T>(Expression<Func<T, bool>> filtro) where T : class
+        => db.Set<T>().Where(filtro).ExecuteDeleteAsync();
+
     public async Task EmTransacao(Func<Task> acao)
     {
         await using var transacao = await db.Database.BeginTransactionAsync();

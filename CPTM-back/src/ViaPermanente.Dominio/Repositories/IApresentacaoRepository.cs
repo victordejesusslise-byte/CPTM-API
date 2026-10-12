@@ -23,6 +23,10 @@ public interface IApresentacaoRepository
     /// <summary>O maior número de tag UHF já usado (BR e a sequência), ou nulo.</summary>
     Task<string?> UltimaTag();
 
+    /// <summary>Os ids das linhas que passam no filtro.</summary>
+    Task<List<TId>> Ids<T, TId>(Expression<Func<T, bool>> filtro, Expression<Func<T, TId>> id) where T : class;
+    /// <summary>Apaga direto no banco as linhas que passam no filtro e devolve quantas foram.</summary>
+    Task<int> Apagar<T>(Expression<Func<T, bool>> filtro) where T : class;
     /// <summary>Tudo ou nada: se algo falhar, nada fica gravado.</summary>
     Task EmTransacao(Func<Task> acao);
 }

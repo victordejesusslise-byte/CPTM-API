@@ -77,3 +77,14 @@ npm run celular
 4. No celular, abra `http://SEU-IP:4200` (ex.: `http://192.168.0.10:4200`) e entre com o seu e-mail e senha.
 
 Se o Windows perguntar sobre o firewall, permita em **redes privadas**. Funciona só no mesmo Wi-Fi; para usar fora, o sistema precisa ir para um servidor.
+
+## Banco de demonstração
+
+Para apresentar o sistema, a API cria (e depois apaga) uma demonstração **no banco de trabalho**: 1 fornecedor, 3 pedidos (um recebido, um recebido em parte e um aberto), 3 peças na via com 3 alertas e 3 trocas em passos diferentes. Tudo leva a marca `DEMO-`, e a limpeza apaga só isso.
+
+Com a API ligada, abra http://localhost:5169/swagger, entre com o supervisor (`POST /api/auth/login`, **Authorize**) e rode:
+
+- **Criar:** `POST /api/apresentacao/demonstracao`
+- **Apagar:** `DELETE /api/apresentacao/demonstracao`
+
+Só funciona em desenvolvimento.
