@@ -161,3 +161,4 @@ button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-butt
 .opcao.marcada { border-color: var(--tinta); box-shadow: inset 3px 0 0 var(--tinta); }
 @media (max-width: 620px) { .opcao { grid-template-columns: auto 1fr; } }
 .especies .especie { display: grid; grid-template-columns: minmax(140px, 1fr) 3fr auto; gap: 12px; align-items: center; .barra { margin: 0; height: 10px; } }
+.campo-tabela { width: 100%; min-width: 80px; min-height: 36px; padding: 6px 8px; border: 1px solid var(--linha-2); border-radius: 3px; background: var(--superficie); font-size: 14px; }

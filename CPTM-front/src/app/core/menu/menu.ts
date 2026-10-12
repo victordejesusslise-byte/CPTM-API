@@ -102,7 +102,23 @@ export const MENU: ItemMenu[] = [
       { rota: '/relatorio-ambiental/especies', rotulo: 'Por espécie', curto: 'Espécies' },
     ],
   },
-  { rota: '/cadastros', rotulo: 'Cadastros', grupo: 'Supervisão', cargos: ['Supervisor'] },
+  {
+    rota: '/cadastros', rotulo: 'Cadastros', grupo: 'Supervisão', cargos: ['Supervisor'],
+    subs: [
+      { rota: '/cadastros', rotulo: 'Empresas', curto: 'Empresas' },
+      { rota: '/cadastros/contratos', rotulo: 'Contratos', curto: 'Contratos' },
+      { rota: '/cadastros/via', rotulo: 'Estações e trechos', curto: 'Via' },
+      { rota: '/cadastros/parametros', rotulo: 'Parâmetros', curto: 'Parâmetros' },
+    ],
+  },
+  {
+    rota: '/integracoes', rotulo: 'Integrações', grupo: 'Supervisão', cargos: ['Supervisor', 'OperadorPatio'],
+    subs: [
+      { rota: '/integracoes', rotulo: 'Notas pela planilha', curto: 'Notas' },
+      { rota: '/integracoes/erp', rotulo: 'Estoque para o ERP', curto: 'ERP' },
+      { rota: '/integracoes/historico', rotulo: 'Histórico', curto: 'Histórico' },
+    ],
+  },
   {
     rota: '/usuarios', rotulo: 'Usuários', grupo: 'Supervisão', cargos: ['Supervisor'],
     subs: [{ rota: '/usuarios/novo', rotulo: 'Cadastrar usuário', curto: 'Cadastrar', soComputador: true }, { rota: '/usuarios', rotulo: 'Usuários cadastrados', curto: 'Usuários' }],
