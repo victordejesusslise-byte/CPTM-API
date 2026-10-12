@@ -77,7 +77,7 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         return await BuscarPorId(idTroca);
     }
 
-    /// <summary>As peças que servem: do armazém mais perto da troca e, nele, a da frente (a mais nova). A primeira é a sugerida.</summary>
+    /// <summary>As peças que servem: do armazém mais perto da troca e, nele, a que entrou primeiro (saída do mais antigo, para a madeira não apodrecer parada). A primeira é a sugerida.</summary>
     public async Task<IReadOnlyList<CompativelDto>?> ListarCompativeis(int idTroca)
         => await Buscar(idTroca) is { } troca ? await Compativeis(troca) : null;
 
@@ -262,7 +262,7 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
             .Where(p => p.IdPilha is not null && !reservadas.Contains(p.Id) && p.Id != saiu.Id
                         && CompatibilidadeTroca.Serve(p.IdTamanho, p.Classe, saiu.IdTamanho, classeExigida))
             .Select(p => (Peca: p, Distancia: km is decimal k && armazens.GetValueOrDefault(p.IdArmazem) is decimal ka ? Math.Abs(ka - k) : (decimal?)null))
-            .OrderBy(x => x.Distancia ?? decimal.MaxValue).ThenByDescending(x => x.Peca.EntradaArmazemEm).ThenByDescending(x => x.Peca.Id)
+            .OrderBy(x => x.Distancia ?? decimal.MaxValue).ThenBy(x => x.Peca.EntradaArmazemEm ?? DateTime.MaxValue).ThenBy(x => x.Peca.Id)
             .ToList();
         return lista.Select((x, i) => new CompativelDto(x.Peca, x.Distancia,
             x.Peca.EntradaArmazemEm is DateTime e ? (int)(hoje - e).TotalDays : 0, i == 0)).ToList();

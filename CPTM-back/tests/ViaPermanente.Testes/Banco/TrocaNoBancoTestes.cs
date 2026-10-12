@@ -80,6 +80,8 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         var compativeis = (await Trocas().ListarCompativeis(pedida.Id))!;
         Assert.Equal(24, compativeis.Count); // 26 aprovadas no exemplo, menos as duas que estão na via
         Assert.True(compativeis[0].Sugerida);
+        // saída do mais antigo: no mesmo armazém, a que entrou primeiro vem antes
+        Assert.Equal(compativeis.OrderBy(c => c.Peca.EntradaArmazemEm).ThenBy(c => c.Peca.Id).Select(c => c.Peca.Id), compativeis.Select(c => c.Peca.Id));
         Assert.Equal(0.102m, compativeis[0].DistanciaKm); // Santo Amaro (km 219,300) até a troca (km 219,402)
         var entra = 5;
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = 0, Leitura = Lida(entra) }, patio));

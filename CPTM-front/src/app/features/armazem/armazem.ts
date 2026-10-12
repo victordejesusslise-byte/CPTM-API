@@ -42,6 +42,7 @@ export class Armazem {
     { titulo: 'Classe', valor: (p) => `${p.classe}ª` },
     { titulo: 'Armazém', valor: (p) => p.armazem },
     { titulo: 'Pilha', valor: (p) => p.pilha ?? 'sem pilha', vermelho: (p) => !p.pilha },
+    { titulo: 'No armazém', valor: (p) => (p.entradaArmazemEm ? `${Math.floor((Date.now() - new Date(p.entradaArmazemEm).getTime()) / 86_400_000)} dias` : '—') },
   ];
 
   protected mudarFiltro(campo: 'idArmazem' | 'idTamanho' | 'classe', valor: number | null): void {

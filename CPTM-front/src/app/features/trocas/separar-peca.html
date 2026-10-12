@@ -11,7 +11,7 @@
     </header>
     <app-resumo-troca [t]="t" />
     @if (aba() === 'fila' && (t.status === 'Aprovada' || t.status === 'AguardandoPeca')) {
-      <p class="lbl">Peças compatíveis · mesmo comprimento, classe que o trecho aceita</p>
+      <p class="lbl">Peças compatíveis · mesmo comprimento, classe que o trecho aceita · sai primeiro a mais antiga</p>
       @if (compativeis.value()?.length) {
         <div class="opcoes">
           @for (c of compativeis.value(); track c.peca.id) {

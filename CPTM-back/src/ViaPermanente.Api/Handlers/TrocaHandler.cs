@@ -38,7 +38,7 @@ public class TrocaHandler(TrocaService trocas) : ControllerBase
         return troca is null ? NotFound() : troca;
     }
 
-    /// <summary>As peças compatíveis; a primeira é a sugerida (armazém mais perto, a da frente).</summary>
+    /// <summary>As peças compatíveis; a primeira é a sugerida (armazém mais perto e, nele, a que entrou primeiro).</summary>
     [HttpGet("{id:int}/compativeis")]
     [Authorize(Roles = $"{nameof(Cargo.OperadorPatio)},{nameof(Cargo.Supervisor)}")]
     public async Task<ActionResult<IReadOnlyList<CompativelDto>>> Compativeis(int id)
