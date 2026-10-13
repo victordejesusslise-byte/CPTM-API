@@ -1,0 +1,51 @@
+# O back do YBYRA no Docker: o back, o SQL Server Express e os logs do próprio Docker.
+# Subir:    docker compose up -d --build      Logs: docker compose logs -f back
+# Os segredos vêm do .env (o mesmo do back); a senha do banco do container é Banco__SenhaSa.
+name: ybyra
+
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  banco:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express
+      MSSQL_SA_PASSWORD: ${Banco__SenhaSa}
+    ports:
+      - "14330:1433"
+    volumes:
+      - banco:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    logging: *logs
+
+  back:
+    build: .
+    depends_on:
+      banco:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      ConnectionStrings__ViaPermanente: "Server=banco;Database=ViaPermanente;User Id=sa;Password=${Banco__SenhaSa};TrustServerCertificate=True"
+      Banco__MigrarAoIniciar: "true"
+      Logs__Json: "true"
+      ASPNETCORE_ENVIRONMENT: Development
+      Logging__LogLevel__Microsoft.EntityFrameworkCore: Warning
+    ports:
+      - "5169:8080"
+    volumes:
+      - fotos:/app/fotos
+    logging: *logs
+
+volumes:
+  banco:
+  fotos:

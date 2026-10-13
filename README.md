@@ -88,3 +88,23 @@ Com a API ligada, abra http://localhost:5169/swagger, entre com o supervisor (`P
 - **Apagar:** `DELETE /api/apresentacao/demonstracao`
 
 Só funciona em desenvolvimento.
+
+## Com Docker (o back, o banco e os logs)
+
+Precisa só do [Docker Desktop](https://www.docker.com/products/docker-desktop/) aberto; não precisa de .NET nem de SQL Server instalados.
+
+1. No `CPTM-back/.env`, além do que está no passo 3, preencha `Banco__SenhaSa` (a senha do banco do container: letras maiúsculas, minúsculas e números, 12 ou mais).
+2. Dentro de `CPTM-back`, suba tudo (a primeira vez baixa as imagens e demora alguns minutos):
+
+```bash
+docker compose up -d --build
+```
+
+3. O back fica em http://localhost:5169 (o site Angular continua com `npx ng serve`). Na primeira subida ele cria o banco e o supervisor do `.env`.
+4. Os logs:
+
+```bash
+docker compose logs -f back
+```
+
+Para parar: `docker compose down` (o banco e as fotos ficam guardados nos volumes do Docker). O banco do container também abre no SSMS em `localhost,14330`, usuário `sa`.

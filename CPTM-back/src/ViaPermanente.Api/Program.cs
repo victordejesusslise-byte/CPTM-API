@@ -41,6 +41,13 @@ Env.TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// No Docker, o log sai no console em JSON e o próprio Docker guarda (docker compose logs).
+if (builder.Configuration.GetValue<bool>("Logs:Json"))
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole(o => o.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffzzz ");
+}
+
 var conexao = builder.Configuration.GetConnectionString("ViaPermanente");
 if (string.IsNullOrWhiteSpace(conexao))
     throw new InvalidOperationException("Falta ConnectionStrings__ViaPermanente no .env (veja .env.exemplo).");
@@ -170,9 +177,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Primeira subida: cria o supervisor do .env se o banco ainda não tem usuário.
+// Primeira subida: aplica as migrações (no Docker) e cria o supervisor do .env se o banco ainda não tem usuário.
 using (var escopo = app.Services.CreateScope())
 {
+    if (builder.Configuration.GetValue<bool>("Banco:MigrarAoIniciar"))
+        await escopo.ServiceProvider.GetRequiredService<ViaPermanenteContext>().Database.MigrateAsync();
     var inicial = builder.Configuration.GetSection("UsuarioInicial");
     await escopo.ServiceProvider.GetRequiredService<UsuarioService>()
         .GarantirSupervisorInicial(inicial["Nome"], inicial["Email"], inicial["Senha"]);
