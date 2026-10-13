@@ -15,8 +15,10 @@ CPTM-back/
 │   ├── ViaPermanente.Api/        o "geral": a porta de entrada
 │   │   ├── Program.cs            só inicia: lê o .env, registra dependências, segurança, sobe
 │   │   ├── appsettings.json      configuração SEM segredo
-│   │   ├── Handlers/             controllers do MVC: recebem HTTP, chamam o service, respondem
-│   │   ├── Helpers/              TokenHelper (gera e valida o JWT)
+│   │   ├── <Parte>/              os handlers da parte (controllers do MVC: recebem HTTP, chamam o service,
+│   │   │                         respondem), uma pasta por parte, igual ao Dominio e aos Dados
+│   │   ├── Comum/                ErroHandler (o erro vira resposta padrão)
+│   │   ├── Helpers/              TokenHelper (gera e valida o JWT), ChaveHelper, RedeLocalHelper
 │   │   └── Models/               formato da configuração (JwtOpcoes)
 │   ├── ViaPermanente.Dominio/    regras, sem saber de HTTP nem de banco; uma pasta por parte do sistema
 │   │   ├── <Parte>/              Pedidos, Chegadas, Pecas, Armazens, Campo, Via, Ambiental, Integracoes,
@@ -36,7 +38,7 @@ CPTM-back/
 └── tests/ViaPermanente.Testes/   xUnit: Helpers, Services (repositório falso) e Banco (modelo do EF)
 ```
 
-Cada parte do sistema tem a sua pasta, com os seus models, DTOs, services e repositories; o namespace segue a pasta (`ViaPermanente.Dominio.Pedidos`, `ViaPermanente.Dominio.Pedidos.Models`, `ViaPermanente.Dominio.Pedidos.Dtos`, `ViaPermanente.Dados.Pedidos`). Os handlers (`Api/Handlers`) e os helpers (`Api/Helpers`, `Dominio/Helpers`, `Dados/Helpers`) ficam à parte, juntos. As `Configuracoes` seguem os grupos do cérebro (Catalogos, Pessoas, Compras, Chegada, Patio, Via, Campo e Ambiental).
+Cada parte do sistema tem a sua pasta, com os seus models, DTOs, services e repositories; o namespace segue a pasta (`ViaPermanente.Dominio.Pedidos`, `ViaPermanente.Dominio.Pedidos.Models`, `ViaPermanente.Dominio.Pedidos.Dtos`, `ViaPermanente.Dados.Pedidos`, `ViaPermanente.Api.Pedidos`). Na API, cada parte também tem a sua pasta, com os handlers dela (`Api/Pedidos/PedidoHandler.cs`); as rotas não dependem da pasta. Os helpers (`Api/Helpers`, `Dominio/Helpers`, `Dados/Helpers`) ficam à parte. As `Configuracoes` seguem os grupos do cérebro (Catalogos, Pessoas, Compras, Chegada, Patio, Via, Campo e Ambiental).
 
 - **Dependência:** `Api → Dominio`, `Dados → Dominio`, `Api → Dados` só para registrar no `Program.cs`. Dentro: `Handlers → Services → Repositories (interface)`; a implementação está em `Dados`. `Models`, `Dtos` e `Helpers` servem a todos e não dependem de ninguém.
 
@@ -62,6 +64,7 @@ Cada parte do sistema tem a sua pasta, com os seus models, DTOs, services e repo
 
 ## Histórico
 
+- 2026-10-13 — Uma pasta por parte também na API (pedido do Victor): os 30 handlers saíram de `Api/Handlers` para `Api/<Parte>/` (namespace `ViaPermanente.Api.<Parte>`); o ErroHandler foi para `Api/Comum`. As rotas não mudaram; os 204 testes passaram iguais.
 - 2026-10-13 — Uma pasta por parte do sistema (pedido do Victor): models, DTOs, services e repositories juntos por parte; handlers e helpers à parte. Só mudou o lugar dos arquivos, os namespaces e os usings; os 171 testes passaram iguais e o EF não viu mudança no banco.
 
 - 2026-10-11 — Criação: três projetos + testes, 51 tabelas na migração `Inicial`, login com JWT e cargo, catálogos e parâmetros.
