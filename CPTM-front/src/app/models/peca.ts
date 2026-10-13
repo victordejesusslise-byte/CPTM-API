@@ -25,3 +25,5 @@ export interface ConferenciaDto {
   pilhasLidas: string[]; pilhasFaltando: string[]; esperadas: number; lidas: number;
   faltando: PecaConferidaDto[]; aMais: PecaConferidaDto[]; tagsSemCadastro: string[];
 }
+export interface FotoDaPecaDto { momento: 'entrada' | 'via'; arquivo: string; data: string; descricao: string | null; noServidor: boolean; analiseIa: string | null; }
+export interface FotosDaPecaDto { idDormente: number; entrada: FotoDaPecaDto[]; via: FotoDaPecaDto[]; }

@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { ambiente } from '../../environments/ambiente';
 import { consulta } from '../helpers/consulta';
-import { CadastroPecaDto, EventoDaPecaDto, GuardarPecaDto, NovaPecaDto, PecaDto, TrocarPilhaDto, VerificarPecaDto } from '../models/peca';
+import { CadastroPecaDto, EventoDaPecaDto, FotosDaPecaDto, GuardarPecaDto, NovaPecaDto, PecaDto, TrocarPilhaDto, VerificarPecaDto } from '../models/peca';
 
 /** A peça: tag, cadastro, qualidade, entrada na pilha, troca de pilha, estoque e histórico. */
 @Injectable({ providedIn: 'root' })
@@ -26,6 +26,18 @@ export class Pecas {
   }
   doFeixe(idFeixe: number): Observable<PecaDto[]> {
     return this.http.get<PecaDto[]>(`${this.api}/dormentes`, { params: consulta({ idFeixe }) });
+  }
+  /** Guarda a foto da entrada da peça; o caminho que volta vai no fotoArquivo da verificação. */
+  enviarFoto(id: number, foto: File): Observable<{ arquivo: string }> {
+    const corpo = new FormData();
+    corpo.append('foto', foto);
+    return this.http.post<{ arquivo: string }>(`${this.api}/dormentes/${id}/fotos`, corpo);
+  }
+  fotos(id: number): Observable<FotosDaPecaDto> {
+    return this.http.get<FotosDaPecaDto>(`${this.api}/dormentes/${id}/fotos`);
+  }
+  arquivoFoto(caminho: string): Observable<Blob> {
+    return this.http.get(`${this.api}/fotos`, { params: consulta({ caminho }), responseType: 'blob' });
   }
   historico(id: number): Observable<EventoDaPecaDto[]> {
     return this.http.get<EventoDaPecaDto[]>(`${this.api}/dormentes/${id}/historico`);

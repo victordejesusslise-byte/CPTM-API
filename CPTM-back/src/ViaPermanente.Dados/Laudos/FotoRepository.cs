@@ -13,4 +13,12 @@ public class FotoRepository(string pasta) : IFotoRepository
         File.WriteAllBytes(completo, conteudo);
         return relativo.Replace('\\', '/');
     }
+
+    public byte[]? Ler(string caminho)
+    {
+        if (string.IsNullOrWhiteSpace(caminho)) return null;
+        var base_ = Path.GetFullPath(pasta);
+        var completo = Path.GetFullPath(Path.Combine(base_, caminho));
+        return completo.StartsWith(base_ + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && File.Exists(completo) ? File.ReadAllBytes(completo) : null;
+    }
 }
