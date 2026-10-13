@@ -5,6 +5,7 @@ import { nomeDaFoto } from '../../helpers/foto';
 import { dataHora, km, mensagemDeErro, metros } from '../../helpers/formato';
 import { AtaqueBiologicoInspecao, EstadoConservacao, MetodoCaptura, RachaduraInspecao } from '../../models/enums';
 import { PecaDto } from '../../models/peca';
+import { Nota } from '../../shared/nota/nota';
 import { InspecaoDto, Inspecoes } from '../../services/inspecoes';
 import { Laudos } from '../../services/laudos';
 import { Pecas } from '../../services/pecas';
@@ -18,7 +19,7 @@ import { FORMULARIO } from '../../shared/ui';
  */
 @Component({
   selector: 'app-inspecao',
-  imports: [FormsModule, FORMULARIO, LeituraTag],
+  imports: [FormsModule, FORMULARIO, LeituraTag, Nota],
   templateUrl: './inspecao.html',
 })
 export class Inspecao {

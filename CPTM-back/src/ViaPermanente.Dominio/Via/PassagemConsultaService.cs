@@ -29,8 +29,9 @@ public class PassagemConsultaService(IPassagemConsultaRepository repo, IParametr
         var leituras = await repo.Leituras(idPassagem);
         var donos = await pecas.PorIds(leituras.Where(l => l.IdDormente is not null).Select(l => l.IdDormente!.Value).Distinct().ToList());
         var detalhe = leituras
-            .Select(l => new LeituraDaPassagemDto(l.IdLeituraVia, l.IdDormente, l.IdDormente is int id && donos.TryGetValue(id, out var p) ? p.Codigo : null,
-                l.KmMedido, l.Leitura, l.DesvioMm, l.RachaduraSuspeita, Fora(l, limite), l.Data))
+            .Select(l => (Leitura: l, Peca: l.IdDormente is int id ? donos.GetValueOrDefault(id) : null))
+            .Select(x => new LeituraDaPassagemDto(x.Leitura.IdLeituraVia, x.Leitura.IdDormente, x.Peca?.Codigo,
+                x.Leitura.KmMedido, x.Leitura.Leitura, x.Leitura.DesvioMm, x.Leitura.RachaduraSuspeita, Fora(x.Leitura, limite), x.Leitura.Data, x.Peca?.Nota))
             .OrderByDescending(l => !l.Leitura || l.ForaDePosicao || l.RachaduraSuspeita || l.IdDormente is null)
             .ThenBy(l => l.Km)
             .Take(500)

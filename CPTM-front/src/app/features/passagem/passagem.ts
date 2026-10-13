@@ -5,6 +5,7 @@ import { dataHora, km, mensagemDeErro } from '../../helpers/formato';
 import { PassagemDto, Passagens } from '../../services/passagens';
 import { Estado } from '../../shared/estado/estado';
 import { FORMULARIO } from '../../shared/ui';
+import { Nota } from '../../shared/nota/nota';
 
 type Aba = 'noite' | 'anteriores' | 'numeros';
 const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: 'Passagens anteriores', numeros: 'Números do período' };
@@ -15,7 +16,7 @@ const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: '
  */
 @Component({
   selector: 'app-passagem',
-  imports: [FORMULARIO, Estado],
+  imports: [FORMULARIO, Estado, Nota],
   templateUrl: './passagem.html',
 })
 export class Passagem {

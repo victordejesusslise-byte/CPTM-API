@@ -58,6 +58,7 @@
         <div class="kv">
           <div><span class="lbl">Km</span><b class="mono">{{ a.km !== null ? km(a.km) : '—' }}</b></div>
           <div><span class="lbl">Peça</span><b class="mono">{{ a.codigoPeca ?? '—' }}</b></div>
+          @if (a.idDormente) { <div><span class="lbl">Nota</span><app-nota [nota]="a.notaPeca" /></div> }
           <div><span class="lbl">Tag</span><b class="mono">{{ a.tag ?? 'sem tag' }}</b></div>
           <div><span class="lbl">Quando</span><b>{{ dataHora(a.data) }}</b></div>
           @if (a.desvioMm !== null) { <div><span class="lbl">Desvio</span><b class="mono" [class.vermelho]="a.desvioMm > 40">{{ a.desvioMm }} mm</b></div> }

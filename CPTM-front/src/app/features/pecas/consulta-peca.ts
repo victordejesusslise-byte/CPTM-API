@@ -3,6 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { dataHora, km, mensagemDeErro, metros } from '../../helpers/formato';
 import { MetodoCaptura } from '../../models/enums';
 import { FotoDaPecaDto, FotosDaPecaDto, PecaDto } from '../../models/peca';
+import { Nota } from '../../shared/nota/nota';
 import { Pecas } from '../../services/pecas';
 import { LeituraTag } from '../../shared/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../shared/ui';
@@ -10,7 +11,7 @@ import { FORMULARIO } from '../../shared/ui';
 /** Consultar a peça pela tag: onde está e tudo o que aconteceu com ela. */
 @Component({
   selector: 'app-consulta-peca',
-  imports: [FORMULARIO, LeituraTag],
+  imports: [FORMULARIO, LeituraTag, Nota],
   template: `
     <p class="sobre">Peça</p>
     <h1>Consultar peça</h1>
@@ -20,7 +21,7 @@ import { FORMULARIO } from '../../shared/ui';
     @if (peca(); as p) {
       <div class="cartao">
         <h2 class="mono">{{ p.codigo }}</h2>
-        <p>{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª classe · <span class="etiqueta">{{ p.situacao }}</span></p>
+        <p>{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª classe · <span class="etiqueta">{{ p.situacao }}</span> <app-nota [nota]="p.nota" /></p>
         <p class="rotulo">Tag {{ p.tag ?? '—' }} · feixe {{ p.numeroFeixe }} · {{ p.armazem }} · pilha {{ p.pilha ?? '—' }}
           @if (p.kmProjeto !== null) { · km {{ km(p.kmProjeto) }} }</p>
       </div>

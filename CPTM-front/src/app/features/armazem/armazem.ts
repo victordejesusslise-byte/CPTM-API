@@ -10,12 +10,13 @@ import { Conferencias } from '../../services/conferencias';
 import { Pecas } from '../../services/pecas';
 import { LeituraTag, leitura } from '../../shared/leitura-tag/leitura-tag';
 import { Coluna, Tabela } from '../../shared/tabela/tabela';
+import { Nota, classeNota } from '../../shared/nota/nota';
 import { FORMULARIO } from '../../shared/ui';
 
 /** O armazém: estoque, entrada na pilha, troca de pilha e conferência pilha por pilha. */
 @Component({
   selector: 'app-armazem',
-  imports: [FormsModule, FORMULARIO, LeituraTag, Tabela],
+  imports: [FormsModule, FORMULARIO, LeituraTag, Tabela, Nota],
   templateUrl: './armazem.html',
 })
 export class Armazem {
@@ -42,6 +43,7 @@ export class Armazem {
     { titulo: 'Classe', valor: (p) => `${p.classe}ª` },
     { titulo: 'Armazém', valor: (p) => p.armazem },
     { titulo: 'Pilha', valor: (p) => p.pilha ?? 'sem pilha', vermelho: (p) => !p.pilha },
+    { titulo: 'Nota', valor: (p) => p.nota ?? 'sem nota', pilula: (p) => classeNota(p.nota) },
     { titulo: 'No armazém', valor: (p) => (p.entradaArmazemEm ? `${Math.floor((Date.now() - new Date(p.entradaArmazemEm).getTime()) / 86_400_000)} dias` : '—') },
   ];
 

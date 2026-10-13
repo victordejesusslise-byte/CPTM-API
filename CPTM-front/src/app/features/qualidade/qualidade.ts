@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { Nota } from '../../shared/nota/nota';
 import { switchMap } from 'rxjs';
 import { FormBuilder, Validators } from '@angular/forms';
 import { novoIdCliente } from '../../helpers/arquivo';
@@ -12,7 +13,7 @@ import { FORMULARIO } from '../../shared/ui';
 /** A verificação de qualidade (especialista): lê a peça, marca o que viu e aprova ou reprova. */
 @Component({
   selector: 'app-qualidade',
-  imports: [FORMULARIO, LeituraTag],
+  imports: [FORMULARIO, LeituraTag, Nota],
   templateUrl: './qualidade.html',
 })
 export class Qualidade {

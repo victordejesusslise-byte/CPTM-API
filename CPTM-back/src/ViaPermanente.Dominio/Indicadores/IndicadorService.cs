@@ -4,17 +4,18 @@ using ViaPermanente.Dominio.Campo.Models;
 using ViaPermanente.Dominio.Catalogos;
 using ViaPermanente.Dominio.Chegadas;
 using ViaPermanente.Dominio.Indicadores.Dtos;
+using ViaPermanente.Dominio.Pecas;
 using ViaPermanente.Dominio.Pecas.Models;
 using ViaPermanente.Dominio.Pedidos;
 
 namespace ViaPermanente.Dominio.Indicadores;
 
 /// <summary>
-/// Os 18 indicadores do cérebro, calculados das tabelas de evento para o período (os de "agora" ignoram o período:
+/// Os 18 indicadores do cérebro (e a nota das peças, o 19º, quando há o repositório dos sinais), calculados das tabelas de evento para o período (os de "agora" ignoram o período:
 /// estoque, dias de peça condenada, última conferência e falhas da tag em 7 noites). Sem dado, o valor vem nulo.
 /// </summary>
 public class IndicadorService(IIndicadorRepository dados, IRelatorioAmbientalRepository estoque, PedidoService pedidos,
-    ICatalogoRepository catalogo, ICadastroRepository cadastros)
+    ICatalogoRepository catalogo, ICadastroRepository cadastros, ISinaisPecaRepository? sinais = null)
 {
     private static readonly CultureInfo Br = CultureInfo.GetCultureInfo("pt-BR");
     private static readonly StatusTroca[] Abertas = [StatusTroca.Pedida, StatusTroca.Aprovada, StatusTroca.AguardandoPeca, StatusTroca.Separada, StatusTroca.Recusada];
@@ -136,6 +137,19 @@ public class IndicadorService(IIndicadorRepository dados, IRelatorioAmbientalRep
         lista.Add(new("segunda-classe-pedido", "Segunda classe por pedido", dosPedidos.Count == 0 ? null : Arred(dosPedidos.Average(p => p.SegundaClasse.Percentual)), "%",
             $"média de {dosPedidos.Count} pedido(s) {periodo}", dosPedidos.FirstOrDefault() is { } p0 ? $"limite de {p0.SegundaClasse.Limite:0.#}% em {p0.SegundaClasse.Unidade}" : "limite em PARAMETRO",
             dosPedidos.Any(p => !p.SegundaClasse.Valido), dosPedidos.Select(p => Det(p.Codigo, $"{p.SegundaClasse.Percentual:0.#}%")).ToList()));
+
+        // 19: a nota única das peças em uso (pedido do Victor em 2026-10-12)
+        if (sinais is not null)
+        {
+            var notas = (await sinais.Sinais(await sinais.PecasEmUso())).Values.Select(NotaDaPeca.Calcular).ToList();
+            var avaliadas = notas.Count(n => n is not null);
+            int Com(string nota) => notas.Count(n => n == nota);
+            lista.Add(Taxa("notas-das-pecas", "Nota das peças", Com(NotaDaPeca.Ruim) + Com(NotaDaPeca.Critico), avaliadas,
+                $"peças avaliadas no armazém e na via em Ruim ou Crítico ({notas.Count - avaliadas} sem avaliação)", "vermelho com peça em Crítico", _ => Com(NotaDaPeca.Critico) > 0,
+                [Det(NotaDaPeca.Bom, Com(NotaDaPeca.Bom).ToString()), Det(NotaDaPeca.Regular, Com(NotaDaPeca.Regular).ToString()),
+                 Det(NotaDaPeca.Ruim, Com(NotaDaPeca.Ruim).ToString()), Det(NotaDaPeca.Critico, Com(NotaDaPeca.Critico).ToString()),
+                 Det("sem avaliação", (notas.Count - avaliadas).ToString())]));
+        }
 
         return lista;
     }

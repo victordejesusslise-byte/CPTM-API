@@ -5,6 +5,8 @@ export interface PecaDto {
   idEspecie: number; especie: string; classe: number; idTamanho: number; comprimentoM: number;
   idArmazem: number; armazem: string; idPilha: number | null; pilha: string | null; entradaArmazemEm: string | null;
   idTrecho: number | null; kmProjeto: number | null; situacao: string;
+  /** a nota única de estado: Bom, Regular, Ruim ou Crítico (nula sem avaliação) */
+  nota?: string | null;
 }
 export interface CadastroPecaDto { resultado: string; mensagem: string; peca: PecaDto | null; }
 export interface EventoDaPecaDto { data: string; tipo: string; descricao: string; idUsuario: number | null; origem: string; }

@@ -98,7 +98,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             var naVia = aprovadas.Take(3).ToList();
             for (var i = 0; i < naVia.Count; i++)
             {
-                naVia[i].IdPilha = null; naVia[i].RetiradaEm = agora.AddDays(-10);
+                naVia[i].IdPilha = null; // retirada_em é a saída da via (troca), não do armazém
                 naVia[i].IdTrecho = trecho.IdTrecho; naVia[i].KmProjeto = 213.100m + i * 0.006m;
             }
             await repo.AdicionarVarios(naVia.Select(d => new Movimentacao
@@ -151,7 +151,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             separada.Status = StatusTroca.Separada; separada.IdUsuarioAprovou = idUsuario; separada.DataAprovacao = agora.AddDays(-7);
             separada.IdDormenteEntrou = reserva.IdDormente; separada.TagEntrou = tagReserva; separada.IdUsuarioSeparou = idUsuario; separada.DataSeparacao = agora.AddDays(-1);
             await repo.AdicionarVarios(new List<Troca> { pedida, aprovada, separada });
-            reserva.IdPilha = null; reserva.RetiradaEm = agora.AddDays(-1);
+            reserva.IdPilha = null; // separada: saiu da pilha, reservada para a troca
             await repo.Adicionar(new Movimentacao
             {
                 IdDormente = reserva.IdDormente, Tipo = TipoMovimentacao.Saida, IdPilhaOrigem = pilha.IdPilha, IdTroca = separada.IdTroca,

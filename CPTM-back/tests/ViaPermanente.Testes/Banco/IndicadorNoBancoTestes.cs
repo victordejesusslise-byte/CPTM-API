@@ -1,4 +1,5 @@
 using ViaPermanente.Dados;
+using ViaPermanente.Dados.Pecas;
 using ViaPermanente.Dados.Ambiental;
 using ViaPermanente.Dados.Apresentacao;
 using ViaPermanente.Dados.Catalogos;
@@ -41,5 +42,25 @@ public class IndicadorNoBancoTestes : IAsyncLifetime
         Assert.Null(indicadores["disponibilidade-registros"].Valor);
         Assert.Null(indicadores["acerto-camera"].Valor);                             // sem alerta decidido
         Assert.False(indicadores["confiabilidade-dados"].Vermelho);
+    }
+
+    [Fact]
+    public async Task Com_os_sinais_da_peca_vem_a_nota_das_pecas_em_uso()
+    {
+        var id = (await new UsuarioService(new UsuarioRepository(db)).Criar(new NovoUsuarioDto { Nome = "S", Email = "s@teste.local", Senha = "senha-boa-1", Cargo = Cargo.Supervisor })).Id;
+        await new ApresentacaoService(new ApresentacaoRepository(db)).CriarExemplo(id);
+        var ofertas = new OfertaService(new OfertaRepository(db), new PedidoRepository(db), new CatalogoRepository(db));
+        var servico = new IndicadorService(new IndicadorRepository(db), new RelatorioAmbientalRepository(db),
+            new PedidoService(new PedidoRepository(db), new CatalogoRepository(db), new ParametroRepository(db), ofertas), new CatalogoRepository(db), new CadastroRepository(db),
+            new SinaisPecaRepository(db));
+
+        var indicadores = (await servico.Calcular(null, null, DateTime.Now.AddMinutes(1))).ToDictionary(i => i.Chave);
+
+        Assert.Equal(19, indicadores.Count);
+        var notas = indicadores["notas-das-pecas"];
+        Assert.Equal(0m, notas.Valor);                                                // as 26 do estoque foram aprovadas e nada as derrubou
+        Assert.False(notas.Vermelho);
+        Assert.Equal("0", notas.Detalhes.Single(d => d.Rotulo == "sem avaliação").Valor);
+        Assert.Equal(26, notas.Detalhes.Where(d => d.Rotulo != "sem avaliação").Sum(d => int.Parse(d.Valor)));
     }
 }

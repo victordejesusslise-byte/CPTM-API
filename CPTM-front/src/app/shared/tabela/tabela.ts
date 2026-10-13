@@ -7,6 +7,8 @@ export interface Coluna<T> {
   mono?: boolean;
   /** Vermelho só para exceção: divergência, reprovada, o que pede ação. */
   vermelho?: (linha: T) => boolean;
+  /** Mostra o valor numa pílula com esta classe (ex.: a nota da peça). */
+  pilula?: (linha: T) => string;
 }
 
 /**
@@ -22,7 +24,7 @@ export interface Coluna<T> {
         @for (c of colunas(); track c.titulo; let i = $index) {
           <ng-container [matColumnDef]="'c' + i">
             <th mat-header-cell *matHeaderCellDef>{{ c.titulo }}</th>
-            <td mat-cell *matCellDef="let l" [class.mono]="c.mono" [class.vermelho]="c.vermelho?.(l)">{{ c.valor(l) ?? '—' }}</td>
+            <td mat-cell *matCellDef="let l" [class.mono]="c.mono" [class.vermelho]="c.vermelho?.(l)">@if (c.pilula) { <span [class]="c.pilula(l)">{{ c.valor(l) ?? '—' }}</span> } @else { {{ c.valor(l) ?? '—' }} }</td>
           </ng-container>
         }
         <tr mat-header-row *matHeaderRowDef="nomes()"></tr>

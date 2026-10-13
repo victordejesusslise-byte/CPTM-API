@@ -11,7 +11,7 @@ namespace ViaPermanente.Dominio.Pecas;
 /// Etapa 03: o cadastro da peça, com a nossa tag UHF cravada (módulo do celular ou pistola), e as consultas da peça.
 /// A espécie da plaquinha do feixe vira a primeira classificação. Espécie, tamanho e placa não são copiados: vêm do feixe.
 /// </summary>
-public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo)
+public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, ISinaisPecaRepository? sinais = null)
 {
     /// <summary>O próximo número para o módulo gravar. Não fica reservado: o cadastro confere de novo.</summary>
     public async Task<string> ProximaTag() => TagHelper.Proxima(await pecas.MaiorTag());
@@ -144,6 +144,7 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo)
         var tamanhos = (await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho);
         var armazens = (await catalogo.ListarArmazens()).ToDictionary(a => a.IdArmazem, a => a.Nome);
         var pilhas = (await catalogo.ListarPilhas()).ToDictionary(p => p.IdPilha);
+        var sinaisDe = sinais is null ? new Dictionary<int, SinaisDaPeca>() : await sinais.Sinais(resumos.Select(r => r.IdDormente).ToList());
 
         return resumos.Select(r =>
         {
@@ -153,7 +154,8 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo)
             return new PecaDto(r.IdDormente, $"DM-E{r.IdEmpresa:00}-L{r.IdLote:00}-{r.IdDormente:0000}", r.TagAtiva, r.TagFornecedor,
                 r.IdPedido, r.IdLote, r.IdFeixe, r.NumeroFeixe, especie.IdEspecie, especie.NomeCientifico, especie.Classe,
                 r.IdTamanho, tamanhos[r.IdTamanho].ComprimentoM, idArmazem, armazens.GetValueOrDefault(idArmazem, ""),
-                pilha?.IdPilha, pilha?.Codigo, r.EntradaArmazemEm, r.IdTrecho, r.KmProjeto, Situacao(r));
+                pilha?.IdPilha, pilha?.Codigo, r.EntradaArmazemEm, r.IdTrecho, r.KmProjeto, Situacao(r),
+                NotaDaPeca.Calcular(sinaisDe.GetValueOrDefault(r.IdDormente)));
         }).ToList();
     }
 

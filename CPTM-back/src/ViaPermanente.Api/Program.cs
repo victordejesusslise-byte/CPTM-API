@@ -70,6 +70,7 @@ builder.Services.AddScoped<IChegadaRepository, ChegadaRepository>();
 builder.Services.AddScoped<IPecaRepository, PecaRepository>();
 builder.Services.AddScoped<IClassificacaoRepository, ClassificacaoRepository>();
 builder.Services.AddScoped<IFotoPecaRepository, FotoPecaRepository>();
+builder.Services.AddScoped<ISinaisPecaRepository, SinaisPecaRepository>();
 builder.Services.AddScoped<IPassagemConsultaRepository, PassagemConsultaRepository>();
 builder.Services.AddScoped<IVarreduraRepository, VarreduraRepository>();
 builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();

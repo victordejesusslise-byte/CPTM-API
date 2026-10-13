@@ -6,6 +6,7 @@ export interface AlertaDto {
   id: number; origem: OrigemAlerta; tipo: string; status: StatusAlerta; data: string; desvioMm: number | null; km: number | null;
   idDormente: number | null; codigoPeca: string | null; tag: string | null; deteccao: DeteccaoDto | null; vistorias: number;
   idUsuarioDecisao: number | null; dataDecisao: string | null; motivoDescarte: string | null;
+  notaPeca?: string | null;
 }
 export interface NovaVistoriaDto { viu: boolean; leitura?: LeituraDto | null; tagNaoResponde: boolean; fotoArquivo: string; observacao?: string | null; idCliente?: string; }
 export interface NovoAvisoTagDto { tag: string; km?: number | null; observacao?: string | null; }

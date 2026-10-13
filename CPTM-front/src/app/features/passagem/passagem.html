@@ -36,16 +36,17 @@
         <button type="button" [attr.aria-pressed]="so() === 'todas'" (click)="so.set('todas')">Todas</button>
       </div>
       <div class="tabela"><table class="simples">
-        <thead><tr><th>Peça</th><th class="num">Km</th><th>Tag</th><th class="num">Desvio</th><th>Rachadura</th></tr></thead>
+        <thead><tr><th>Peça</th><th>Nota</th><th class="num">Km</th><th>Tag</th><th class="num">Desvio</th><th>Rachadura</th></tr></thead>
         <tbody>@for (l of leituras(); track l.id) {
           <tr>
             <td class="mono">{{ l.codigoPeca ?? 'tag sem cadastro' }}</td>
+            <td>@if (l.idDormente) { <app-nota [nota]="l.notaPeca" /> } @else { — }</td>
             <td class="num">{{ l.km !== null ? km(l.km) : '—' }}</td>
             <td [class.vermelho]="!l.leitura">{{ l.leitura ? 'respondeu' : 'não respondeu' }}</td>
             <td class="num" [class.vermelho]="l.foraDePosicao">{{ l.desvioMm !== null ? l.desvioMm + ' mm' : '—' }}</td>
             <td [class.vermelho]="l.rachaduraSuspeita">{{ l.rachaduraSuspeita ? 'suspeita' : '—' }}</td>
           </tr>
-        } @empty { <tr><td colspan="5">Nenhuma leitura com problema nesta passagem.</td></tr> }</tbody>
+        } @empty { <tr><td colspan="6">Nenhuma leitura com problema nesta passagem.</td></tr> }</tbody>
       </table></div>
     </section>
   }

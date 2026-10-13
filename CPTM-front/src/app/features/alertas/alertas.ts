@@ -14,6 +14,7 @@ import { Alertas as AlertasApi } from '../../services/alertas';
 import { Estado } from '../../shared/estado/estado';
 import { LeituraTag, leitura } from '../../shared/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../shared/ui';
+import { Nota } from '../../shared/nota/nota';
 
 type Aba = 'imagem' | 'sensores' | 'tags';
 const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: 'Alertas dos sensores', tags: 'Tags sem cadastro' };
@@ -24,7 +25,7 @@ const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: '
  */
 @Component({
   selector: 'app-alertas',
-  imports: [FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag],
+  imports: [FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag, Nota],
   templateUrl: './alertas.html',
 })
 export class Alertas {

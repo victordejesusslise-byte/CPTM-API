@@ -104,7 +104,7 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
                 a.IdDormente, peca?.Codigo, peca?.Tag,
                 d is null ? null : new DeteccaoDto(d.IdDeteccao, d.QuadroArquivo, d.Camera, d.CaixaX, d.CaixaY, d.CaixaLargura, d.CaixaAltura,
                     d.Defeito.ToString(), d.Grau, d.Confianca, d.VersaoModelo),
-                vistorias.GetValueOrDefault(a.IdAlerta), a.IdUsuarioDecisao, a.DataDecisao, a.MotivoDescarte);
+                vistorias.GetValueOrDefault(a.IdAlerta), a.IdUsuarioDecisao, a.DataDecisao, a.MotivoDescarte, peca?.Nota);
         }).ToList();
     }
 }

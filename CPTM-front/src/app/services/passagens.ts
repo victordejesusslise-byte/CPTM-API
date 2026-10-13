@@ -8,7 +8,7 @@ export interface PassagemDto {
   id: number; codigo: string; dataInicio: string; dataFim: string | null; leituras: number; semResposta: number; foraDePosicao: number;
   tagsDesconhecidas: number; mudancasDeFaixa: number; alertasSensor: number; alertasImagem: number; deteccoesAbaixoDoMinimo: number;
 }
-export interface LeituraDaPassagemDto { id: number; idDormente: number | null; codigoPeca: string | null; km: number | null; leitura: boolean; desvioMm: number | null; rachaduraSuspeita: boolean; foraDePosicao: boolean; data: string; }
+export interface LeituraDaPassagemDto { id: number; idDormente: number | null; codigoPeca: string | null; km: number | null; leitura: boolean; desvioMm: number | null; rachaduraSuspeita: boolean; foraDePosicao: boolean; data: string; notaPeca?: string | null; }
 export interface PassagemDetalheDto { resumo: PassagemDto; veiculo: string | null; kmInicio: number | null; kmFim: number | null; limiteMm: number; leituras: LeituraDaPassagemDto[]; }
 
 /** GET /api/passagens: o que o carro mandou em cada noite (operador da via, técnico, supervisor). */

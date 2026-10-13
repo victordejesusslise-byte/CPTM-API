@@ -11,11 +11,11 @@ public static class IndicadoresPorCargo
     private static readonly Dictionary<Cargo, HashSet<string>> DoCargo = new()
     {
         [Cargo.OperadorPatio] = ["divergencia-nota-chegada", "divergencia-conferencia", "estoque-m3", "gravacao-conferida", "segunda-classe-pedido",
-            "alvo-unico", "acerto-ocr", "reprovacao-fornecedor"],
-        [Cargo.Especialista] = ["reprovacao-fornecedor", "estoque-m3", "identificado-corretamente", "taxa-retrabalho", "acerto-ocr"],
+            "alvo-unico", "acerto-ocr", "reprovacao-fornecedor", "notas-das-pecas"],
+        [Cargo.Especialista] = ["reprovacao-fornecedor", "estoque-m3", "identificado-corretamente", "taxa-retrabalho", "acerto-ocr", "notas-das-pecas"],
         [Cargo.Tecnico] = ["acerto-camera", "confiabilidade-dados", "dias-peca-condenada", "tempo-passos-troca", "inspecoes-por-dia",
-            "tempo-medio-inspecao", "taxa-retrabalho", "falhas-tag-7-noites"],
-        [Cargo.OperadorVia] = ["confiabilidade-dados", "falhas-tag-7-noites", "dias-peca-condenada", "tempo-passos-troca"],
+            "tempo-medio-inspecao", "taxa-retrabalho", "falhas-tag-7-noites", "notas-das-pecas"],
+        [Cargo.OperadorVia] = ["confiabilidade-dados", "falhas-tag-7-noites", "dias-peca-condenada", "tempo-passos-troca", "notas-das-pecas"],
     };
 
     public static bool Ve(Cargo cargo, string chave)
