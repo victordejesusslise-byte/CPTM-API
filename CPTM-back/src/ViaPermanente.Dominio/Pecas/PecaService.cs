@@ -155,7 +155,8 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
                 r.IdPedido, r.IdLote, r.IdFeixe, r.NumeroFeixe, especie.IdEspecie, especie.NomeCientifico, especie.Classe,
                 r.IdTamanho, tamanhos[r.IdTamanho].ComprimentoM, idArmazem, armazens.GetValueOrDefault(idArmazem, ""),
                 pilha?.IdPilha, pilha?.Codigo, r.EntradaArmazemEm, r.IdTrecho, r.KmProjeto, Situacao(r),
-                NotaDaPeca.Calcular(sinaisDe.GetValueOrDefault(r.IdDormente)));
+                NotaDaPeca.Calcular(sinaisDe.GetValueOrDefault(r.IdDormente)),
+                r.RetiradaEm is null && sinaisDe.GetValueOrDefault(r.IdDormente) is { } s ? NotaDaPeca.Posicao(s.Linha, r.KmProjeto, s.NumeroNoTrecho) : null);
         }).ToList();
     }
 

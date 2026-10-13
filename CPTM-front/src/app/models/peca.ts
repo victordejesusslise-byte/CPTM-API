@@ -7,6 +7,8 @@ export interface PecaDto {
   idTrecho: number | null; kmProjeto: number | null; situacao: string;
   /** a nota única de estado: Bom, Regular, Ruim ou Crítico (nula sem avaliação) */
   nota?: string | null;
+  /** o ID de posição na via: L09-213100-0012 = linha · km · nº da peça no trecho (nulo fora da via) */
+  posicao?: string | null;
 }
 export interface CadastroPecaDto { resultado: string; mensagem: string; peca: PecaDto | null; }
 export interface EventoDaPecaDto { data: string; tipo: string; descricao: string; idUsuario: number | null; origem: string; }

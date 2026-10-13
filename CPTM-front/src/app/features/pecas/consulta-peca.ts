@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { dataHora, km, mensagemDeErro, metros } from '../../helpers/formato';
 import { MetodoCaptura } from '../../models/enums';
@@ -23,7 +23,8 @@ import { FORMULARIO } from '../../shared/ui';
         <h2 class="mono">{{ p.codigo }}</h2>
         <p>{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª classe · <span class="etiqueta">{{ p.situacao }}</span> <app-nota [nota]="p.nota" /></p>
         <p class="rotulo">Tag {{ p.tag ?? '—' }} · feixe {{ p.numeroFeixe }} · {{ p.armazem }} · pilha {{ p.pilha ?? '—' }}
-          @if (p.kmProjeto !== null) { · km {{ km(p.kmProjeto) }} }</p>
+          @if (p.kmProjeto !== null) { · km {{ km(p.kmProjeto) }} }
+          @if (p.posicao) { · posição <b class="mono">{{ p.posicao }}</b> }</p>
       </div>
       <h2>Como estava × como ficou</h2>
       <div class="comparar">
@@ -54,7 +55,9 @@ import { FORMULARIO } from '../../shared/ui';
     }
   `,
 })
-export class ConsultaPeca implements OnDestroy {
+export class ConsultaPeca implements OnInit, OnDestroy {
+  /** a tag que veio na rota (?tag=), do mapa do trecho */
+  readonly tagDaRota = input<string | undefined>(undefined, { alias: 'tag' });
   private readonly pecas = inject(Pecas);
   protected readonly metros = metros;
   protected readonly km = km;
@@ -85,6 +88,14 @@ export class ConsultaPeca implements OnDestroy {
   private liberar(): void {
     Object.values(this.urls()).forEach((u) => URL.revokeObjectURL(u));
     this.urls.set({});
+  }
+
+  ngOnInit(): void {
+    const tag = this.tagDaRota();
+    if (tag) {
+      this.tag.set(tag);
+      this.buscar();
+    }
   }
 
   ngOnDestroy(): void {

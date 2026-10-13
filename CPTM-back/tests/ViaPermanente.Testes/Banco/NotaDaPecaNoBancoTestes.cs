@@ -4,6 +4,7 @@ using ViaPermanente.Dados.Apresentacao;
 using ViaPermanente.Dados.Catalogos;
 using ViaPermanente.Dados.Pecas;
 using ViaPermanente.Dados.Pessoas;
+using ViaPermanente.Dados.Via;
 using ViaPermanente.Dominio.Apresentacao;
 using ViaPermanente.Dominio.Chegadas.Models;
 using ViaPermanente.Dominio.Pecas;
@@ -11,6 +12,7 @@ using ViaPermanente.Dominio.Pecas.Models;
 using ViaPermanente.Dominio.Pessoas;
 using ViaPermanente.Dominio.Pessoas.Dtos;
 using ViaPermanente.Dominio.Pessoas.Models;
+using ViaPermanente.Dominio.Via;
 
 namespace ViaPermanente.Testes.Banco;
 
@@ -44,5 +46,21 @@ public class NotaDaPecaNoBancoTestes : IAsyncLifetime
         Assert.Equal("Crítico", todas[reprovada].Nota);
         Assert.Equal("NaVia", todas[naVia[0]].Situacao);
         Assert.All(await pecas.Estoque(), p => Assert.NotNull(p.Nota));
+
+        // O ID de posição: linha, km e a ordem da peça no trecho; fora da via, nulo.
+        Assert.Matches(@"^L\d{2}-213100-0001$", todas[naVia[0]].Posicao);
+        Assert.Matches(@"^L\d{2}-213112-0003$", todas[naVia[2]].Posicao);
+        Assert.Null(todas[reprovada].Posicao);
+
+        // A tela do trecho: as 3 peças da via nas faixas de 100 m, 2 em Ruim.
+        var mapa = new TrechoMapaService(new TrechoMapaRepository(db), pecas);
+        var idTrecho = await db.Set<Dormente>().Where(d => d.IdTrecho != null).Select(d => d.IdTrecho!.Value).FirstAsync();
+        var trecho = Assert.Single(await mapa.Trechos(), t => t.Id == idTrecho);
+        Assert.Equal((3, 2), (trecho.Pecas, trecho.RuimOuCritico));
+        var doTrecho = (await mapa.Mapa(idTrecho))!;
+        Assert.Equal(100, doTrecho.FaixaM);
+        Assert.Equal(3, doTrecho.Faixas.Sum(f => f.Pecas.Count));
+        Assert.Equal(2, doTrecho.Faixas.Sum(f => f.Ruim));
+        Assert.Null(await mapa.Mapa(999999));
     }
 }

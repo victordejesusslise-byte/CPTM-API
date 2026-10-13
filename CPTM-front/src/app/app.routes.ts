@@ -36,6 +36,7 @@ export const routes: Routes = [
       { path: 'pecas', title: titulo('Consultar peça'), loadComponent: () => import('./features/pecas/consulta-peca').then((m) => m.ConsultaPeca) },
       { path: 'passagem', title: titulo('Passagem da noite'), data: { ...so('Supervisor', 'Tecnico', 'OperadorVia'), aba: 'noite' }, loadComponent: () => import('./features/passagem/passagem').then((m) => m.Passagem) },
       { path: 'passagem/anteriores', title: titulo('Passagens anteriores'), data: { ...so('Supervisor', 'Tecnico', 'OperadorVia'), aba: 'anteriores' }, loadComponent: () => import('./features/passagem/passagem').then((m) => m.Passagem) },
+      { path: 'trecho', title: titulo('Mapa do trecho'), data: so('Supervisor', 'Tecnico', 'OperadorVia'), loadComponent: () => import('./features/trecho/trecho').then((m) => m.Trecho) },
       { path: 'passagem/numeros', title: titulo('Números do período'), data: { ...so('Supervisor', 'Tecnico', 'OperadorVia'), aba: 'numeros' }, loadComponent: () => import('./features/passagem/passagem').then((m) => m.Passagem) },
       { path: 'alertas', title: titulo('Alertas da câmera'), data: { ...so('Supervisor', 'Tecnico', 'OperadorVia'), aba: 'imagem' }, loadComponent: () => import('./features/alertas/alertas').then((m) => m.Alertas) },
       { path: 'alertas/sensores', title: titulo('Alertas dos sensores'), data: { ...so('Supervisor', 'Tecnico', 'OperadorVia'), aba: 'sensores' }, loadComponent: () => import('./features/alertas/alertas').then((m) => m.Alertas) },
