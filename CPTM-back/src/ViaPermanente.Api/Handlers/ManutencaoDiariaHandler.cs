@@ -1,4 +1,4 @@
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Via;
 
 namespace ViaPermanente.Api.Handlers;
 

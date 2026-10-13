@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Comum;
 
 namespace ViaPermanente.Api.Handlers;
 

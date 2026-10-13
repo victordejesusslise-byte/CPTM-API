@@ -1,6 +1,7 @@
-using ViaPermanente.Dominio.Models.Campo;
-using ViaPermanente.Dominio.Models.Via;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Campo;
+using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Via;
+using ViaPermanente.Dominio.Via.Models;
 
 namespace ViaPermanente.Testes.Services;
 

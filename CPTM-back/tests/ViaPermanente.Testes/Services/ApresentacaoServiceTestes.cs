@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
-using ViaPermanente.Dominio.Models.Apresentacao;
-using ViaPermanente.Dominio.Repositories;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Apresentacao;
+using ViaPermanente.Dominio.Apresentacao.Models;
 
 namespace ViaPermanente.Testes.Services;
 

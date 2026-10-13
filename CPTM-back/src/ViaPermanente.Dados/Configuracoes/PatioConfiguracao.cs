@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using ViaPermanente.Dominio.Models.Campo;
-using ViaPermanente.Dominio.Models.Catalogos;
-using ViaPermanente.Dominio.Models.Chegada;
-using ViaPermanente.Dominio.Models.Compras;
-using ViaPermanente.Dominio.Models.Patio;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Models.Via;
+using ViaPermanente.Dominio.Armazens.Models;
+using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Catalogos.Models;
+using ViaPermanente.Dominio.Chegadas.Models;
+using ViaPermanente.Dominio.Pecas.Models;
+using ViaPermanente.Dominio.Pedidos.Models;
+using ViaPermanente.Dominio.Pessoas.Models;
+using ViaPermanente.Dominio.Via.Models;
 
 namespace ViaPermanente.Dados.Configuracoes;
 

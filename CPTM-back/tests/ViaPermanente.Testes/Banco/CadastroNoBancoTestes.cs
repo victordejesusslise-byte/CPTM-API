@@ -1,8 +1,9 @@
 using ViaPermanente.Dados;
-using ViaPermanente.Dados.Repositories;
-using ViaPermanente.Dominio.Dtos.Cadastros;
-using ViaPermanente.Dominio.Models.Compras;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dados.Catalogos;
+using ViaPermanente.Dominio.Catalogos;
+using ViaPermanente.Dominio.Catalogos.Dtos;
+using ViaPermanente.Dominio.Comum;
+using ViaPermanente.Dominio.Pedidos.Models;
 
 namespace ViaPermanente.Testes.Banco;
 

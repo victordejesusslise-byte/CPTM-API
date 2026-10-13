@@ -1,4 +1,4 @@
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Pecas;
 
 namespace ViaPermanente.Testes.Helpers;
 

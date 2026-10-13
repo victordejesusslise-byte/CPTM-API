@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViaPermanente.Api.Helpers;
-using ViaPermanente.Dominio.Dtos.Parametros;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Catalogos;
+using ViaPermanente.Dominio.Catalogos.Dtos;
+using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Handlers;
 

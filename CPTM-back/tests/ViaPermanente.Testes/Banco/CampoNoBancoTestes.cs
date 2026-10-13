@@ -1,15 +1,24 @@
 using Microsoft.EntityFrameworkCore;
 using ViaPermanente.Dados;
-using ViaPermanente.Dados.Repositories;
-using ViaPermanente.Dominio.Dtos.Alertas;
-using ViaPermanente.Dominio.Dtos.Inspecoes;
-using ViaPermanente.Dominio.Dtos.Pecas;
-using ViaPermanente.Dominio.Dtos.Usuarios;
-using ViaPermanente.Dominio.Dtos.Varredura;
-using ViaPermanente.Dominio.Models.Campo;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Models.Via;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dados.Apresentacao;
+using ViaPermanente.Dados.Campo;
+using ViaPermanente.Dados.Catalogos;
+using ViaPermanente.Dados.Pecas;
+using ViaPermanente.Dados.Pessoas;
+using ViaPermanente.Dados.Via;
+using ViaPermanente.Dominio.Apresentacao;
+using ViaPermanente.Dominio.Campo;
+using ViaPermanente.Dominio.Campo.Dtos;
+using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Comum;
+using ViaPermanente.Dominio.Pecas;
+using ViaPermanente.Dominio.Pecas.Dtos;
+using ViaPermanente.Dominio.Pessoas;
+using ViaPermanente.Dominio.Pessoas.Dtos;
+using ViaPermanente.Dominio.Pessoas.Models;
+using ViaPermanente.Dominio.Via;
+using ViaPermanente.Dominio.Via.Dtos;
+using ViaPermanente.Dominio.Via.Models;
 
 namespace ViaPermanente.Testes.Banco;
 
@@ -37,7 +46,7 @@ public class CampoNoBancoTestes : IAsyncLifetime
     public Task DisposeAsync() => BancoDeTeste.Apagar(db);
 
     private static string Tag(int n) => $"BR{n:D10}";
-    private async Task<int> Peca(int n) => (await db.Set<Dominio.Models.Patio.Rfid>().AsNoTracking().SingleAsync(r => r.TagRfid == Tag(n))).IdDormente;
+    private async Task<int> Peca(int n) => (await db.Set<Dominio.Pecas.Models.Rfid>().AsNoTracking().SingleAsync(r => r.TagRfid == Tag(n))).IdDormente;
     private VarreduraService Varredura() => new(new VarreduraRepository(db), new ParametroRepository(db));
     private PecaService Pecas() => new(new PecaRepository(db), new CatalogoRepository(db));
     private AlertaService Alertas() => new(new AlertaRepository(db), new PecaRepository(db), new LeituraService(new PecaRepository(db)), Pecas());

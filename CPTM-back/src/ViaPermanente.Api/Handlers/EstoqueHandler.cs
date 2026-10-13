@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using ViaPermanente.Dominio.Dtos.Pecas;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Pecas;
+using ViaPermanente.Dominio.Pecas.Dtos;
 
 namespace ViaPermanente.Api.Handlers;
 

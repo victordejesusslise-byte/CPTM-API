@@ -3,8 +3,7 @@ using System.Text;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using ViaPermanente.Api.Models;
-using ViaPermanente.Dominio.Dtos.Auth;
-using ViaPermanente.Dominio.Dtos.Usuarios;
+using ViaPermanente.Dominio.Pessoas.Dtos;
 
 namespace ViaPermanente.Api.Helpers;
 

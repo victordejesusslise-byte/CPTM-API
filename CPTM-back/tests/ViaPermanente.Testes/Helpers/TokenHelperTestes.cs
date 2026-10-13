@@ -1,7 +1,7 @@
 using Microsoft.IdentityModel.JsonWebTokens;
 using ViaPermanente.Api.Helpers;
 using ViaPermanente.Api.Models;
-using ViaPermanente.Dominio.Dtos.Usuarios;
+using ViaPermanente.Dominio.Pessoas.Dtos;
 
 namespace ViaPermanente.Testes.Helpers;
 

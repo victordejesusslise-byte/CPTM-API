@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using ViaPermanente.Dados;
-using ViaPermanente.Dominio.Models.Campo;
-using ViaPermanente.Dominio.Models.Via;
+using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Via.Models;
 
 namespace ViaPermanente.Testes.Banco;
 

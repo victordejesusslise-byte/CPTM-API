@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using ViaPermanente.Dominio.Dtos.Integracoes;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Integracoes.Dtos;
+using ViaPermanente.Dominio.Laudos;
 
 namespace ViaPermanente.Api.Handlers;
 

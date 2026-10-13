@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using ViaPermanente.Dominio.Models.Pessoas;
+using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Dados.Configuracoes;
 

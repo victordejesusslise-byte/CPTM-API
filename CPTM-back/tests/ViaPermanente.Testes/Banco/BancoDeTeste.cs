@@ -1,7 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using ViaPermanente.Dados;
-using ViaPermanente.Dados.Repositories;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dados.Campo;
+using ViaPermanente.Dados.Catalogos;
+using ViaPermanente.Dados.Chegadas;
+using ViaPermanente.Dados.Pecas;
+using ViaPermanente.Dados.Pedidos;
+using ViaPermanente.Dados.Pessoas;
+using ViaPermanente.Dominio.Campo;
+using ViaPermanente.Dominio.Chegadas;
+using ViaPermanente.Dominio.Laudos;
+using ViaPermanente.Dominio.Pecas;
 
 namespace ViaPermanente.Testes.Banco;
 
@@ -26,7 +34,7 @@ internal static class BancoDeTeste
 
     public static AlertaService Alertas(ViaPermanenteContext db) => new(new AlertaRepository(db), new PecaRepository(db), new LeituraService(new PecaRepository(db)), Pecas(db));
 
-    public static LaudoService Laudos(ViaPermanenteContext db, ViaPermanente.Dominio.Repositories.IDocumentoPdfRepository pdf) => new(pdf, new PecaRepository(db), new HistoricoRepository(db),
+    public static LaudoService Laudos(ViaPermanenteContext db, ViaPermanente.Dominio.Laudos.IDocumentoPdfRepository pdf) => new(pdf, new PecaRepository(db), new HistoricoRepository(db),
         new UsuarioRepository(db), new TrocaRepository(db), new ChegadaService(new ChegadaRepository(db), new PedidoRepository(db), new NotaFiscalRepository(db), new CatalogoRepository(db)),
         Pecas(db), Inspecoes(db), Alertas(db), Trocas(db));
 

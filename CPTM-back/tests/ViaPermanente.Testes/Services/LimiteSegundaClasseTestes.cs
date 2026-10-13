@@ -1,5 +1,5 @@
-using ViaPermanente.Dominio.Models.Compras;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Pedidos;
+using ViaPermanente.Dominio.Pedidos.Models;
 
 namespace ViaPermanente.Testes.Services;
 

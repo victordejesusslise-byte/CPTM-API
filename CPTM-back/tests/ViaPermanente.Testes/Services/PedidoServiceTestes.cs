@@ -1,5 +1,6 @@
-using ViaPermanente.Dominio.Dtos.Pedidos;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Comum;
+using ViaPermanente.Dominio.Pedidos;
+using ViaPermanente.Dominio.Pedidos.Dtos;
 
 namespace ViaPermanente.Testes.Services;
 
@@ -54,7 +55,7 @@ public class PedidoServiceTestes
         {
             Codigo = "PED-3", IdEmpresa = 2, Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 5 }]
         }, 1));
-        repo.Empresas.Add(new() { IdEmpresa = 3, Nome = "Outro", Papel = Dominio.Models.Compras.PapelEmpresa.Fornecedor, Ativo = true });
+        repo.Empresas.Add(new() { IdEmpresa = 3, Nome = "Outro", Papel = Dominio.Pedidos.Models.PapelEmpresa.Fornecedor, Ativo = true });
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Service("pecas").Criar(new NovoPedidoDto
         {
             Codigo = "PED-4", IdEmpresa = 3, IdContrato = 1, Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 5 }]

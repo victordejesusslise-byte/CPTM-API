@@ -1,12 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using ViaPermanente.Dados;
-using ViaPermanente.Dados.Repositories;
-using ViaPermanente.Dominio.Dtos.Armazem;
-using ViaPermanente.Dominio.Dtos.Pecas;
-using ViaPermanente.Dominio.Dtos.Usuarios;
-using ViaPermanente.Dominio.Models.Patio;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dados.Apresentacao;
+using ViaPermanente.Dados.Armazens;
+using ViaPermanente.Dados.Catalogos;
+using ViaPermanente.Dados.Pecas;
+using ViaPermanente.Dados.Pessoas;
+using ViaPermanente.Dominio.Apresentacao;
+using ViaPermanente.Dominio.Armazens;
+using ViaPermanente.Dominio.Armazens.Dtos;
+using ViaPermanente.Dominio.Armazens.Models;
+using ViaPermanente.Dominio.Comum;
+using ViaPermanente.Dominio.Pecas;
+using ViaPermanente.Dominio.Pecas.Dtos;
+using ViaPermanente.Dominio.Pecas.Models;
+using ViaPermanente.Dominio.Pessoas;
+using ViaPermanente.Dominio.Pessoas.Dtos;
+using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Testes.Banco;
 

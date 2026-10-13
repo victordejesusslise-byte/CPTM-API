@@ -1,5 +1,5 @@
-using ViaPermanente.Dominio.Models.Chegada;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Chegadas;
+using ViaPermanente.Dominio.Chegadas.Models;
 
 namespace ViaPermanente.Testes.Services;
 

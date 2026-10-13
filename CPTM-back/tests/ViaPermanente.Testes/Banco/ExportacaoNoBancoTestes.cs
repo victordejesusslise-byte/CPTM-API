@@ -1,12 +1,20 @@
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using ViaPermanente.Dados;
-using ViaPermanente.Dados.Repositories;
-using ViaPermanente.Dominio.Dtos.Catalogos;
-using ViaPermanente.Dominio.Dtos.Usuarios;
-using ViaPermanente.Dominio.Models.Ambiental;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dados.Ambiental;
+using ViaPermanente.Dados.Apresentacao;
+using ViaPermanente.Dados.Catalogos;
+using ViaPermanente.Dados.Integracoes;
+using ViaPermanente.Dados.Pessoas;
+using ViaPermanente.Dominio.Ambiental;
+using ViaPermanente.Dominio.Ambiental.Models;
+using ViaPermanente.Dominio.Apresentacao;
+using ViaPermanente.Dominio.Catalogos.Dtos;
+using ViaPermanente.Dominio.Comum;
+using ViaPermanente.Dominio.Integracoes;
+using ViaPermanente.Dominio.Pessoas;
+using ViaPermanente.Dominio.Pessoas.Dtos;
+using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Testes.Banco;
 

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using ViaPermanente.Dominio.Models.Campo;
-using ViaPermanente.Dominio.Models.Patio;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Models.Via;
+using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Pecas.Models;
+using ViaPermanente.Dominio.Pessoas.Models;
+using ViaPermanente.Dominio.Via.Models;
 
 namespace ViaPermanente.Dados.Configuracoes;
 

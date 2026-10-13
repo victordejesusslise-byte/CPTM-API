@@ -2,10 +2,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViaPermanente.Api.Helpers;
-using ViaPermanente.Dominio.Dtos.Trocas;
-using ViaPermanente.Dominio.Models.Campo;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Campo;
+using ViaPermanente.Dominio.Campo.Dtos;
+using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Handlers;
 

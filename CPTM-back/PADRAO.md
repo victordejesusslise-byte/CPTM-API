@@ -18,29 +18,32 @@ CPTM-back/
 │   │   ├── Handlers/             controllers do MVC: recebem HTTP, chamam o service, respondem
 │   │   ├── Helpers/              TokenHelper (gera e valida o JWT)
 │   │   └── Models/               formato da configuração (JwtOpcoes)
-│   ├── ViaPermanente.Dominio/    regras, sem saber de HTTP nem de banco
-│   │   ├── Models/<Grupo>/       as 51 tabelas, uma classe por tabela, e os enums
-│   │   ├── Dtos/<Assunto>/       o que entra e sai da API
-│   │   ├── Services/             regra de negócio
-│   │   ├── Repositories/         interfaces do acesso a dados (IUsuarioRepository...)
-│   │   └── Helpers/              funções puras por assunto (SenhaHelper, EmailHelper, VolumeHelper)
+│   ├── ViaPermanente.Dominio/    regras, sem saber de HTTP nem de banco; uma pasta por parte do sistema
+│   │   ├── <Parte>/              Pedidos, Chegadas, Pecas, Armazens, Campo, Via, Ambiental, Integracoes,
+│   │   │   │                     Pessoas, Catalogos, Apresentacao, Indicadores, Laudos
+│   │   │   ├── Models/           as tabelas da parte (uma classe por tabela) e os enums
+│   │   │   ├── Dtos/             o que entra e sai da API
+│   │   │   ├── XService.cs       regra de negócio da parte
+│   │   │   └── IXRepository.cs   interface do acesso a dados da parte
+│   │   ├── Comum/                o que vale para todas: RegraDeNegocioException, IRegistroDeCampo
+│   │   └── Helpers/              funções puras (SenhaHelper, EmailHelper, VolumeHelper, TagHelper)
 │   └── ViaPermanente.Dados/      o SQL Server
 │       ├── ViaPermanenteContext.cs   DbContext e convenções (nomes, tipos, cascata)
+│       ├── <Parte>/              a implementação dos repositórios da parte, com EF Core
 │       ├── Configuracoes/        chaves, ligações, índices e carga inicial, um arquivo por grupo
-│       ├── Repositories/         implementação das interfaces do Dominio, com EF Core
 │       ├── Helpers/              NomeBancoHelper (nome de tabela e coluna, precisão)
 │       └── Migrations/           geradas pelo dotnet-ef; nunca editar à mão
 └── tests/ViaPermanente.Testes/   xUnit: Helpers, Services (repositório falso) e Banco (modelo do EF)
 ```
 
-Os grupos de `Models` e `Configuracoes` são os mesmos do cérebro: Catalogos, Pessoas, Compras, Chegada, Patio, Via, Campo e Ambiental.
+Cada parte do sistema tem a sua pasta, com os seus models, DTOs, services e repositories; o namespace segue a pasta (`ViaPermanente.Dominio.Pedidos`, `ViaPermanente.Dominio.Pedidos.Models`, `ViaPermanente.Dominio.Pedidos.Dtos`, `ViaPermanente.Dados.Pedidos`). Os handlers (`Api/Handlers`) e os helpers (`Api/Helpers`, `Dominio/Helpers`, `Dados/Helpers`) ficam à parte, juntos. As `Configuracoes` seguem os grupos do cérebro (Catalogos, Pessoas, Compras, Chegada, Patio, Via, Campo e Ambiental).
 
 - **Dependência:** `Api → Dominio`, `Dados → Dominio`, `Api → Dados` só para registrar no `Program.cs`. Dentro: `Handlers → Services → Repositories (interface)`; a implementação está em `Dados`. `Models`, `Dtos` e `Helpers` servem a todos e não dependem de ninguém.
 
 ## Regras extras
 
 1. **Banco igual ao cérebro.** Tabela em `MAIUSCULAS_COM_SUBLINHADO`, coluna em `minusculas_com_sublinhado`, gerados do nome da classe e da propriedade pelo `NomeBancoHelper`. Nunca escrever `[Table]` ou `[Column]` à mão.
-2. **Tabela nova ou coluna nova:** classe em `Dominio/Models/<Grupo>/`, chaves e ligações em `Dados/Configuracoes/<Grupo>Configuracao.cs`, depois `dotnet dotnet-ef migrations add <Nome>`. Mudou o banco, muda a nota da tabela no cérebro (`3 Integração/Projeto/20 Banco/`).
+2. **Tabela nova ou coluna nova:** classe em `Dominio/<Parte>/Models/`, chaves e ligações em `Dados/Configuracoes/<Grupo>Configuracao.cs`, depois `dotnet dotnet-ef migrations add <Nome>`. Mudou o banco, muda a nota da tabela no cérebro (`3 Integração/Projeto/20 Banco/`).
 3. **Sem cascata.** Toda chave estrangeira é `Restrict`. Tabela de evento só recebe inserção.
 4. **Enum vira texto no banco e no JSON** (`AguardandoPeca`, não `2`).
 5. **Registro de campo** (`IRegistroDeCampo`): `id_cliente` único quando preenchido; o mesmo envio do celular entra uma vez.
@@ -58,6 +61,8 @@ Os grupos de `Models` e `Configuracoes` são os mesmos do cérebro: Catalogos, P
 - Projeto em 3 semanas: semana 1 e 2 o back, semana 3 o front em Angular (`ng serve`, `ng test`).
 
 ## Histórico
+
+- 2026-10-13 — Uma pasta por parte do sistema (pedido do Victor): models, DTOs, services e repositories juntos por parte; handlers e helpers à parte. Só mudou o lugar dos arquivos, os namespaces e os usings; os 171 testes passaram iguais e o EF não viu mudança no banco.
 
 - 2026-10-11 — Criação: três projetos + testes, 51 tabelas na migração `Inicial`, login com JWT e cargo, catálogos e parâmetros.
 - 2026-10-11 — Migração `CargaEspeciesArmazensPilhas` (22 espécies de exemplo, 5 armazéns, 40 pilhas). Apresentação do fluxo (`ApresentacaoService`). Testes da categoria `Banco` passam a usar o SQL Server de verdade, num banco próprio que é criado e apagado (`ViaPermanente_Testes`).

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ViaPermanente.Dominio.Models.Ambiental;
-using ViaPermanente.Dominio.Models.Catalogos;
-using ViaPermanente.Dominio.Models.Pessoas;
+using ViaPermanente.Dominio.Ambiental.Models;
+using ViaPermanente.Dominio.Catalogos.Models;
+using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Dados.Configuracoes;
 

@@ -1,11 +1,18 @@
 using ViaPermanente.Dados;
-using ViaPermanente.Dados.Repositories;
-using ViaPermanente.Dominio.Dtos.Ocr;
-using ViaPermanente.Dominio.Dtos.Pedidos;
-using ViaPermanente.Dominio.Dtos.Usuarios;
-using ViaPermanente.Dominio.Models.Compras;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dados.Catalogos;
+using ViaPermanente.Dados.Chegadas;
+using ViaPermanente.Dados.Laudos;
+using ViaPermanente.Dados.Pedidos;
+using ViaPermanente.Dados.Pessoas;
+using ViaPermanente.Dominio.Chegadas;
+using ViaPermanente.Dominio.Chegadas.Dtos;
+using ViaPermanente.Dominio.Comum;
+using ViaPermanente.Dominio.Pedidos;
+using ViaPermanente.Dominio.Pedidos.Dtos;
+using ViaPermanente.Dominio.Pedidos.Models;
+using ViaPermanente.Dominio.Pessoas;
+using ViaPermanente.Dominio.Pessoas.Dtos;
+using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Testes.Banco;
 

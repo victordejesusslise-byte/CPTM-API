@@ -1,5 +1,5 @@
-using ViaPermanente.Dominio.Models.Patio;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Pecas;
+using ViaPermanente.Dominio.Pecas.Models;
 
 namespace ViaPermanente.Testes.Services;
 

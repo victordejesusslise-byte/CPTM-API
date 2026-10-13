@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using ViaPermanente.Dominio.Dtos.Indicadores;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Indicadores;
+using ViaPermanente.Dominio.Indicadores.Dtos;
 
 namespace ViaPermanente.Api.Handlers;
 

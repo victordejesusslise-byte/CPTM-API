@@ -1,5 +1,5 @@
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Repositories;
+using ViaPermanente.Dominio.Pessoas;
+using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Testes.Services;
 

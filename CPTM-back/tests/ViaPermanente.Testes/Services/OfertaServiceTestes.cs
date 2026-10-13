@@ -1,7 +1,7 @@
-using ViaPermanente.Dominio.Dtos.Ofertas;
-using ViaPermanente.Dominio.Dtos.Pedidos;
-using ViaPermanente.Dominio.Models.Compras;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Comum;
+using ViaPermanente.Dominio.Pedidos;
+using ViaPermanente.Dominio.Pedidos.Dtos;
+using ViaPermanente.Dominio.Pedidos.Models;
 
 namespace ViaPermanente.Testes.Services;
 

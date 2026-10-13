@@ -1,6 +1,6 @@
-using ViaPermanente.Dados.Repositories;
-using ViaPermanente.Dominio.Models.Laudos;
-using ViaPermanente.Dominio.Repositories;
+using ViaPermanente.Dados.Laudos;
+using ViaPermanente.Dominio.Laudos;
+using ViaPermanente.Dominio.Laudos.Models;
 
 namespace ViaPermanente.Testes.Banco;
 

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ViaPermanente.Dados.Configuracoes;
 using ViaPermanente.Dados.Helpers;
-using ViaPermanente.Dominio.Models;
+using ViaPermanente.Dominio.Comum;
 
 namespace ViaPermanente.Dados;
 

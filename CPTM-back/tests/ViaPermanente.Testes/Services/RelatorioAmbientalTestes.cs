@@ -1,5 +1,4 @@
-using ViaPermanente.Dominio.Models.Ambiental;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Ambiental;
 
 namespace ViaPermanente.Testes.Services;
 

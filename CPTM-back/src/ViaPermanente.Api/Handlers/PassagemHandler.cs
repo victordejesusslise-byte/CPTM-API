@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViaPermanente.Dominio.Dtos.Varredura;
-using ViaPermanente.Dominio.Models.Pessoas;
-using ViaPermanente.Dominio.Services;
+using ViaPermanente.Dominio.Pessoas.Models;
+using ViaPermanente.Dominio.Via;
+using ViaPermanente.Dominio.Via.Dtos;
 
 namespace ViaPermanente.Api.Handlers;
 

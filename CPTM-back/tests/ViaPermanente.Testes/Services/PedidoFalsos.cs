@@ -1,7 +1,9 @@
-using ViaPermanente.Dominio.Models.Catalogos;
-using ViaPermanente.Dominio.Models.Compras;
-using ViaPermanente.Dominio.Models.Patio;
-using ViaPermanente.Dominio.Repositories;
+using ViaPermanente.Dominio.Armazens.Models;
+using ViaPermanente.Dominio.Catalogos;
+using ViaPermanente.Dominio.Catalogos.Models;
+using ViaPermanente.Dominio.Pecas.Models;
+using ViaPermanente.Dominio.Pedidos;
+using ViaPermanente.Dominio.Pedidos.Models;
 
 namespace ViaPermanente.Testes.Services;
 
