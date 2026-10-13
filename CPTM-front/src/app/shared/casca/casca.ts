@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { Sessao } from '../../core/auth/sessao';
+import { Tema } from '../../core/tema/tema';
 import { ItemMenu, SubMenu, menuDoCargo } from '../../core/menu/menu';
 import { nomeDoCargo } from '../../helpers/formato';
 import { Marca } from '../marca/marca';
@@ -11,6 +12,7 @@ import { Marca } from '../marca/marca';
 interface ItemVisivel extends ItemMenu {
   link: string;
   ativo: boolean;
+  aberto: boolean;
   abas: SubMenu[];
 }
 
@@ -32,6 +34,9 @@ export class Casca {
   protected readonly usuario = this.sessao.usuario;
   protected readonly cargo = computed(() => nomeDoCargo(this.usuario()?.cargo));
   protected readonly menuAberto = signal(false);
+  protected readonly tema = inject(Tema);
+  /** itens com abas que a pessoa recolheu clicando de novo neles */
+  private readonly recolhidos = signal(new Set<string>());
   protected readonly celular = toSignal(inject(BreakpointObserver).observe('(max-width: 820px)').pipe(map((r) => r.matches)), { initialValue: false });
   private readonly url = toSignal(
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd), map(() => this.router.url)),
@@ -46,13 +51,26 @@ export class Casca {
       const subs = (item.subs ?? []).filter((s) => !(s.soComputador && this.celular()) && !(s.cargos && cargo && !s.cargos.includes(cargo)));
       const abas = subs.length > 1 ? subs : [];
       const ativo = caminho === item.rota || caminho.startsWith(item.rota + '/');
-      return { ...item, abas, ativo, link: subs[0]?.rota ?? item.rota };
+      return { ...item, abas, ativo, aberto: ativo && abas.length > 0 && !this.recolhidos().has(item.rota), link: subs[0]?.rota ?? item.rota };
     });
     const grupos = new Map<string, ItemVisivel[]>();
     for (const item of itens) grupos.set(item.grupo, [...(grupos.get(item.grupo) ?? []), item]);
     return [...grupos].map(([nome, itensDoGrupo]) => ({ nome, itens: itensDoGrupo }));
   });
   protected readonly abasNoAlto = computed(() => (this.celular() ? (this.grupos().flatMap((g) => g.itens).find((i) => i.ativo)?.abas ?? []) : []));
+
+  /** No item aberto, o clique recolhe ou abre as abas (sem sair da tela); nos outros, navega e abre. */
+  protected clicar(item: ItemVisivel): void {
+    const recolhidos = new Set(this.recolhidos());
+    if (item.ativo && item.abas.length) {
+      if (recolhidos.has(item.rota)) recolhidos.delete(item.rota);
+      else recolhidos.add(item.rota);
+    } else {
+      recolhidos.delete(item.rota);
+      this.menuAberto.set(false);
+    }
+    this.recolhidos.set(recolhidos);
+  }
 
   protected sair(): void {
     this.sessao.sair();

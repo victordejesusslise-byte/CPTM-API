@@ -43,6 +43,31 @@ describe('Casca', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.menu__sub--ativo')?.textContent?.trim()).toBe('Cadastrar pedido');
   });
 
+  it('clicar de novo no item aberto recolhe e abre as abas', async () => {
+    localStorage.clear();
+    entrarComo('Supervisor');
+    await TestBed.configureTestingModule({ imports: [Casca], providers: [provideRouter([{ path: 'pedidos', children: [] }, { path: 'pedidos/novo', children: [] }]), provideHttpClient()] }).compileComponents();
+    const fixture = TestBed.createComponent(Casca);
+    await TestBed.inject(Router).navigateByUrl('/pedidos/novo');
+    await fixture.whenStable();
+    const tela = fixture.nativeElement as HTMLElement;
+    const pedidos = [...tela.querySelectorAll<HTMLElement>('.menu__item')].find((a) => a.textContent?.includes('Pedidos'))!;
+    pedidos.click();
+    await fixture.whenStable();
+    expect(tela.querySelectorAll('.menu__sub')).toHaveLength(0);
+    pedidos.click();
+    await fixture.whenStable();
+    expect(tela.querySelectorAll('.menu__sub')).toHaveLength(2);
+  });
+
+  it('o botão do topo troca para o modo escuro e volta', async () => {
+    const tela = await abrir('Tecnico');
+    tela.querySelector<HTMLButtonElement>('.topo__tema')!.click();
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+    tela.querySelector<HTMLButtonElement>('.topo__tema')!.click();
+    expect(document.documentElement.dataset['theme']).toBeUndefined();
+  });
+
   it('sair encerra a sessão e volta ao login', async () => {
     const tela = await abrir('Tecnico');
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);

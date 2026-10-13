@@ -7,6 +7,9 @@
     <span class="topo__nome">{{ usuario()?.nome }}</span>
     <span class="topo__cargo">{{ cargo() }}</span>
   </div>
+  <button type="button" class="topo__tema" (click)="tema.alternar()" [attr.aria-pressed]="tema.escuro()" [attr.aria-label]="tema.escuro() ? 'Voltar para o tema claro' : 'Trocar para o modo escuro'">
+    {{ tema.escuro() ? 'Claro' : 'Escuro' }}
+  </button>
   <button type="button" class="topo__sair" (click)="sair()">Sair</button>
 </header>
 
@@ -15,16 +18,16 @@
     @for (grupo of grupos(); track grupo.nome) {
       <p class="menu__grupo">{{ grupo.nome }}</p>
       @for (item of grupo.itens; track item.rota) {
-        <a class="menu__item" [class.menu__item--ativo]="item.ativo" [routerLink]="item.link" [attr.aria-current]="item.ativo ? 'page' : null"
-          [attr.aria-expanded]="item.abas.length ? item.ativo : null" (click)="menuAberto.set(false)">
+        <a class="menu__item" [class.menu__item--ativo]="item.ativo" [routerLink]="item.ativo && item.abas.length ? null : item.link" [attr.aria-current]="item.ativo ? 'page' : null"
+          [attr.aria-expanded]="item.abas.length ? item.aberto : null" role="link" tabindex="0" (click)="clicar(item)" (keydown.enter)="clicar(item)">
           <span>{{ item.rotulo }}</span>
           @if (item.abas.length) {
-            <svg class="menu__seta" [class.menu__seta--aberta]="item.ativo" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+            <svg class="menu__seta" [class.menu__seta--aberta]="item.aberto" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
               <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           }
         </a>
-        @if (item.ativo && item.abas.length) {
+        @if (item.aberto) {
           <div class="menu__subs" role="group" [attr.aria-label]="item.rotulo">
             @for (s of item.abas; track s.rota) {
               <a class="menu__sub" [class.menu__sub--ativo]="caminho() === s.rota" [routerLink]="s.rota"

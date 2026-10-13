@@ -14,7 +14,7 @@
 .topo__quem { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
 .topo__nome { font-weight: 600; }
 .topo__cargo { font-size: 12px; color: var(--sobre-escuro-2); }
-.topo__menu, .topo__sair {
+.topo__menu, .topo__sair, .topo__tema {
   min-height: 44px; padding: 0 14px; border: 1px solid var(--sobre-escuro-3); border-radius: 8px;
   background: transparent; color: inherit; font: inherit; cursor: pointer;
 }
