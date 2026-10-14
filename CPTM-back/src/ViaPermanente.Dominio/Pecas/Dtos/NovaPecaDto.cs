@@ -13,7 +13,7 @@ public class NovaPecaDto
     public string? TagFornecedor { get; init; }
     /// <summary>Câmera, NFC ou digitado.</summary>
     public MetodoCaptura? TagFornecedorLeitura { get; init; }
-    /// <summary>ModuloUhf (o padrão) ou Pistola.</summary>
+    /// <summary>Sempre ModuloUhf: só o módulo do celular crava a tag (a pistola agora é a NIR).</summary>
     public MetodoCaptura Metodo { get; init; } = MetodoCaptura.ModuloUhf;
     /// <summary>O número gravado pelo módulo (peça em GET /api/tags/proxima) ou lido pela pistola.</summary>
     [Required] public string Tag { get; init; } = "";

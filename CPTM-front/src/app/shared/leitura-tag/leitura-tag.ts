@@ -39,7 +39,7 @@ export const leitura = (tag: string, metodo: MetodoCaptura): LeituraDto => ({ ta
 })
 export class LeituraTag {
   readonly tag = model('');
-  readonly metodo = model<MetodoCaptura>('Pistola');
+  readonly metodo = model<MetodoCaptura>('ModuloUhf');
   readonly rotulo = input('Tag da peça');
   readonly lida = output<void>();
   protected readonly metodos = METODOS_WEB;

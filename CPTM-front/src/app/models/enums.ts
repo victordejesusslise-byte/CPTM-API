@@ -12,9 +12,8 @@ export type OrigemAlerta = 'Sensor' | 'Imagem';
 export type StatusTroca = 'Pedida' | 'Aprovada' | 'AguardandoPeca' | 'Separada' | 'Feita' | 'Reprovada' | 'Recusada' | 'Cancelada';
 export type DecisaoRecusa = 'Manter' | 'Aceitar';
 
-/** Como a tag foi lida na tela web: pistola (teclado), módulo do celular ou digitada. */
+/** Como a tag foi lida na tela web: módulo do celular ou digitada. A pistola agora é a NIR (madeira); 'Pistola' fica só no histórico. */
 export const METODOS_WEB: { valor: MetodoCaptura; rotulo: string }[] = [
-  { valor: 'Pistola', rotulo: 'Pistola' },
   { valor: 'ModuloUhf', rotulo: 'Módulo do celular' },
   { valor: 'Digitado', rotulo: 'Digitada' },
 ];

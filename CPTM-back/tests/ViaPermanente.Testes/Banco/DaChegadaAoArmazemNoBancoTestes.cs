@@ -143,15 +143,13 @@ public class DaChegadaAoArmazemNoBancoTestes : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Cadastro_com_a_pistola_le_a_tag_impressa()
+    public async Task Cadastro_so_com_o_modulo_a_pistola_agora_e_a_NIR()
     {
         var feixe = (await Chegar()).Feixes[1];
-        var r = await Pecas().Cadastrar(new NovaPecaDto { IdFeixe = feixe.Id, Metodo = MetodoCaptura.Pistola, Tag = "PST-TAG-77", IdLeitor = idLeitor }, idUsuario);
 
-        Assert.Equal("Hymenaea courbaril", r.Peca!.Especie);
-        Assert.Equal(r.Peca.Id, (await Pecas().BuscarPorTag("PST-TAG-77"))!.Id);
-        Assert.Equal(1, await db.Set<LeituraDormente>().CountAsync(l => l.MetodoCaptura == MetodoCaptura.Pistola));
-        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Pecas().Cadastrar(new NovaPecaDto { IdFeixe = feixe.Id, Metodo = MetodoCaptura.Pistola, Tag = "PST-TAG-77" }, idUsuario));
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Pecas().Cadastrar(new NovaPecaDto { IdFeixe = feixe.Id, Metodo = MetodoCaptura.Pistola, Tag = "PST-TAG-77", IdLeitor = idLeitor }, idUsuario));
+        Assert.Null(await Pecas().BuscarPorTag("PST-TAG-77"));
+        Assert.Equal(0, await db.Set<LeituraDormente>().CountAsync(l => l.MetodoCaptura == MetodoCaptura.Pistola));
     }
 
     [Fact]

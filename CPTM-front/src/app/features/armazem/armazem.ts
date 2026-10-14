@@ -53,7 +53,7 @@ export class Armazem {
 
   // Entrada e troca de pilha
   protected readonly tag = signal('');
-  protected readonly metodo = signal<MetodoCaptura>('Pistola');
+  protected readonly metodo = signal<MetodoCaptura>('ModuloUhf');
   protected readonly peca = signal<PecaDto | null>(null);
   protected readonly idPilha = signal<number | null>(null);
   protected readonly pilhasDaPeca = computed(() => this.armazens.value()?.find((a) => a.id === this.peca()?.idArmazem)?.pilhas ?? []);

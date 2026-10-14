@@ -63,7 +63,7 @@ export class ConsultaPeca implements OnInit, OnDestroy {
   protected readonly km = km;
   protected readonly dataHora = dataHora;
   protected readonly tag = signal('');
-  protected readonly metodo = signal<MetodoCaptura>('Pistola');
+  protected readonly metodo = signal<MetodoCaptura>('ModuloUhf');
   protected readonly peca = signal<PecaDto | null>(null);
   protected readonly erro = signal<string | null>(null);
   protected readonly historico = rxResource({ params: () => this.peca()?.id, stream: ({ params }) => this.pecas.historico(params) });

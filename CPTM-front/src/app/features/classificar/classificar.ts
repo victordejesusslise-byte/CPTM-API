@@ -13,9 +13,9 @@ import { FORMULARIO } from '../../shared/ui';
 
 const METODOS: { valor: MetodoClassificacao; rotulo: string }[] = [
   { valor: 'Comparacao', rotulo: 'Comparação com a amostra' }, { valor: 'Visual', rotulo: 'Visual' },
-  { valor: 'Catalogo', rotulo: 'Catálogo' }, { valor: 'Laboratorio', rotulo: 'Laboratório' },
+  { valor: 'Catalogo', rotulo: 'Catálogo' }, { valor: 'Laboratorio', rotulo: 'Laboratório' }, { valor: 'Nir', rotulo: 'Pistola NIR' },
 ];
-const NOME_METODO: Record<string, string> = { PlacaFornecedor: 'Placa do fornecedor', Comparacao: 'Comparação', Visual: 'Visual', Catalogo: 'Catálogo', Laboratorio: 'Laboratório' };
+const NOME_METODO: Record<string, string> = { PlacaFornecedor: 'Placa do fornecedor', Comparacao: 'Comparação', Visual: 'Visual', Catalogo: 'Catálogo', Laboratorio: 'Laboratório', Nir: 'Pistola NIR' };
 
 /**
  * Classificar (protótipo YBYRA, etapa 07; especialista): lê a peça, confirma a espécie da placa ou corrige.

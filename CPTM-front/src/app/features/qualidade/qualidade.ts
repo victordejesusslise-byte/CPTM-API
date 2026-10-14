@@ -20,7 +20,7 @@ export class Qualidade {
   private readonly pecas = inject(Pecas);
   protected readonly metros = metros;
   protected readonly tag = signal('');
-  protected readonly metodo = signal<MetodoCaptura>('Pistola');
+  protected readonly metodo = signal<MetodoCaptura>('ModuloUhf');
   protected readonly peca = signal<PecaDto | null>(null);
   protected readonly mensagem = signal<string | null>(null);
   protected readonly erro = signal<string | null>(null);

@@ -20,6 +20,8 @@ public class LeituraService(IPecaRepository pecas)
         var lida = (dto.Tag ?? "").Trim();
         if (lida.Length == 0)
             throw new RegraDeNegocioException("Leia a tag da peça antes de continuar.");
+        if (dto.Metodo == MetodoCaptura.Pistola)
+            throw new RegraDeNegocioException("A tag é lida pelo módulo do celular; a pistola agora é a NIR, que analisa a madeira.");
         var leitura = new LeituraDormente
         {
             IdDormente = idDormente, IdLeitor = dto.IdLeitor, IdUsuario = idUsuario, MetodoCaptura = dto.Metodo, Leitura = true,

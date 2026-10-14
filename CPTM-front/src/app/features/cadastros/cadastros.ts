@@ -28,7 +28,7 @@ export class Cadastros {
   private readonly catalogos = inject(Catalogos);
   protected readonly leitores = rxResource({ params: () => (this.aba() === 'leitores' ? true : undefined), stream: () => this.catalogos.leitores() });
   protected readonly leitor = { idTipoLeitor: 2, codigo: '', numeroSerie: '' };
-  protected readonly tiposLeitor = [{ id: 1, nome: 'Pistola' }, { id: 2, nome: 'Módulo do celular' }, { id: 3, nome: 'Carro' }];
+  protected readonly tiposLeitor = [{ id: 1, nome: 'Pistola NIR' }, { id: 2, nome: 'Módulo do celular' }, { id: 3, nome: 'Carro' }];
   protected readonly fornecedores = computed(() => (this.empresas.value() ?? []).filter((e) => e.papel === 'Fornecedor'));
   protected readonly data = data;
   protected readonly dataHora = dataHora;

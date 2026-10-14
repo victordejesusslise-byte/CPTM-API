@@ -20,8 +20,8 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
     {
         if (nova.IdCliente is Guid idCliente && await pecas.GravacaoPorCliente(idCliente) is { } repetida)
             return await Repetida(repetida);
-        if (nova.Metodo is not (MetodoCaptura.ModuloUhf or MetodoCaptura.Pistola))
-            throw new RegraDeNegocioException("O cadastro crava a nossa tag UHF: use o módulo do celular ou a pistola.");
+        if (nova.Metodo != MetodoCaptura.ModuloUhf)
+            throw new RegraDeNegocioException("O cadastro crava a nossa tag UHF com o módulo do celular (a pistola agora é a NIR, que analisa a madeira).");
         if (nova.TagFornecedorLeitura is not (null or MetodoCaptura.Camera or MetodoCaptura.Nfc or MetodoCaptura.Digitado))
             throw new RegraDeNegocioException("A identificação do fornecedor é lida pela câmera, por NFC ou digitada.");
         var tag = (nova.Tag ?? "").Trim();
@@ -50,7 +50,6 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
         var agora = DateTime.Now;
         var registradoEm = nova.RegistradoEm ?? agora;
         GravacaoTag? gravacao = null;
-        LeituraDormente? leitura = null;
         if (modulo)
         {
             var resultado = GravacaoRigorosa.Resultado(nova.TagsVistas, tag, nova.TagRelida);
@@ -66,21 +65,6 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
                 return new CadastroPecaDto(resultado.ToString(), GravacaoRigorosa.Mensagem(resultado, tag, nova.TagRelida), null);
             }
         }
-        else
-        {
-            leitura = new LeituraDormente
-            {
-                IdLeitor = nova.IdLeitor, IdUsuario = idUsuario, MetodoCaptura = MetodoCaptura.Pistola, Leitura = true,
-                DataLeitura = agora, TagLida = tag, IdModo = nova.IdModo, RssiDbm = nova.RssiDbm, TagsVistas = nova.TagsVistas,
-                Ambigua = AlvoUnico.EhAmbigua(MetodoCaptura.Pistola, nova.TagsVistas),
-                IdCliente = nova.IdCliente, RegistradoEm = registradoEm, RecebidoEm = agora
-            };
-            if (leitura.Ambigua)
-            {
-                await pecas.RegistrarLeitura(leitura);
-                return new CadastroPecaDto(nameof(ResultadoGravacao.Bloqueada), AlvoUnico.MensagemAmbigua, null);
-            }
-        }
 
         var dormente = new Dormente
         {
@@ -94,7 +78,7 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
                 IdEspecie = feixe.IdEspecie, IdUsuario = idUsuario, Data = agora, Metodo = MetodoClassificacao.PlacaFornecedor,
                 MetodoCaptura = nova.TagFornecedorLeitura, Observacao = "Espécie da plaquinha do feixe", RegistradoEm = registradoEm, RecebidoEm = agora
             },
-            gravacao, leitura);
+            gravacao, null);
         return new CadastroPecaDto(nameof(ResultadoGravacao.Ok), GravacaoRigorosa.Mensagem(ResultadoGravacao.Ok, tag, tag), await BuscarPorId(dormente.IdDormente));
     }
 

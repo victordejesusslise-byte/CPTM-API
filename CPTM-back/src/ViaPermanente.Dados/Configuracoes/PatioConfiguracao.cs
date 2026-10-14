@@ -136,7 +136,7 @@ internal static class PatioConfiguracao
             e.HasKey(x => x.IdTipoLeitor);
             e.HasIndex(x => x.Nome).IsUnique();
             e.HasData(
-                new TipoLeitor { IdTipoLeitor = 1, Nome = "Pistola", Descricao = "Crava a tag e manda o que os sensores mediram" },
+                new TipoLeitor { IdTipoLeitor = 1, Nome = "Pistola NIR", Descricao = "Analisa a madeira por infravermelho próximo: espécie, umidade e propriedades" },
                 new TipoLeitor { IdTipoLeitor = 2, Nome = "Módulo do celular", Descricao = "Módulo RFID UHF ligado pelo USB-C" },
                 new TipoLeitor { IdTipoLeitor = 3, Nome = "Carro", Descricao = "Carro de inspeção da varredura noturna" });
         });
