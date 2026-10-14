@@ -25,6 +25,10 @@ public class ClassificacaoService(IClassificacaoRepository repo, IPecaRepository
             throw new RegraDeNegocioException("A tag lida não é desta peça.");
         if (dto.Metodo == MetodoClassificacao.PlacaFornecedor)
             throw new RegraDeNegocioException("A placa do fornecedor já é a primeira classificação: escolha como você conferiu.");
+        if (dto.Metodo == MetodoClassificacao.Nir && dto.UmidadePct is null)
+            throw new RegraDeNegocioException("Com a pistola NIR, informe a umidade que ela mediu.");
+        if (dto.Metodo != MetodoClassificacao.Nir && (dto.UmidadePct is not null || dto.ConfiancaPct is not null))
+            throw new RegraDeNegocioException("A umidade e a confiança são da leitura da pistola NIR.");
         var especie = await repo.Especie(dto.IdEspecie) ?? throw new RegraDeNegocioException("Espécie não encontrada.");
         if (!especie.Ativo)
             throw new RegraDeNegocioException("Espécie fora da lista ativa.");
@@ -35,6 +39,7 @@ public class ClassificacaoService(IClassificacaoRepository repo, IPecaRepository
         {
             IdDormente = dto.IdDormente, IdEspecie = especie.IdEspecie, IdUsuario = idUsuario, Anterior = anterior?.IdClassificacao,
             Data = agora, Metodo = dto.Metodo, MetodoCaptura = dto.Leitura.Metodo, Observacao = string.IsNullOrWhiteSpace(dto.Observacao) ? null : dto.Observacao.Trim(),
+            UmidadePct = dto.UmidadePct, ConfiancaPct = dto.ConfiancaPct,
             IdCliente = dto.IdCliente, RegistradoEm = agora, RecebidoEm = agora
         });
         return Dto(nova, especie);
@@ -50,5 +55,5 @@ public class ClassificacaoService(IClassificacaoRepository repo, IPecaRepository
     private async Task<ClassificacaoDto> Dto(ClassificacaoMadeira c) => Dto(c, (await repo.Especie(c.IdEspecie))!);
 
     private static ClassificacaoDto Dto(ClassificacaoMadeira c, Especie e)
-        => new(c.IdClassificacao, c.IdDormente, e.IdEspecie, e.NomePopular ?? e.NomeCientifico, e.Classe, c.Metodo.ToString(), c.Data, c.IdUsuario, c.Anterior, c.Observacao);
+        => new(c.IdClassificacao, c.IdDormente, e.IdEspecie, e.NomePopular ?? e.NomeCientifico, e.Classe, c.Metodo.ToString(), c.Data, c.IdUsuario, c.Anterior, c.Observacao, c.UmidadePct, c.ConfiancaPct);
 }

@@ -2206,6 +2206,11 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("int")
                         .HasColumnName("anterior");
 
+                    b.Property<decimal?>("ConfiancaPct")
+                        .HasPrecision(7, 4)
+                        .HasColumnType("decimal(7,4)")
+                        .HasColumnName("confianca_pct");
+
                     b.Property<DateTime>("Data")
                         .HasColumnType("datetime2")
                         .HasColumnName("data");
@@ -2249,6 +2254,11 @@ namespace ViaPermanente.Dados.Migrations
                     b.Property<DateTime>("RegistradoEm")
                         .HasColumnType("datetime2")
                         .HasColumnName("registrado_em");
+
+                    b.Property<decimal?>("UmidadePct")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("umidade_pct");
 
                     b.HasKey("IdClassificacao");
 

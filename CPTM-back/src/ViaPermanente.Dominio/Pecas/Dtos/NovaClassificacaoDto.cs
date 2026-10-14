@@ -11,5 +11,9 @@ public class NovaClassificacaoDto
     public MetodoClassificacao Metodo { get; init; } = MetodoClassificacao.Comparacao;
     [Required] public LeituraDto Leitura { get; init; } = new();
     public string? Observacao { get; init; }
+    /// <summary>Com a pistola NIR (obrigatória): a umidade medida, de 0 a 100%.</summary>
+    [Range(0, 100)] public decimal? UmidadePct { get; init; }
+    /// <summary>Com a pistola NIR (opcional): a confiança da leitura da espécie, de 0 a 100%.</summary>
+    [Range(0, 100)] public decimal? ConfiancaPct { get; init; }
     public Guid? IdCliente { get; init; }
 }

@@ -47,6 +47,9 @@ export class Classificar {
   protected readonly idEspecie = signal<number | null>(null);
   protected readonly metodo = signal<MetodoClassificacao>('Comparacao');
   protected readonly observacao = signal('');
+  /** a leitura da pistola NIR (só quando o método é a NIR) */
+  protected readonly umidade = signal<number | null>(null);
+  protected readonly confianca = signal<number | null>(null);
   protected readonly mensagem = signal<string | null>(null);
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
@@ -73,14 +76,19 @@ export class Classificar {
   protected registrar(p: PecaDto, confirmar: boolean): void {
     const idEspecie = confirmar ? p.idEspecie : this.idEspecie();
     if (!idEspecie) return this.erro.set('Escolha a espécie.');
+    const nir = this.metodo() === 'Nir';
+    if (nir && this.umidade() === null) return this.erro.set('Informe a umidade que a pistola NIR mediu.');
     this.enviando.set(true);
     this.erro.set(null);
-    this.api.classificar(p.id, idEspecie, this.metodo(), leitura(this.tag(), this.metodoLeitura()), this.observacao().trim() || null).subscribe({
+    this.api.classificar(p.id, idEspecie, this.metodo(), leitura(this.tag(), this.metodoLeitura()), this.observacao().trim() || null,
+      nir ? { umidadePct: this.umidade(), confiancaPct: this.confianca() } : undefined).subscribe({
       next: (c) => {
         this.enviando.set(false);
         this.mensagem.set(confirmar ? `Espécie confirmada: ${c.especie}.` : `Espécie corrigida para ${c.especie} (${c.classe}ª classe). A anterior continua no histórico.`);
         this.corrigir.set(false);
         this.observacao.set('');
+        this.umidade.set(null);
+        this.confianca.set(null);
         this.pecas.buscar(p.id).subscribe((n) => this.peca.set(n));
         this.api.daPeca(p.id).subscribe((h) => this.historico.set(h));
       },

@@ -58,5 +58,21 @@ public class ClassificacaoNoBancoTestes : IAsyncLifetime
         Assert.Equal(outra.IdEspecie, aberta!.IdEspecie);
         Assert.Equal(aberta.Id, (await pecas.BuscarPorCodigo(aberta.Codigo))!.Id);
         Assert.Null(await pecas.BuscarPorCodigo(aberta.Codigo.Replace("-E", "-E9")));
+
+        // A pistola NIR: a umidade é obrigatória e só vale para ela.
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => servico.Classificar(new NovaClassificacaoDto
+        {
+            IdDormente = peca.IdDormente, IdEspecie = outra.IdEspecie, Metodo = MetodoClassificacao.Nir, Leitura = new LeituraDto { Tag = tag }
+        }, usuario.Id));
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => servico.Classificar(new NovaClassificacaoDto
+        {
+            IdDormente = peca.IdDormente, IdEspecie = outra.IdEspecie, Metodo = MetodoClassificacao.Visual, UmidadePct = 14, Leitura = new LeituraDto { Tag = tag }
+        }, usuario.Id));
+        var nir = await servico.Classificar(new NovaClassificacaoDto
+        {
+            IdDormente = peca.IdDormente, IdEspecie = outra.IdEspecie, Metodo = MetodoClassificacao.Nir, UmidadePct = 14.5m, ConfiancaPct = 92m, Leitura = new LeituraDto { Tag = tag }
+        }, usuario.Id);
+        Assert.Equal((14.5m, 92m), (nir.UmidadePct, nir.ConfiancaPct));
+        Assert.Equal(14.5m, (await servico.DaPeca(peca.IdDormente))[0].UmidadePct);
     }
 }

@@ -14,6 +14,10 @@ public class ClassificacaoMadeira : IRegistroDeCampo
     public MetodoClassificacao Metodo { get; set; }
     public MetodoCaptura? MetodoCaptura { get; set; }
     public string? Observacao { get; set; }
+    /// <summary>Só com a pistola NIR: a umidade que ela mediu (%).</summary>
+    public decimal? UmidadePct { get; set; }
+    /// <summary>Só com a pistola NIR: a confiança da leitura da espécie (%).</summary>
+    public decimal? ConfiancaPct { get; set; }
     public Guid? IdCliente { get; set; }
     public DateTime RegistradoEm { get; set; }
     public DateTime? RecebidoEm { get; set; }
