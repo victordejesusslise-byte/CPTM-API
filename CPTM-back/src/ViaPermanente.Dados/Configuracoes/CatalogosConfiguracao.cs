@@ -22,28 +22,30 @@ internal static class CatalogosConfiguracao
             e.HasKey(x => x.IdEspecie);
             e.HasIndex(x => x.NomeCientifico).IsUnique();
             e.HasData(
-                Especie(1, "Ocotea neesiana", "Lauraceae", "Canela", 1),
-                Especie(2, "Handroanthus serratifolius", "Bignoniaceae", "Ipê-amarelo", 1),
-                Especie(3, "Hymenaea courbaril", "Fabaceae", "Jatobá", 1),
-                Especie(4, "Dipteryx odorata", "Fabaceae", "Cumaru", 1),
-                Especie(5, "Manilkara huberi", "Sapotaceae", "Maçaranduba", 1),
-                Especie(6, "Myracrodruon urundeuva", "Anacardiaceae", "Aroeira", 1),
-                Especie(7, "Astronium lecointei", "Anacardiaceae", "Muiracatiara", 1),
-                Especie(8, "Handroanthus impetiginosus", "Bignoniaceae", "Ipê-roxo", 1),
-                Especie(9, "Bowdichia nitida", "Fabaceae", "Sucupira", 1),
-                Especie(10, "Mezilaurus itauba", "Lauraceae", "Itaúba", 1),
-                Especie(11, "Dinizia excelsa", "Fabaceae", "Angelim-vermelho", 1),
-                Especie(12, "Goupia glabra", "Goupiaceae", "Cupiúba", 1),
-                Especie(13, "Corymbia citriodora", "Myrtaceae", "Eucalipto-citriodora", 2),
-                Especie(14, "Eucalyptus grandis", "Myrtaceae", "Eucalipto-grandis", 2),
-                Especie(15, "Eucalyptus saligna", "Myrtaceae", "Eucalipto-saligna", 2),
-                Especie(16, "Corymbia maculata", "Myrtaceae", "Eucalipto-maculata", 2),
-                Especie(17, "Vatairea sericea", "Fabaceae", "Angelim-amargoso", 2),
-                Especie(18, "Hymenolobium petraeum", "Fabaceae", "Angelim-pedra", 2),
-                Especie(19, "Qualea paraensis", "Vochysiaceae", "Mandioqueira", 2),
-                Especie(20, "Erisma uncinatum", "Vochysiaceae", "Cedrinho", 2),
+                // A lista oficial das 22 espécies da CPTM (formulário de retirada, Victor, 2026-10-13). Todas de 2ª classe, por decisão do Victor;
+                // os ids das que já existiam ficaram iguais (Ocotea 1, Hymenaea 3, Dipteryx odorata 4, Bowdichia nitida 9, ...).
+                Especie(1, "Ocotea neesiana", "Lauraceae", "Canela", 2),
+                Especie(2, "Tabebuia serratifolia", "Bignoniaceae", "Ipê-amarelo", 2),
+                Especie(3, "Hymenaea courbaril", "Fabaceae", "Jatobá", 2),
+                Especie(4, "Dipteryx odorata", "Fabaceae", "Cumaru", 2),
+                Especie(5, "Apuleia molaris", "Fabaceae", "Amarelão", 2),
+                Especie(6, "Aspidosperma polyneuron", "Apocynaceae", "Peroba-rosa", 2),
+                Especie(7, "Astronium graveolens", "Anacardiaceae", "Guaritá", 2),
+                Especie(8, "Bowdichia brasiliensis ou Bowdichia spp", "Fabaceae", "Sucupira", 2),
+                Especie(9, "Bowdichia nitida", "Fabaceae", "Sucupira", 2),
+                Especie(10, "Mezilaurus itauba", "Lauraceae", "Itaúba", 2),
+                Especie(11, "Angelim Vermelho (Promap - AMV)", "Fabaceae", "Angelim-vermelho", 2),
+                Especie(12, "Goupia glabra", "Goupiaceae", "Cupiúba", 2),
+                Especie(13, "Bowdichia racemosa", "Fabaceae", "Sucupira", 2),
+                Especie(14, "Dialium guianense", "Fabaceae", "Jutaí-pororoca", 2),
+                Especie(15, "Diplotropis purpurea", "Fabaceae", "Sucupira-preta", 2),
+                Especie(16, "Dipteryx spp.", "Fabaceae", "Cumaru", 2),
+                Especie(17, "Enterolobium schomburgkii", "Fabaceae", "Orelha-de-macaco", 2),
+                Especie(18, "Hymenolobium petraeum ou Hymenolobium spp", "Fabaceae", "Angelim-pedra", 2),
+                Especie(19, "Hymenaea intermedia", "Fabaceae", "Jatobá", 2),
+                Especie(20, "Coimal (Dormentes antigos - AMV)", "A confirmar", null, 2),
                 Especie(21, "Apuleia leiocarpa", "Fabaceae", "Garapa", 2),
-                Especie(22, "Couratari oblongifolia", "Lecythidaceae", "Tauari", 2));
+                Especie(22, "Veneer (Dormentes antigos - AMV)", "A confirmar", null, 2));
         });
 
         mb.Entity<Parametro>(e =>
@@ -76,6 +78,6 @@ internal static class CatalogosConfiguracao
         });
     }
 
-    private static Especie Especie(int id, string cientifico, string familia, string popular, byte classe)
+    private static Especie Especie(int id, string cientifico, string familia, string? popular, byte classe)
         => new() { IdEspecie = id, NomeCientifico = cientifico, Familia = familia, NomePopular = popular, Classe = classe, Ativo = true };
 }

@@ -1474,7 +1474,7 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 1,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Lauraceae",
                             NomeCientifico = "Ocotea neesiana",
                             NomePopular = "Canela"
@@ -1483,16 +1483,16 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 2,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Bignoniaceae",
-                            NomeCientifico = "Handroanthus serratifolius",
+                            NomeCientifico = "Tabebuia serratifolia",
                             NomePopular = "Ipê-amarelo"
                         },
                         new
                         {
                             IdEspecie = 3,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Hymenaea courbaril",
                             NomePopular = "Jatobá"
@@ -1501,7 +1501,7 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 4,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Dipteryx odorata",
                             NomePopular = "Cumaru"
@@ -1510,43 +1510,43 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 5,
                             Ativo = true,
-                            Classe = (byte)1,
-                            Familia = "Sapotaceae",
-                            NomeCientifico = "Manilkara huberi",
-                            NomePopular = "Maçaranduba"
+                            Classe = (byte)2,
+                            Familia = "Fabaceae",
+                            NomeCientifico = "Apuleia molaris",
+                            NomePopular = "Amarelão"
                         },
                         new
                         {
                             IdEspecie = 6,
                             Ativo = true,
-                            Classe = (byte)1,
-                            Familia = "Anacardiaceae",
-                            NomeCientifico = "Myracrodruon urundeuva",
-                            NomePopular = "Aroeira"
+                            Classe = (byte)2,
+                            Familia = "Apocynaceae",
+                            NomeCientifico = "Aspidosperma polyneuron",
+                            NomePopular = "Peroba-rosa"
                         },
                         new
                         {
                             IdEspecie = 7,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Anacardiaceae",
-                            NomeCientifico = "Astronium lecointei",
-                            NomePopular = "Muiracatiara"
+                            NomeCientifico = "Astronium graveolens",
+                            NomePopular = "Guaritá"
                         },
                         new
                         {
                             IdEspecie = 8,
                             Ativo = true,
-                            Classe = (byte)1,
-                            Familia = "Bignoniaceae",
-                            NomeCientifico = "Handroanthus impetiginosus",
-                            NomePopular = "Ipê-roxo"
+                            Classe = (byte)2,
+                            Familia = "Fabaceae",
+                            NomeCientifico = "Bowdichia brasiliensis ou Bowdichia spp",
+                            NomePopular = "Sucupira"
                         },
                         new
                         {
                             IdEspecie = 9,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Bowdichia nitida",
                             NomePopular = "Sucupira"
@@ -1555,7 +1555,7 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 10,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Lauraceae",
                             NomeCientifico = "Mezilaurus itauba",
                             NomePopular = "Itaúba"
@@ -1564,16 +1564,16 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 11,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Fabaceae",
-                            NomeCientifico = "Dinizia excelsa",
+                            NomeCientifico = "Angelim Vermelho (Promap - AMV)",
                             NomePopular = "Angelim-vermelho"
                         },
                         new
                         {
                             IdEspecie = 12,
                             Ativo = true,
-                            Classe = (byte)1,
+                            Classe = (byte)2,
                             Familia = "Goupiaceae",
                             NomeCientifico = "Goupia glabra",
                             NomePopular = "Cupiúba"
@@ -1583,36 +1583,36 @@ namespace ViaPermanente.Dados.Migrations
                             IdEspecie = 13,
                             Ativo = true,
                             Classe = (byte)2,
-                            Familia = "Myrtaceae",
-                            NomeCientifico = "Corymbia citriodora",
-                            NomePopular = "Eucalipto-citriodora"
+                            Familia = "Fabaceae",
+                            NomeCientifico = "Bowdichia racemosa",
+                            NomePopular = "Sucupira"
                         },
                         new
                         {
                             IdEspecie = 14,
                             Ativo = true,
                             Classe = (byte)2,
-                            Familia = "Myrtaceae",
-                            NomeCientifico = "Eucalyptus grandis",
-                            NomePopular = "Eucalipto-grandis"
+                            Familia = "Fabaceae",
+                            NomeCientifico = "Dialium guianense",
+                            NomePopular = "Jutaí-pororoca"
                         },
                         new
                         {
                             IdEspecie = 15,
                             Ativo = true,
                             Classe = (byte)2,
-                            Familia = "Myrtaceae",
-                            NomeCientifico = "Eucalyptus saligna",
-                            NomePopular = "Eucalipto-saligna"
+                            Familia = "Fabaceae",
+                            NomeCientifico = "Diplotropis purpurea",
+                            NomePopular = "Sucupira-preta"
                         },
                         new
                         {
                             IdEspecie = 16,
                             Ativo = true,
                             Classe = (byte)2,
-                            Familia = "Myrtaceae",
-                            NomeCientifico = "Corymbia maculata",
-                            NomePopular = "Eucalipto-maculata"
+                            Familia = "Fabaceae",
+                            NomeCientifico = "Dipteryx spp.",
+                            NomePopular = "Cumaru"
                         },
                         new
                         {
@@ -1620,8 +1620,8 @@ namespace ViaPermanente.Dados.Migrations
                             Ativo = true,
                             Classe = (byte)2,
                             Familia = "Fabaceae",
-                            NomeCientifico = "Vatairea sericea",
-                            NomePopular = "Angelim-amargoso"
+                            NomeCientifico = "Enterolobium schomburgkii",
+                            NomePopular = "Orelha-de-macaco"
                         },
                         new
                         {
@@ -1629,7 +1629,7 @@ namespace ViaPermanente.Dados.Migrations
                             Ativo = true,
                             Classe = (byte)2,
                             Familia = "Fabaceae",
-                            NomeCientifico = "Hymenolobium petraeum",
+                            NomeCientifico = "Hymenolobium petraeum ou Hymenolobium spp",
                             NomePopular = "Angelim-pedra"
                         },
                         new
@@ -1637,18 +1637,17 @@ namespace ViaPermanente.Dados.Migrations
                             IdEspecie = 19,
                             Ativo = true,
                             Classe = (byte)2,
-                            Familia = "Vochysiaceae",
-                            NomeCientifico = "Qualea paraensis",
-                            NomePopular = "Mandioqueira"
+                            Familia = "Fabaceae",
+                            NomeCientifico = "Hymenaea intermedia",
+                            NomePopular = "Jatobá"
                         },
                         new
                         {
                             IdEspecie = 20,
                             Ativo = true,
                             Classe = (byte)2,
-                            Familia = "Vochysiaceae",
-                            NomeCientifico = "Erisma uncinatum",
-                            NomePopular = "Cedrinho"
+                            Familia = "A confirmar",
+                            NomeCientifico = "Coimal (Dormentes antigos - AMV)"
                         },
                         new
                         {
@@ -1664,9 +1663,8 @@ namespace ViaPermanente.Dados.Migrations
                             IdEspecie = 22,
                             Ativo = true,
                             Classe = (byte)2,
-                            Familia = "Lecythidaceae",
-                            NomeCientifico = "Couratari oblongifolia",
-                            NomePopular = "Tauari"
+                            Familia = "A confirmar",
+                            NomeCientifico = "Veneer (Dormentes antigos - AMV)"
                         });
                 });
 

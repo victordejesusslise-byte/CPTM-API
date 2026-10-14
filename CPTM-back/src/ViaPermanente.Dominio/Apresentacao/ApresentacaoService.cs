@@ -88,7 +88,7 @@ public class ApresentacaoService(IApresentacaoRepository repo)
                 Codigo = $"EX-{sufixo}", DataCompra = DateOnly.FromDateTime(agora), Quantidade = total,
                 CriadoEm = agora, Status = StatusPedido.Aberto
             });
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = pedido.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = total } });
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = pedido.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = especies[0].Classe, Quantidade = total } });
             var nota = await repo.Adicionar(new NotaFiscal
             {
                 IdPedido = pedido.IdPedido, Numero = $"NF-{sufixo}", DataEmissao = DateOnly.FromDateTime(agora),
