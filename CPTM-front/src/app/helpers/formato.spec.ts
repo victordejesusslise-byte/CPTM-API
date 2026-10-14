@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { consulta } from './consulta';
-import { km, m3, mensagemDeErro, nomeDoCargo } from './formato';
+import { diasDesde, km, m3, mensagemDeErro, nomeDoCargo } from './formato';
 
 describe('formato', () => {
   it('formata m³ e km como no Brasil', () => {
@@ -23,5 +23,12 @@ describe('formato', () => {
 
   it('monta a consulta sem os campos vazios', () => {
     expect(consulta({ idEmpresa: 3, papel: null, texto: '', ativo: false }).toString()).toBe('idEmpresa=3&ativo=false');
+  });
+
+  it('conta os dias inteiros e nunca mostra dia negativo', () => {
+    const agora = new Date('2026-10-13T18:00:00').getTime();
+    expect(diasDesde('2026-10-11T17:00:00', agora)).toBe(2);
+    expect(diasDesde('2026-10-13T21:00:00', agora)).toBe(0);
+    expect(diasDesde(null, agora)).toBeNull();
   });
 });

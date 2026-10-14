@@ -15,6 +15,10 @@ export const km = (valor: number | null | undefined): string =>
   valor == null ? '—' : valor.toLocaleString(br, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 
 /** ISO → "11/10/2026 14:05" */
+/** Dias inteiros desde a data (nunca negativo: um relógio um pouco adiantado não vira "-1 dias"). */
+export const diasDesde = (iso: string | null | undefined, agora = Date.now()): number | null =>
+  iso ? Math.max(0, Math.floor((agora - new Date(iso).getTime()) / 86_400_000)) : null;
+
 export const dataHora = (iso: string | null | undefined): string =>
   !iso ? '—' : new Date(iso).toLocaleString(br, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 

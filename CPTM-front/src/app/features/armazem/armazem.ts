@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { dataHora, mensagemDeErro, metros } from '../../helpers/formato';
+import { dataHora, diasDesde, mensagemDeErro, metros } from '../../helpers/formato';
 import { novoIdCliente } from '../../helpers/arquivo';
 import { MetodoCaptura } from '../../models/enums';
 import { ConferenciaDto, PecaDto } from '../../models/peca';
@@ -44,7 +44,7 @@ export class Armazem {
     { titulo: 'Armazém', valor: (p) => p.armazem },
     { titulo: 'Pilha', valor: (p) => p.pilha ?? 'sem pilha', vermelho: (p) => !p.pilha },
     { titulo: 'Nota', valor: (p) => p.nota ?? 'sem nota', pilula: (p) => classeNota(p.nota) },
-    { titulo: 'No armazém', valor: (p) => (p.entradaArmazemEm ? `${Math.floor((Date.now() - new Date(p.entradaArmazemEm).getTime()) / 86_400_000)} dias` : '—') },
+    { titulo: 'No armazém', valor: (p) => (p.entradaArmazemEm ? `${diasDesde(p.entradaArmazemEm)} dias` : '—') },
   ];
 
   protected mudarFiltro(campo: 'idArmazem' | 'idTamanho' | 'classe', valor: number | null): void {

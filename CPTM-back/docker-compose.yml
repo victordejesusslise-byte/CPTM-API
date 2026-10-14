@@ -15,6 +15,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Express
+      TZ: America/Sao_Paulo
       MSSQL_SA_PASSWORD: ${Banco__SenhaSa}
     ports:
       - "14330:1433"
@@ -39,6 +40,8 @@ services:
       Banco__MigrarAoIniciar: "true"
       Logs__Json: "true"
       ASPNETCORE_ENVIRONMENT: Development
+      # O sistema grava a hora local (DateTime.Now): no container, a hora de Brasília, e não UTC.
+      TZ: America/Sao_Paulo
       Logging__LogLevel__Microsoft.EntityFrameworkCore: Warning
     ports:
       - "5169:8080"
