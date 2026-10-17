@@ -62,6 +62,7 @@ describe('Painel', () => {
     expect(destaque.querySelectorAll('.indicador--vermelho')).toHaveLength(1);
     expect(destaque.querySelector('a.indicador__verificar')?.getAttribute('href')).toBe('/pedidos');
     expect(destaque.textContent).toContain('Precisa de atenção');
+    expect(destaque.querySelector('a.indicador__verificar')?.getAttribute('title')).toBe('Ver os pedidos');
   });
 
   it('no acompanhamento, o vermelho vem primeiro e só tem botão se o cargo abre a tela', async () => {

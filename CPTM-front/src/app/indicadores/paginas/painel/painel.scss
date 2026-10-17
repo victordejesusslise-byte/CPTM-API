@@ -32,4 +32,4 @@ section { margin-bottom: 32px; }
 .indicador__abrir { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--tinta-2); }
 .atencao h2 { color: var(--vermelho); }
 .grade:has(.indicador) .indicador { display: flex; flex-direction: column; }
-.indicador__verificar, .indicador__abrir { align-self: flex-start; }
+.indicador__verificar, .indicador__abrir, .indicador__selo { align-self: flex-start; }

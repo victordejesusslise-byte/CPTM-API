@@ -24,7 +24,7 @@
         <p class="indicador__valor">{{ valor(i) }} <span>{{ i.unidade }}</span></p>
         <p class="indicador__resumo">{{ i.resumo }}</p>
         @if (verificar(i); as v) {
-          <a mat-flat-button class="indicador__verificar" [routerLink]="v.rota">Verificar · {{ v.texto }}</a>
+          <a mat-flat-button class="indicador__verificar" [routerLink]="v.rota" [attr.title]="v.texto">Verificar</a>
         }
       </article>
     }
@@ -78,7 +78,7 @@
           }
           @if (verificar(i); as v) {
             @if (i.vermelho) {
-              <a mat-flat-button class="indicador__verificar" [routerLink]="v.rota">Verificar · {{ v.texto }}</a>
+              <a mat-flat-button class="indicador__verificar" [routerLink]="v.rota" [attr.title]="v.texto">Verificar</a>
             } @else {
               <a class="indicador__abrir" [routerLink]="v.rota">{{ v.texto }} →</a>
             }
