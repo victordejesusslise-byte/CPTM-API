@@ -19,7 +19,6 @@
   <div class="grade">
     @for (i of vermelhos(); track i.chave) {
       <article class="cartao indicador indicador--vermelho">
-        <p class="indicador__selo">Precisa de atenção</p>
         <h3>{{ i.nome }}</h3>
         <p class="indicador__valor">{{ valor(i) }} <span>{{ i.unidade }}</span></p>
         <p class="indicador__resumo">{{ i.resumo }}</p>
@@ -62,7 +61,6 @@
     <div class="grade">
       @for (i of ordenados(); track i.chave) {
         <article class="cartao indicador" [class.indicador--vermelho]="i.vermelho">
-          @if (i.vermelho) { <p class="indicador__selo">Precisa de atenção</p> }
           <h3>{{ i.nome }}</h3>
           <p class="indicador__valor">{{ valor(i) }} <span>{{ i.unidade }}</span></p>
           <p class="indicador__resumo">{{ i.resumo }}</p>

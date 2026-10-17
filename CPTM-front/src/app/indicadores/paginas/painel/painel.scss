@@ -18,18 +18,16 @@ section { margin-bottom: 32px; }
   div { display: flex; justify-content: space-between; gap: 12px; }
   dt { color: var(--tinta-3); }
   dd { margin: 0; font-family: var(--fonte-mono); }
-}// Pede atenção: fundo e borda vermelhos, o número em vermelho forte e o selo no alto (Victor, 2026-10-17: "mais vermelho quando precisa de atenção").
+}
+
+// Pede atenção: borda vermelha, o número em vermelho e o botão Verificar (Victor, 2026-10-17: vermelho quando precisa de atenção, mas pequeno).
 .indicador--vermelho {
-  border: 1px solid var(--vermelho-linha); border-left: 4px solid var(--vermelho); background: var(--vermelho-suave);
+  border: 1px solid var(--vermelho-linha); border-left: 4px solid var(--vermelho);
   .indicador__valor { color: var(--vermelho); }
   .indicador__resumo { color: var(--tinta); }
-}
-.indicador__selo {
-  display: inline-block; margin: 0 0 6px; padding: 1px 8px; border-radius: 999px;
-  background: var(--vermelho); color: var(--vermelho-tinta); font-size: 11px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
 }
 .indicador__verificar { margin-top: 10px; font-size: 13px; --mat-button-filled-container-height: 32px; --mat-button-filled-container-color: var(--vermelho); --mat-button-filled-label-text-color: var(--vermelho-tinta); }
 .indicador__abrir { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--tinta-2); }
 .atencao h2 { color: var(--vermelho); }
 .grade:has(.indicador) .indicador { display: flex; flex-direction: column; }
-.indicador__verificar, .indicador__abrir, .indicador__selo { align-self: flex-start; }
+.indicador__verificar, .indicador__abrir { align-self: flex-start; }
