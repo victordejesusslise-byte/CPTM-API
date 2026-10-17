@@ -13,10 +13,23 @@ section { margin-bottom: 32px; }
 .indicador__valor { margin: 0; font-family: var(--fonte-titulo); font-size: 28px; font-weight: 700; span { font-size: 14px; color: var(--tinta-3); font-weight: 600; } }
 .indicador__resumo { margin: 6px 0 0; color: var(--tinta-2); }
 .indicador__ref { margin: 4px 0 0; font-size: 13px; color: var(--tinta-3); }
-.indicador--vermelho { border-color: var(--vermelho-linha); .indicador__valor { color: var(--vermelho); } }
 .indicador__detalhes {
   margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--linha); display: grid; gap: 4px; font-size: 13px;
   div { display: flex; justify-content: space-between; gap: 12px; }
   dt { color: var(--tinta-3); }
   dd { margin: 0; font-family: var(--fonte-mono); }
+}// Pede atenção: fundo e borda vermelhos, o número em vermelho forte e o selo no alto (Victor, 2026-10-17: "mais vermelho quando precisa de atenção").
+.indicador--vermelho {
+  border: 1px solid var(--vermelho); border-left: 6px solid var(--vermelho); background: var(--vermelho-suave);
+  .indicador__valor { color: var(--vermelho); font-size: 34px; }
+  .indicador__resumo { color: var(--tinta); }
 }
+.indicador__selo {
+  display: inline-block; margin: 0 0 8px; padding: 2px 10px; border-radius: 999px;
+  background: var(--vermelho); color: var(--vermelho-tinta); font-size: 12px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+}
+.indicador__verificar { margin-top: 14px; --mat-button-filled-container-color: var(--vermelho); --mat-button-filled-label-text-color: var(--vermelho-tinta); }
+.indicador__abrir { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--tinta-2); }
+.atencao h2 { color: var(--vermelho); }
+.grade:has(.indicador) .indicador { display: flex; flex-direction: column; }
+.indicador__verificar, .indicador__abrir { align-self: flex-start; }

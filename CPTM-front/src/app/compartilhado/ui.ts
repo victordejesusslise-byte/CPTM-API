@@ -13,4 +13,4 @@ import { MatTabsModule } from '@angular/material/tabs';
  */
 export const FORMULARIO = [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatCheckboxModule] as const;
 export const CARREGANDO = [MatProgressBarModule] as const;
-export const ABAS = [MatTabsModule] as const;
+export const ABAS = [MatTabsModule] as const;export const BOTOES = [MatButtonModule] as const;

@@ -13,6 +13,24 @@
 </header>
 
 @if (aba() === 'hoje') {
+@if (vermelhos().length) {
+<section aria-labelledby="t-atencao" class="atencao">
+  <h2 id="t-atencao">Pede atenção agora</h2>
+  <div class="grade">
+    @for (i of vermelhos(); track i.chave) {
+      <article class="cartao indicador indicador--vermelho">
+        <p class="indicador__selo">Precisa de atenção</p>
+        <h3>{{ i.nome }}</h3>
+        <p class="indicador__valor">{{ valor(i) }} <span>{{ i.unidade }}</span></p>
+        <p class="indicador__resumo">{{ i.resumo }}</p>
+        @if (verificar(i); as v) {
+          <a mat-flat-button class="indicador__verificar" [routerLink]="v.rota">Verificar · {{ v.texto }}</a>
+        }
+      </article>
+    }
+  </div>
+</section>
+}
 <section aria-labelledby="t-atalhos">
   <h2 id="t-atalhos">O que fazer</h2>
   <div class="atalhos">
@@ -42,8 +60,9 @@
   <app-estado [carregando]="indicadores.isLoading()" [erro]="erro()" [vazio]="indicadores.hasValue() && !indicadores.value().length" textoVazio="Sem indicadores no período." />
   @if (indicadores.hasValue()) {
     <div class="grade">
-      @for (i of indicadores.value(); track i.chave) {
+      @for (i of ordenados(); track i.chave) {
         <article class="cartao indicador" [class.indicador--vermelho]="i.vermelho">
+          @if (i.vermelho) { <p class="indicador__selo">Precisa de atenção</p> }
           <h3>{{ i.nome }}</h3>
           <p class="indicador__valor">{{ valor(i) }} <span>{{ i.unidade }}</span></p>
           <p class="indicador__resumo">{{ i.resumo }}</p>
@@ -56,6 +75,13 @@
                 <div><dt>{{ d.rotulo }}</dt><dd>{{ d.valor }}</dd></div>
               }
             </dl>
+          }
+          @if (verificar(i); as v) {
+            @if (i.vermelho) {
+              <a mat-flat-button class="indicador__verificar" [routerLink]="v.rota">Verificar · {{ v.texto }}</a>
+            } @else {
+              <a class="indicador__abrir" [routerLink]="v.rota">{{ v.texto }} →</a>
+            }
           }
         </article>
       }

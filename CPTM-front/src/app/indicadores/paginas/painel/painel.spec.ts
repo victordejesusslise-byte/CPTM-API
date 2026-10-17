@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Routes, provideRouter } from '@angular/router';
 import { IndicadorDto } from '../../entidades/indicador';
 import { entrarComo } from '../../../compartilhado/testes/sessao-de-teste';
 import { Painel } from './painel';
@@ -12,12 +12,12 @@ const indicador = (chave: string, vermelho: boolean): IndicadorDto => ({
 });
 
 describe('Painel', () => {
-  const abrir = async (cargo: Parameters<typeof entrarComo>[0], aba: 'hoje' | 'numeros' = 'numeros') => {
+  const abrir = async (cargo: Parameters<typeof entrarComo>[0], aba: 'hoje' | 'numeros' = 'numeros', rotas: Routes = []) => {
     localStorage.clear();
     entrarComo(cargo);
     await TestBed.configureTestingModule({
       imports: [Painel],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter(rotas), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
     const fixture = TestBed.createComponent(Painel);
     fixture.componentRef.setInput('aba', aba);
@@ -49,5 +49,26 @@ describe('Painel', () => {
     http.expectOne((r) => r.url === 'http://localhost:8045/api/indicadores').flush({ detail: 'Período inválido.' }, { status: 400, statusText: 'Bad Request' });
     await fixture.whenStable();
     expect(tela.querySelector('.aviso--erro')?.textContent).toContain('Período inválido.');
+  });
+
+  // A casca com a rota dos pedidos, só para supervisor e operador de pátio (como no app.routes).
+  const rotas: Routes = [{ path: '', children: [{ path: 'pedidos', data: { cargos: ['Supervisor', 'OperadorPatio'] }, children: [] }] }];
+
+  it('põe em destaque o que pede atenção, com o botão para verificar', async () => {
+    const { fixture, tela, http } = await abrir('Supervisor', 'hoje', rotas);
+    http.expectOne((r) => r.url === 'http://localhost:8045/api/indicadores').flush([indicador('estoque-m3', false), indicador('segunda-classe-pedido', true)]);
+    await fixture.whenStable();
+    const destaque = tela.querySelector('.atencao')!;
+    expect(destaque.querySelectorAll('.indicador--vermelho')).toHaveLength(1);
+    expect(destaque.querySelector('a.indicador__verificar')?.getAttribute('href')).toBe('/pedidos');
+    expect(destaque.textContent).toContain('Precisa de atenção');
+  });
+
+  it('no acompanhamento, o vermelho vem primeiro e só tem botão se o cargo abre a tela', async () => {
+    const { fixture, tela, http } = await abrir('Especialista', 'numeros', rotas);
+    http.expectOne((r) => r.url === 'http://localhost:8045/api/indicadores').flush([indicador('estoque-m3', false), indicador('segunda-classe-pedido', true)]);
+    await fixture.whenStable();
+    expect(tela.querySelector('.indicador')?.classList).toContain('indicador--vermelho');
+    expect(tela.querySelector('.indicador__verificar')).toBeNull();
   });
 });

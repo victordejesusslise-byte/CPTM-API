@@ -12,19 +12,25 @@ import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-
 import { FORMULARIO } from '../../../compartilhado/ui';
 
 const METODOS: { valor: MetodoClassificacao; rotulo: string }[] = [
-  { valor: 'Comparacao', rotulo: 'Comparação com a amostra' }, { valor: 'Visual', rotulo: 'Visual' },
-  { valor: 'Catalogo', rotulo: 'Catálogo' }, { valor: 'Laboratorio', rotulo: 'Laboratório' }, { valor: 'Nir', rotulo: 'Pistola NIR' },
+  { valor: 'Nir', rotulo: 'Pistola NIR' }, { valor: 'Comparacao', rotulo: 'Comparação com a amostra' }, { valor: 'Visual', rotulo: 'Visual' },
+  { valor: 'Catalogo', rotulo: 'Catálogo' }, { valor: 'Laboratorio', rotulo: 'Laboratório' },
 ];
 const NOME_METODO: Record<string, string> = { PlacaFornecedor: 'Placa do fornecedor', Comparacao: 'Comparação', Visual: 'Visual', Catalogo: 'Catálogo', Laboratorio: 'Laboratório', Nir: 'Pistola NIR' };
 
 /**
  * Classificar (protótipo YBYRA, etapa 07; especialista): lê a peça, confirma a espécie da placa ou corrige.
- * A de antes nunca some; a classe vem da espécie. Em "Classificações feitas", as dos últimos 30 dias.
+ * A de antes nunca some; a classe vem do feixe (do pedido). Em "Classificações feitas", as dos últimos 30 dias.
  */
 @Component({
   selector: 'app-classificar',
   imports: [FormsModule, FORMULARIO, Estado, LeituraTag],
   templateUrl: './classificar.html',
+  styles: `
+    .passos { margin: 0 0 16px; padding-left: 20px; color: var(--tinta-2); li { margin: 2px 0; } }
+    .pistola-nir { border: 1px solid var(--linha-2); border-left: 4px solid var(--verde, var(--tinta)); border-radius: 8px; padding: 12px 14px 4px; margin-bottom: 12px; background: var(--superficie-2, var(--superficie)); }
+    .pistola-nir__titulo { margin: 0; font-weight: 700; }
+    .pistola-nir .nota { margin: 2px 0 10px; }
+  `,
 })
 export class Classificar {
   readonly aba = input<'peca' | 'feitas'>('peca');
@@ -45,7 +51,8 @@ export class Classificar {
   protected readonly historico = signal<ClassificacaoDto[]>([]);
   protected readonly corrigir = signal(false);
   protected readonly idEspecie = signal<number | null>(null);
-  protected readonly metodo = signal<MetodoClassificacao>('Comparacao');
+  /** A pistola NIR é o jeito padrão de classificar (Victor, 2026-10-17); os outros ficam na lista. */
+  protected readonly metodo = signal<MetodoClassificacao>('Nir');
   protected readonly observacao = signal('');
   /** a leitura da pistola NIR (só quando o método é a NIR) */
   protected readonly umidade = signal<number | null>(null);

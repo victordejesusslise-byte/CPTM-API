@@ -54,7 +54,8 @@
       <h2>Feixes</h2>
       <div formArrayName="feixes">
         @for (f of form.controls.feixes.controls; track f; let i = $index) {
-          <div class="cartao item campos" [formGroupName]="i">
+          <div class="cartao item" [formGroupName]="i">
+            <div class="campos">
             <mat-form-field appearance="outline"><mat-label>Número do feixe</mat-label><input matInput formControlName="numeroFeixe" class="mono" /></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Peças no feixe</mat-label><input matInput type="number" min="1" formControlName="quantidade" /></mat-form-field>
             <mat-form-field appearance="outline">
@@ -72,10 +73,29 @@
             <mat-form-field appearance="outline">
               <mat-label>Classe</mat-label>
               <mat-select formControlName="classe">
-                <mat-option [value]="null">A do pedido</mat-option><mat-option [value]="1">1ª</mat-option><mat-option [value]="2">2ª</mat-option>
+                <mat-option [value]="1">1ª</mat-option><mat-option [value]="2">2ª</mat-option>
               </mat-select>
+              <mat-error>Escolha 1ª ou 2ª.</mat-error>
             </mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Tratamento</mat-label><input matInput formControlName="tratamento" /></mat-form-field>
+            </div>
+            @if (placas().get(f); as pl) {
+              <div class="placa-lida">
+                <img [src]="pl.foto" alt="Foto da placa do feixe" />
+                <div>
+                  <h3>Placa do feixe</h3>
+                  <dl>
+                    @for (c of pl.campos; track c.nome) { <div><dt>{{ c.nome }}</dt><dd [class.vermelho]="c.naoBate">{{ c.valor || '—' }}</dd></div> }
+                  </dl>
+                </div>
+              </div>
+            }
+            @if (placaAberta() === f) {
+              <app-ler-placa [idPedido]="idPedido()" (confirmada)="placaConfirmada(f, $event)" />
+              <div class="acoes"><button mat-button type="button" (click)="placaAberta.set(null)">Fechar a leitura</button></div>
+            } @else {
+              <div class="acoes"><button mat-stroked-button type="button" (click)="placaAberta.set(f)">{{ placas().has(f) ? 'Ler a placa de novo' : 'Ler a placa pela foto' }}</button></div>
+            }
           </div>
         }
       </div>

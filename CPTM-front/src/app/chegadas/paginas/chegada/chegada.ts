@@ -1,18 +1,32 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { ChegadaDto, NovoFeixeDto } from '../../../pedidos/entidades/pedido';
 import { Catalogos } from '../../../catalogos/servicos/catalogos';
 import { Pedidos } from '../../../pedidos/servicos/pedidos';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { LerPlaca, PlacaConfirmada } from './ler-placa';
+import { PlacaNoFeixe, feixeDaPlaca, placaNoFeixe } from './placa-no-feixe';
 
-/** A chegada da carga: os feixes que vieram, conferidos com o pedido e a nota. A primeira chegada cria o lote. */
+/**
+ * A chegada da carga: os feixes que vieram, conferidos com o pedido e a nota. A primeira chegada cria o lote.
+ * Em cada feixe, "Ler a placa pela foto": confirmada a placa, o feixe ganha espécie, tamanho, classe e tratamento, e mostra a placa.
+ */
 @Component({
   selector: 'app-chegada',
-  imports: [RouterLink, FORMULARIO],
+  imports: [RouterLink, FORMULARIO, LerPlaca],
   templateUrl: './chegada.html',
+  styles: `
+    .placa-lida { display: grid; grid-template-columns: minmax(0, 160px) 1fr; gap: 14px; align-items: start; margin: 4px 0 10px; padding: 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); }
+    .placa-lida img { width: 100%; border-radius: 6px; }
+    .placa-lida h3 { margin: 0 0 6px; font-size: 14px; }
+    .placa-lida dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 14px; font-size: 13px; }
+    .placa-lida dt { color: var(--tinta-3); }
+    .placa-lida dd { margin: 0; font-family: var(--fonte-mono); }
+    @media (max-width: 560px) { .placa-lida { grid-template-columns: 1fr; } .placa-lida img { max-width: 220px; } }
+  `,
 })
 export class Chegada {
   /** ?pedido= vindo da tela do pedido */
@@ -44,6 +58,9 @@ export class Chegada {
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
   protected readonly somaFeixes = signal(0);
+  /** O feixe com a leitura da placa aberta (um por vez) e as placas já confirmadas, por feixe. */
+  protected readonly placaAberta = signal<AbstractControl | null>(null);
+  protected readonly placas = signal(new Map<AbstractControl, PlacaNoFeixe>());
 
   constructor() {
     this.form.controls.feixes.valueChanges.subscribe((f) => this.somaFeixes.set(f.reduce((s, x) => s + (Number(x.quantidade) || 0), 0)));
@@ -56,10 +73,20 @@ export class Chegada {
       quantidade: [1, [Validators.min(1), Validators.max(1000)]],
       idEspecie: [0, Validators.min(1)],
       idTamanho: [0, Validators.min(1)],
-      /** null = a classe do item do pedido; o operador escolhe quando o pedido tem 1ª e 2ª para o feixe */
-      classe: [null as number | null],
+      /** O operador escolhe 1ª ou 2ª em todo feixe (Victor, 2026-10-17); a placa lida pela foto já preenche. */
+      classe: [null as number | null, Validators.required],
       tratamento: [''],
     });
+  }
+
+  /** Placa confirmada: preenche só o que ela disse (o resto fica como o operador deixou) e guarda os 9 campos e a foto para mostrar no feixe. */
+  protected placaConfirmada(feixe: AbstractControl, p: PlacaConfirmada): void {
+    const daPlaca = feixeDaPlaca(p.valores, this.especies(), this.tamanhos());
+    feixe.patchValue(Object.fromEntries(Object.entries(daPlaca).filter(([, v]) => v !== null)));
+    const anterior = this.placas().get(feixe);
+    if (anterior) URL.revokeObjectURL(anterior.foto);
+    this.placas.update((m) => new Map(m).set(feixe, placaNoFeixe(p)));
+    this.placaAberta.set(null);
   }
 
   protected registrar(): void {

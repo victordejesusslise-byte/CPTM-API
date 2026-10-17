@@ -4,6 +4,11 @@
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
 @if (aba() === 'peca') {
+  <ol class="passos">
+    <li>Leia a tag da peça com o módulo RFID.</li>
+    <li>Meça a madeira com a <b>pistola NIR</b> e anote a umidade.</li>
+    <li>Confirme a espécie ou diga qual é.</li>
+  </ol>
   <app-leitura-tag [(tag)]="tag" [(metodo)]="metodoLeitura" (lida)="buscar()" />
   <div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Ler a peça</button></div>
 
@@ -21,11 +26,15 @@
         </mat-select>
       </mat-form-field>
       @if (metodo() === 'Nir') {
+        <div class="pistola-nir">
+        <p class="pistola-nir__titulo">Leitura da pistola NIR</p>
+        <p class="nota">Aponte a pistola para a face da peça e anote o que ela mostrou.</p>
         <div class="campos">
           <mat-form-field appearance="outline"><mat-label>Umidade medida (%)</mat-label>
             <input matInput type="number" min="0" max="100" step="0.1" [ngModel]="umidade()" (ngModelChange)="umidade.set($event === '' || $event === null ? null : +$event)" /></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Confiança da leitura (%)</mat-label>
             <input matInput type="number" min="0" max="100" step="1" [ngModel]="confianca()" (ngModelChange)="confianca.set($event === '' || $event === null ? null : +$event)" /></mat-form-field>
+        </div>
         </div>
       }
       @if (corrigir()) {

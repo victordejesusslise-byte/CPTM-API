@@ -14,7 +14,7 @@ const pedido = (id: number, codigo: string, quantidade: number, recebidas: numbe
 });
 
 describe('AcompanharPedidos', () => {
-  it('soma o filtro, marca a entrega incompleta e filtra pelo que falta chegar', async () => {
+  it('soma o filtro, marca a entrega incompleta e filtra pelo que está a caminho', async () => {
     localStorage.clear();
     entrarComo('Supervisor');
     await TestBed.configureTestingModule({

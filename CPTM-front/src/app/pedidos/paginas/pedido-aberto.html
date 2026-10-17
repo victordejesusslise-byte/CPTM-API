@@ -71,7 +71,7 @@
         <div class="totais">
           <div class="t">Pediu<b>{{ p.quantidade }}</b></div>
           <div class="t">Chegou<b>{{ p.pecasRecebidas }}</b></div>
-          <div class="t">Falta chegar<b [class.vermelho]="p.pecasRecebidas > 0 && faltaChegar(p) > 0">{{ faltaChegar(p) }}</b></div>
+          <div class="t">A caminho<b [class.vermelho]="p.pecasRecebidas > 0 && faltaChegar(p) > 0">{{ faltaChegar(p) }}</b></div>
           <div class="t">Cadastradas<b>{{ cadastradas() }}</b></div>
         </div>
         <app-tabela-itens [itens]="itensTabela()" />

@@ -13,7 +13,7 @@
   <div class="totais">
     <div class="t">Pediu<b>{{ totais().pediu }}</b></div>
     <div class="t">Chegou<b>{{ totais().chegou }}</b></div>
-    <div class="t">Falta chegar<b>{{ totais().falta }}</b></div>
+    <div class="t">A caminho<b>{{ totais().falta }}</b></div>
     <div class="t">Entrega incompleta<b [class.vermelho]="totais().incompletas > 0">{{ totais().incompletas }}</b></div>
   </div>
 
@@ -34,7 +34,7 @@
       <mat-label>Situação</mat-label>
       <mat-select [value]="filtroSituacao()" (selectionChange)="filtroSituacao.set($event.value)">
         <mat-option value="all">Todas</mat-option>
-        <mat-option value="__falta">Só o que falta chegar</mat-option>
+        <mat-option value="__falta">Só o que está a caminho</mat-option>
         @for (s of situacoes; track s.valor) { <mat-option [value]="s.valor">{{ s.rotulo }}</mat-option> }
       </mat-select>
     </mat-form-field>
