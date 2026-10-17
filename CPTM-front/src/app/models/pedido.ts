@@ -29,8 +29,9 @@ export interface ChegadaDto {
   documentoOrigemTipo: string | null; documentoOrigemNumero: string | null; dataRecebimento: string; quantidadeRecebida: number; observacao: string | null;
   idLote: number; lote: string; feixes: FeixeDto[]; confere: boolean; divergencias: string[]; avisos: string[];
 }
-export interface NovoFeixeDto { numeroFeixe: string; quantidade: number; idEspecie: number; idTamanho: number; tratamento?: string | null; idEmpresaTratamento?: number | null; idEmpresaInspecao?: number | null; anoInspecao?: number | null; }
+/** classe: sem ela, vale a do item do pedido; obrigatória quando o pedido tem 1ª e 2ª para o mesmo feixe. */
+export interface NovoFeixeDto { numeroFeixe: string; quantidade: number; idEspecie: number; idTamanho: number; classe?: number | null; tratamento?: string | null; idEmpresaTratamento?: number | null; idEmpresaInspecao?: number | null; anoInspecao?: number | null; }
 export interface NovaChegadaDto {
   idNota?: number | null; idArmazem: number; documentoOrigemTipo?: string | null; documentoOrigemNumero?: string | null;
   dataRecebimento?: string | null; quantidadeRecebida: number; observacao?: string | null; feixes: NovoFeixeDto[];
-}export interface OfertaDto { id: number; idEmpresa: number; empresa: string; idEspecie: number; especie: string; classe: number; idTamanho: number; comprimentoM: number; volumeM3Disponivel: number; data: string; }
+}export interface OfertaDto { id: number; idEmpresa: number; empresa: string; idEspecie: number; especie: string; idTamanho: number; comprimentoM: number; volumeM3Disponivel: number; data: string; }

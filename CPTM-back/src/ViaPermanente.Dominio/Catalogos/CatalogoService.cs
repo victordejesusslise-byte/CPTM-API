@@ -18,7 +18,7 @@ public class CatalogoService(ICatalogoRepository catalogo)
     public async Task<IReadOnlyList<EspecieDto>> ListarEspecies()
         => (await catalogo.ListarEspecies())
             .Where(e => e.Ativo)
-            .Select(e => new EspecieDto(e.IdEspecie, e.NomeCientifico, e.Familia, e.NomePopular, e.Classe))
+            .Select(e => new EspecieDto(e.IdEspecie, e.NomeCientifico, e.Familia, e.NomePopular))
             .ToList();
 
     public async Task<IReadOnlyList<ModoLeituraDto>> ListarModos()

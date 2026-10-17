@@ -41,11 +41,11 @@ public class PedidoServiceTestes
     }
 
     [Fact]
-    public async Task Classe_do_item_tem_de_ser_a_da_especie()
+    public async Task Qualquer_especie_pode_ser_pedida_de_1a_ou_de_2a()
     {
+        // A classe vem do pedido (Victor, 2026-10-16): o eucalipto (antes de 2ª) pode ser pedido de 1ª.
         var novo = new NovoPedidoDto { Codigo = "PED-2", IdEmpresa = 1, Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 14, Quantidade = 5 }] };
-        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(() => Service().Criar(novo, 1));
-        Assert.Contains("a classe vem da espécie", erro.Message);
+        Assert.Null(await Record.ExceptionAsync(() => Service().Criar(novo, 1)));
     }
 
     [Fact]

@@ -82,16 +82,6 @@ export class ItensPedido {
     });
   }
 
-  protected especiesDaClasse(classe: number) {
-    return this.especies().filter((e) => e.classe === Number(classe));
-  }
-
-  protected classeMudou(i: number): void {
-    const item = this.itens().at(i);
-    const especie = this.especies().find((e) => e.id === item.controls.idEspecie.value);
-    if (especie && especie.classe !== Number(item.controls.classe.value)) item.controls.idEspecie.setValue(null);
-  }
-
   protected adicionar(): void {
     this.itens().push(novoItemPedido(this.fb));
   }

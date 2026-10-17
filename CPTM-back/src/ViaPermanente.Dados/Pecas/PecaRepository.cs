@@ -132,7 +132,8 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
                 db.Set<ClassificacaoMadeira>().Where(c => c.IdDormente == d.IdDormente)
                     .OrderByDescending(c => c.IdClassificacao).Select(c => (int?)c.IdEspecie).FirstOrDefault() ?? f.IdEspecie,
                 db.Set<VerificacaoQualidade>().Where(v => v.IdDormente == d.IdDormente)
-                    .OrderBy(v => v.IdVerificacao).Select(v => (ResultadoVerificacao?)v.Resultado).FirstOrDefault())
+                    .OrderBy(v => v.IdVerificacao).Select(v => (ResultadoVerificacao?)v.Resultado).FirstOrDefault(),
+                f.Classe)
         ).ToListAsync();
     }
 }

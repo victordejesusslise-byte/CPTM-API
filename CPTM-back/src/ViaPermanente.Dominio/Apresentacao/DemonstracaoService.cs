@@ -60,7 +60,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
 
             // Pedido 1: chegou inteiro, cadastrado, verificado (1 reprovada) e guardado; 3 peças já foram para a via.
             var p1 = await repo.Adicionar(NovoPedido(1, PecasPorFeixe * 2, 20));
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p1.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = especies[0].Classe, Quantidade = p1.Quantidade } });
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p1.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = p1.Quantidade } });
             var m3 = VolumeHelper.M3(tamanho.ComprimentoM, tamanho.LarguraM, tamanho.AlturaM);
             var nota = await repo.Adicionar(new NotaFiscal
             {
@@ -69,7 +69,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             });
             await repo.AdicionarVarios(especies.Select(e => new NotaFiscalItem
             {
-                IdNota = nota.IdNota, IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = e.Classe, Quantidade = PecasPorFeixe, VolumeM3 = PecasPorFeixe * m3
+                IdNota = nota.IdNota, IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = PecasPorFeixe, VolumeM3 = PecasPorFeixe * m3
             }).ToList());
             var (dormentes1, tags1) = await Chegada(p1, nota.IdNota, idArmazem, especies, PecasPorFeixe, PecasPorFeixe, agora.AddDays(-14), 1, tamanho, tratadora, inspetora, fornecedor, idUsuario);
 
@@ -109,12 +109,12 @@ public class DemonstracaoService(IApresentacaoRepository repo)
 
             // Pedido 2: chegou só uma parte (4 de 8) e só 2 peças ganharam a tag.
             var p2 = await repo.Adicionar(NovoPedido(2, PecasPorFeixe * 2, 6));
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p2.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = especies[0].Classe, Quantidade = p2.Quantidade } });
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p2.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = p2.Quantidade } });
             var (dormentes2, _) = await Chegada(p2, null, idArmazem, especies.Take(1).ToList(), PecasPorFeixe, 2, agora.AddDays(-2), 2, tamanho, tratadora, inspetora, fornecedor, idUsuario);
 
             // Pedido 3: aberto, esperando a carga.
             var p3 = await repo.Adicionar(NovoPedido(3, 6, 1));
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p3.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = especies[0].Classe, Quantidade = 6 } });
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p3.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = 6 } });
 
             // A passagem da noite: uma peça fora de posição, uma com a tag muda, uma com suspeita de rachadura.
             var passagem = await repo.Adicionar(new Passagem
@@ -244,7 +244,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
         });
         var feixes = especies.Select((e, i) => new Feixe
         {
-            IdRecebimento = recebimento.IdRecebimento, NumeroFeixe = $"{n}{i + 1:00}", Quantidade = porFeixe, IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho,
+            IdRecebimento = recebimento.IdRecebimento, NumeroFeixe = $"{n}{i + 1:00}", Quantidade = porFeixe, IdEspecie = e.IdEspecie, Classe = 1, IdTamanho = tamanho.IdTamanho,
             Tratamento = "CCA", IdEmpresaTratamento = tratadora.IdEmpresa, IdEmpresaInspecao = inspetora.IdEmpresa, AnoInspecao = (short)quando.Year
         }).ToList();
         await repo.AdicionarVarios(feixes);

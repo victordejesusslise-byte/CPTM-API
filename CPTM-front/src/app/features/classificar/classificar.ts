@@ -84,7 +84,7 @@ export class Classificar {
       nir ? { umidadePct: this.umidade(), confiancaPct: this.confianca() } : undefined).subscribe({
       next: (c) => {
         this.enviando.set(false);
-        this.mensagem.set(confirmar ? `Espécie confirmada: ${c.especie}.` : `Espécie corrigida para ${c.especie} (${c.classe}ª classe). A anterior continua no histórico.`);
+        this.mensagem.set(confirmar ? `Espécie confirmada: ${c.especie}.` : `Espécie corrigida para ${c.especie}. A anterior continua no histórico.`);
         this.corrigir.set(false);
         this.observacao.set('');
         this.umidade.set(null);

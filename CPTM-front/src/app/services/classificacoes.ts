@@ -6,7 +6,7 @@ import { consulta } from '../helpers/consulta';
 import { LeituraDto } from '../models/enums';
 
 export type MetodoClassificacao = 'Comparacao' | 'Visual' | 'Catalogo' | 'Laboratorio' | 'Nir';
-export interface ClassificacaoDto { id: number; idDormente: number; idEspecie: number; especie: string; classe: number; metodo: string; data: string; idUsuario: number; anterior: number | null; observacao: string | null; umidadePct?: number | null; confiancaPct?: number | null; }
+export interface ClassificacaoDto { id: number; idDormente: number; idEspecie: number; especie: string; metodo: string; data: string; idUsuario: number; anterior: number | null; observacao: string | null; umidadePct?: number | null; confiancaPct?: number | null; }
 
 /** /api/classificacoes: o especialista confirma ou corrige a espécie da placa (a de antes fica). */
 @Injectable({ providedIn: 'root' })

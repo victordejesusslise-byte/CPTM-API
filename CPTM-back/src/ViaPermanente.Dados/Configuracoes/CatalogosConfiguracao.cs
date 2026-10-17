@@ -22,30 +22,30 @@ internal static class CatalogosConfiguracao
             e.HasKey(x => x.IdEspecie);
             e.HasIndex(x => x.NomeCientifico).IsUnique();
             e.HasData(
-                // A lista oficial das 22 espécies da CPTM (formulário de retirada, Victor, 2026-10-13). Todas de 2ª classe, por decisão do Victor;
+                // A lista oficial das 22 espécies da CPTM (formulário de retirada, Victor, 2026-10-13). Sem classe: a classe vem do pedido (2026-10-16);
                 // os ids das que já existiam ficaram iguais (Ocotea 1, Hymenaea 3, Dipteryx odorata 4, Bowdichia nitida 9, ...).
-                Especie(1, "Ocotea neesiana", "Lauraceae", "Canela", 2),
-                Especie(2, "Tabebuia serratifolia", "Bignoniaceae", "Ipê-amarelo", 2),
-                Especie(3, "Hymenaea courbaril", "Fabaceae", "Jatobá", 2),
-                Especie(4, "Dipteryx odorata", "Fabaceae", "Cumaru", 2),
-                Especie(5, "Apuleia molaris", "Fabaceae", "Amarelão", 2),
-                Especie(6, "Aspidosperma polyneuron", "Apocynaceae", "Peroba-rosa", 2),
-                Especie(7, "Astronium graveolens", "Anacardiaceae", "Guaritá", 2),
-                Especie(8, "Bowdichia brasiliensis ou Bowdichia spp", "Fabaceae", "Sucupira", 2),
-                Especie(9, "Bowdichia nitida", "Fabaceae", "Sucupira", 2),
-                Especie(10, "Mezilaurus itauba", "Lauraceae", "Itaúba", 2),
-                Especie(11, "Angelim Vermelho (Promap - AMV)", "Fabaceae", "Angelim-vermelho", 2),
-                Especie(12, "Goupia glabra", "Goupiaceae", "Cupiúba", 2),
-                Especie(13, "Bowdichia racemosa", "Fabaceae", "Sucupira", 2),
-                Especie(14, "Dialium guianense", "Fabaceae", "Jutaí-pororoca", 2),
-                Especie(15, "Diplotropis purpurea", "Fabaceae", "Sucupira-preta", 2),
-                Especie(16, "Dipteryx spp.", "Fabaceae", "Cumaru", 2),
-                Especie(17, "Enterolobium schomburgkii", "Fabaceae", "Orelha-de-macaco", 2),
-                Especie(18, "Hymenolobium petraeum ou Hymenolobium spp", "Fabaceae", "Angelim-pedra", 2),
-                Especie(19, "Hymenaea intermedia", "Fabaceae", "Jatobá", 2),
-                Especie(20, "Coimal (Dormentes antigos - AMV)", "A confirmar", null, 2),
-                Especie(21, "Apuleia leiocarpa", "Fabaceae", "Garapa", 2),
-                Especie(22, "Veneer (Dormentes antigos - AMV)", "A confirmar", null, 2));
+                Especie(1, "Ocotea neesiana", "Lauraceae", "Canela"),
+                Especie(2, "Tabebuia serratifolia", "Bignoniaceae", "Ipê-amarelo"),
+                Especie(3, "Hymenaea courbaril", "Fabaceae", "Jatobá"),
+                Especie(4, "Dipteryx odorata", "Fabaceae", "Cumaru"),
+                Especie(5, "Apuleia molaris", "Fabaceae", "Amarelão"),
+                Especie(6, "Aspidosperma polyneuron", "Apocynaceae", "Peroba-rosa"),
+                Especie(7, "Astronium graveolens", "Anacardiaceae", "Guaritá"),
+                Especie(8, "Bowdichia brasiliensis ou Bowdichia spp", "Fabaceae", "Sucupira"),
+                Especie(9, "Bowdichia nitida", "Fabaceae", "Sucupira"),
+                Especie(10, "Mezilaurus itauba", "Lauraceae", "Itaúba"),
+                Especie(11, "Angelim Vermelho (Promap - AMV)", "Fabaceae", "Angelim-vermelho"),
+                Especie(12, "Goupia glabra", "Goupiaceae", "Cupiúba"),
+                Especie(13, "Bowdichia racemosa", "Fabaceae", "Sucupira"),
+                Especie(14, "Dialium guianense", "Fabaceae", "Jutaí-pororoca"),
+                Especie(15, "Diplotropis purpurea", "Fabaceae", "Sucupira-preta"),
+                Especie(16, "Dipteryx spp.", "Fabaceae", "Cumaru"),
+                Especie(17, "Enterolobium schomburgkii", "Fabaceae", "Orelha-de-macaco"),
+                Especie(18, "Hymenolobium petraeum ou Hymenolobium spp", "Fabaceae", "Angelim-pedra"),
+                Especie(19, "Hymenaea intermedia", "Fabaceae", "Jatobá"),
+                Especie(20, "Coimal (Dormentes antigos - AMV)", "A confirmar", null),
+                Especie(21, "Apuleia leiocarpa", "Fabaceae", "Garapa"),
+                Especie(22, "Veneer (Dormentes antigos - AMV)", "A confirmar", null));
         });
 
         mb.Entity<Parametro>(e =>
@@ -78,6 +78,6 @@ internal static class CatalogosConfiguracao
         });
     }
 
-    private static Especie Especie(int id, string cientifico, string familia, string? popular, byte classe)
-        => new() { IdEspecie = id, NomeCientifico = cientifico, Familia = familia, NomePopular = popular, Classe = classe, Ativo = true };
+    private static Especie Especie(int id, string cientifico, string familia, string? popular)
+        => new() { IdEspecie = id, NomeCientifico = cientifico, Familia = familia, NomePopular = popular, Ativo = true };
 }

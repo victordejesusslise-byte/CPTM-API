@@ -43,9 +43,6 @@ internal static class BancoDeTeste
     {
         await db.Database.EnsureDeletedAsync();
         await db.Database.MigrateAsync();
-        // No sistema, as 22 espécies oficiais são de 2ª classe (Victor, 2026-10-13). Nos testes, as 12 primeiras voltam a ser
-        // de 1ª, como antes, para os cenários continuarem exercitando as duas classes (pilhas, códigos de material, limite de 2ª).
-        await db.Set<Especie>().Where(e => e.IdEspecie <= 12).ExecuteUpdateAsync(s => s.SetProperty(e => e.Classe, (byte)1));
     }
 
     public static async Task Apagar(ViaPermanenteContext db)

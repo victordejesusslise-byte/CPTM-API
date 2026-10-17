@@ -1438,10 +1438,6 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("ativo");
 
-                    b.Property<byte>("Classe")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("classe");
-
                     b.Property<string>("Familia")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1464,17 +1460,13 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasIndex("NomeCientifico")
                         .IsUnique();
 
-                    b.ToTable("ESPECIE", t =>
-                        {
-                            t.HasCheckConstraint("CK_ESPECIE_classe", "[classe] IN (1, 2)");
-                        });
+                    b.ToTable("ESPECIE");
 
                     b.HasData(
                         new
                         {
                             IdEspecie = 1,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Lauraceae",
                             NomeCientifico = "Ocotea neesiana",
                             NomePopular = "Canela"
@@ -1483,7 +1475,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 2,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Bignoniaceae",
                             NomeCientifico = "Tabebuia serratifolia",
                             NomePopular = "Ipê-amarelo"
@@ -1492,7 +1483,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 3,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Hymenaea courbaril",
                             NomePopular = "Jatobá"
@@ -1501,7 +1491,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 4,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Dipteryx odorata",
                             NomePopular = "Cumaru"
@@ -1510,7 +1499,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 5,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Apuleia molaris",
                             NomePopular = "Amarelão"
@@ -1519,7 +1507,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 6,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Apocynaceae",
                             NomeCientifico = "Aspidosperma polyneuron",
                             NomePopular = "Peroba-rosa"
@@ -1528,7 +1515,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 7,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Anacardiaceae",
                             NomeCientifico = "Astronium graveolens",
                             NomePopular = "Guaritá"
@@ -1537,7 +1523,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 8,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Bowdichia brasiliensis ou Bowdichia spp",
                             NomePopular = "Sucupira"
@@ -1546,7 +1531,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 9,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Bowdichia nitida",
                             NomePopular = "Sucupira"
@@ -1555,7 +1539,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 10,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Lauraceae",
                             NomeCientifico = "Mezilaurus itauba",
                             NomePopular = "Itaúba"
@@ -1564,7 +1547,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 11,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Angelim Vermelho (Promap - AMV)",
                             NomePopular = "Angelim-vermelho"
@@ -1573,7 +1555,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 12,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Goupiaceae",
                             NomeCientifico = "Goupia glabra",
                             NomePopular = "Cupiúba"
@@ -1582,7 +1563,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 13,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Bowdichia racemosa",
                             NomePopular = "Sucupira"
@@ -1591,7 +1571,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 14,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Dialium guianense",
                             NomePopular = "Jutaí-pororoca"
@@ -1600,7 +1579,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 15,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Diplotropis purpurea",
                             NomePopular = "Sucupira-preta"
@@ -1609,7 +1587,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 16,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Dipteryx spp.",
                             NomePopular = "Cumaru"
@@ -1618,7 +1595,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 17,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Enterolobium schomburgkii",
                             NomePopular = "Orelha-de-macaco"
@@ -1627,7 +1603,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 18,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Hymenolobium petraeum ou Hymenolobium spp",
                             NomePopular = "Angelim-pedra"
@@ -1636,7 +1611,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 19,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Hymenaea intermedia",
                             NomePopular = "Jatobá"
@@ -1645,7 +1619,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 20,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "A confirmar",
                             NomeCientifico = "Coimal (Dormentes antigos - AMV)"
                         },
@@ -1653,7 +1626,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 21,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "Fabaceae",
                             NomeCientifico = "Apuleia leiocarpa",
                             NomePopular = "Garapa"
@@ -1662,7 +1634,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdEspecie = 22,
                             Ativo = true,
-                            Classe = (byte)2,
                             Familia = "A confirmar",
                             NomeCientifico = "Veneer (Dormentes antigos - AMV)"
                         });
@@ -1829,6 +1800,10 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("ano_inspecao");
 
+                    b.Property<byte>("Classe")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("classe");
+
                     b.Property<int?>("IdEmpresaInspecao")
                         .HasColumnType("int")
                         .HasColumnName("id_empresa_inspecao");
@@ -1876,7 +1851,10 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasIndex("IdTamanho");
 
-                    b.ToTable("FEIXE");
+                    b.ToTable("FEIXE", t =>
+                        {
+                            t.HasCheckConstraint("CK_FEIXE_classe", "[classe] IN (1, 2)");
+                        });
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Chegadas.Models.LeituraOcr", b =>

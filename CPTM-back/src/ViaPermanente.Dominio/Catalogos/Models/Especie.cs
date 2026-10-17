@@ -7,6 +7,5 @@ public class Especie
     public string NomeCientifico { get; set; } = "";
     public string Familia { get; set; } = "";
     public string? NomePopular { get; set; }
-    public byte Classe { get; set; }
     public bool Ativo { get; set; } = true;
 }

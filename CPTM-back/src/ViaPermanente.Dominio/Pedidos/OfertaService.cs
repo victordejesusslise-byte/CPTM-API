@@ -22,7 +22,7 @@ public class OfertaService(IOfertaRepository ofertas, IPedidoRepository pedidos,
 
         return vigentes
             .Select(o => new OfertaDto(o.IdOferta, o.IdEmpresa, empresas.GetValueOrDefault(o.IdEmpresa, ""),
-                o.IdEspecie, especies[o.IdEspecie].NomeCientifico, especies[o.IdEspecie].Classe,
+                o.IdEspecie, especies[o.IdEspecie].NomeCientifico,
                 o.IdTamanho, tamanhos[o.IdTamanho].ComprimentoM, o.VolumeM3Disponivel, o.Data))
             .OrderBy(o => o.Empresa).ThenBy(o => o.Especie).ThenBy(o => o.ComprimentoM)
             .ToList();
@@ -67,9 +67,8 @@ public class OfertaService(IOfertaRepository ofertas, IPedidoRepository pedidos,
             if (!tamanhos.TryGetValue(grupo.Key.IdTamanho, out var tamanho))
                 continue; // tamanho inválido é recusado pela regra do pedido
             var pedidoM3 = grupo.Sum(i => i.Quantidade) * VolumeHelper.M3(tamanho.ComprimentoM, tamanho.LarguraM, tamanho.AlturaM);
-            var candidatas = vigentes.Where(o => o.IdTamanho == tamanho.IdTamanho && (grupo.Key.IdEspecie is int idEspecie
-                ? o.IdEspecie == idEspecie
-                : especies.TryGetValue(o.IdEspecie, out var e) && e.Classe == grupo.Key.Classe)).ToList();
+            // A oferta é por espécie e tamanho; a classe vem do pedido, então qualquer espécie serve à 1ª ou à 2ª.
+            var candidatas = vigentes.Where(o => o.IdTamanho == tamanho.IdTamanho && (grupo.Key.IdEspecie is not int idEspecie || o.IdEspecie == idEspecie)).ToList();
             var oQue = grupo.Key.IdEspecie is int id && especies.TryGetValue(id, out var especie)
                 ? $"{especie.NomeCientifico} de {FormatoHelper.Metros(tamanho.ComprimentoM)}"
                 : $"{FormatoHelper.Metros(tamanho.ComprimentoM)} de {grupo.Key.Classe}ª classe";

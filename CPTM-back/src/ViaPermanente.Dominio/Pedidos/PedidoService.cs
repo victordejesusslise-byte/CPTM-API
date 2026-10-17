@@ -208,10 +208,8 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
             throw new RegraDeNegocioException("Tamanho de dormente não encontrado.");
         if (item.IdEspecie is int idEspecie)
         {
-            var especie = especies.GetValueOrDefault(idEspecie)
-                ?? throw new RegraDeNegocioException("Espécie não encontrada.");
-            if (especie.Classe != item.Classe)
-                throw new RegraDeNegocioException($"{especie.NomeCientifico} é de {especie.Classe}ª classe: a classe vem da espécie.");
+            // A classe vem do pedido: qualquer uma das espécies pode ser de 1ª ou de 2ª (Victor, 2026-10-16).
+            _ = especies.GetValueOrDefault(idEspecie) ?? throw new RegraDeNegocioException("Espécie não encontrada.");
         }
     }
 

@@ -136,7 +136,7 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
             var pilha = r.IdPilha is int idPilha ? pilhas.GetValueOrDefault(idPilha) : null;
             var idArmazem = pilha?.IdArmazem ?? r.IdArmazemChegada;
             return new PecaDto(r.IdDormente, $"DM-E{r.IdEmpresa:00}-L{r.IdLote:00}-{r.IdDormente:0000}", r.TagAtiva, r.TagFornecedor,
-                r.IdPedido, r.IdLote, r.IdFeixe, r.NumeroFeixe, especie.IdEspecie, especie.NomeCientifico, especie.Classe,
+                r.IdPedido, r.IdLote, r.IdFeixe, r.NumeroFeixe, especie.IdEspecie, especie.NomeCientifico, r.Classe,
                 r.IdTamanho, tamanhos[r.IdTamanho].ComprimentoM, idArmazem, armazens.GetValueOrDefault(idArmazem, ""),
                 pilha?.IdPilha, pilha?.Codigo, r.EntradaArmazemEm, r.IdTrecho, r.KmProjeto, Situacao(r),
                 NotaDaPeca.Calcular(sinaisDe.GetValueOrDefault(r.IdDormente)),

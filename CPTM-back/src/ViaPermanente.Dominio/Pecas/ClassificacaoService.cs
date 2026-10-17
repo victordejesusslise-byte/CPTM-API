@@ -55,5 +55,5 @@ public class ClassificacaoService(IClassificacaoRepository repo, IPecaRepository
     private async Task<ClassificacaoDto> Dto(ClassificacaoMadeira c) => Dto(c, (await repo.Especie(c.IdEspecie))!);
 
     private static ClassificacaoDto Dto(ClassificacaoMadeira c, Especie e)
-        => new(c.IdClassificacao, c.IdDormente, e.IdEspecie, e.NomePopular ?? e.NomeCientifico, e.Classe, c.Metodo.ToString(), c.Data, c.IdUsuario, c.Anterior, c.Observacao, c.UmidadePct, c.ConfiancaPct);
+        => new(c.IdClassificacao, c.IdDormente, e.IdEspecie, e.NomePopular ?? e.NomeCientifico, c.Metodo.ToString(), c.Data, c.IdUsuario, c.Anterior, c.Observacao, c.UmidadePct, c.ConfiancaPct);
 }

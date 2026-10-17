@@ -10,4 +10,4 @@ public record PecaResumo(
     int IdDormente, int IdLote, int IdEmpresa, int IdPedido,
     int IdFeixe, string NumeroFeixe, int IdTamanho, int IdArmazemChegada,
     string? TagFornecedor, int? IdPilha, DateTime? EntradaArmazemEm, DateTime? RetiradaEm, int? IdTrecho, decimal? KmProjeto,
-    string? TagAtiva, int IdEspecieVigente, ResultadoVerificacao? Verificacao);
+    string? TagAtiva, int IdEspecieVigente, ResultadoVerificacao? Verificacao, byte Classe);

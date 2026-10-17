@@ -36,6 +36,8 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
         var especies = (await catalogo.ListarEspecies()).Where(e => e.Ativo).ToDictionary(e => e.IdEspecie);
         var numerosJaRegistrados = (await chegadas.Feixes((await chegadas.Listar(idPedido)).Select(r => r.IdRecebimento).ToList()))
             .Select(f => f.NumeroFeixe).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var itensDoPedido = await pedidos.Itens([idPedido]);
+        var classes = new Dictionary<NovoFeixeDto, byte>();
         foreach (var feixe in nova.Feixes)
         {
             var numero = (feixe.NumeroFeixe ?? "").Trim();
@@ -49,6 +51,7 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
                 throw new RegraDeNegocioException($"Feixe {numero}: espécie não encontrada.");
             if (!tamanhos.ContainsKey(feixe.IdTamanho))
                 throw new RegraDeNegocioException($"Feixe {numero}: tamanho de dormente não encontrado.");
+            classes[feixe] = ClasseDoFeixe(feixe, itensDoPedido, numero);
             await ConferirEmpresa(feixe.IdEmpresaTratamento, PapelEmpresa.Tratadora, numero);
             await ConferirEmpresa(feixe.IdEmpresaInspecao, PapelEmpresa.Inspetora, numero);
         }
@@ -66,7 +69,7 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
         };
         await chegadas.Registrar(recebimento, loteNovo, nova.Feixes.Select(f => new Feixe
         {
-            NumeroFeixe = f.NumeroFeixe.Trim(), Quantidade = f.Quantidade, IdEspecie = f.IdEspecie, IdTamanho = f.IdTamanho,
+            NumeroFeixe = f.NumeroFeixe.Trim(), Quantidade = f.Quantidade, IdEspecie = f.IdEspecie, IdTamanho = f.IdTamanho, Classe = classes[f],
             Tratamento = Limpo(f.Tratamento), IdEmpresaTratamento = f.IdEmpresaTratamento, IdEmpresaInspecao = f.IdEmpresaInspecao,
             AnoInspecao = f.AnoInspecao
         }).ToList());
@@ -98,7 +101,7 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
         foreach (var r in lista)
         {
             var dela = feixes[r.IdRecebimento].ToList();
-            var porClasse = dela.Select(f => (f.IdTamanho, especies[f.IdEspecie].Classe, f.Quantidade)).ToList();
+            var porClasse = dela.Select(f => (f.IdTamanho, f.Classe, f.Quantidade)).ToList();
             int? quantidadeNota = r.IdNota is int n ? itensDasNotas[n].Sum(i => i.Quantidade) : null;
 
             var divergencias = new List<string>();
@@ -122,6 +125,22 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
     }
 
     /// <summary>"Mostra o esperado de 1ª e 2ª classe": o pedido e o que já chegou, por classe.</summary>
+    /// <summary>
+    /// A classe vem do pedido: a do item do mesmo tamanho e espécie (ou sem espécie); sem item assim, a do mesmo tamanho; sem item
+    /// do tamanho, a do pedido. Quando sobram as duas classes, o operador escolhe a do feixe.
+    /// </summary>
+    public static byte ClasseDoFeixe(NovoFeixeDto f, IReadOnlyList<PedidoItem> pedido, string numero)
+    {
+        if (f.Classe is byte escolhida)
+            return escolhida is 1 or 2 ? escolhida : throw new RegraDeNegocioException($"Feixe {numero}: a classe é 1 ou 2.");
+        var candidatos = pedido.Where(i => i.IdTamanho == f.IdTamanho && (i.IdEspecie == null || i.IdEspecie == f.IdEspecie)).ToList();
+        if (candidatos.Count == 0) candidatos = pedido.Where(i => i.IdTamanho == f.IdTamanho).ToList();
+        if (candidatos.Count == 0) candidatos = pedido.ToList();
+        var classesPossiveis = candidatos.Select(i => i.Classe).Distinct().ToList();
+        return classesPossiveis.Count == 1 ? classesPossiveis[0]
+            : throw new RegraDeNegocioException($"Feixe {numero}: o pedido tem 1ª e 2ª classe para ele; informe a classe do feixe.");
+    }
+
     private static string Esperado(IReadOnlyList<PedidoItem> pedido, IReadOnlyList<(int IdTamanho, byte Classe, int Quantidade)> chegou)
         => $"Pedido: {pedido.Where(p => p.Classe == 1).Sum(p => p.Quantidade)} de 1ª e {pedido.Where(p => p.Classe == 2).Sum(p => p.Quantidade)} de 2ª classe; " +
            $"chegaram até aqui {chegou.Where(c => c.Classe == 1).Sum(c => c.Quantidade)} de 1ª e {chegou.Where(c => c.Classe == 2).Sum(c => c.Quantidade)} de 2ª.";
@@ -137,7 +156,7 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
     }
 
     private static FeixeDto ParaDto(Feixe f, int cadastradas, Especie especie, TamanhoDormente tamanho)
-        => new(f.IdFeixe, f.NumeroFeixe, f.Quantidade, cadastradas, f.IdEspecie, especie.NomeCientifico, especie.Classe,
+        => new(f.IdFeixe, f.NumeroFeixe, f.Quantidade, cadastradas, f.IdEspecie, especie.NomeCientifico, f.Classe,
             f.IdTamanho, tamanho.ComprimentoM, f.Tratamento, f.IdEmpresaTratamento, f.IdEmpresaInspecao, f.AnoInspecao);
 
     private static string? Limpo(string? texto) => string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();

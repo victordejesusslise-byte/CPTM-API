@@ -56,6 +56,8 @@ export class Chegada {
       quantidade: [1, [Validators.min(1), Validators.max(1000)]],
       idEspecie: [0, Validators.min(1)],
       idTamanho: [0, Validators.min(1)],
+      /** null = a classe do item do pedido; o operador escolhe quando o pedido tem 1ª e 2ª para o feixe */
+      classe: [null as number | null],
       tratamento: [''],
     });
   }

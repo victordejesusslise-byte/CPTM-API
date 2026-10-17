@@ -9,7 +9,7 @@
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Classe</mat-label>
-      <mat-select formControlName="classe" (selectionChange)="classeMudou(i)">
+      <mat-select formControlName="classe">
         <mat-option [value]="1">1ª classe</mat-option>
         <mat-option [value]="2">2ª classe</mat-option>
       </mat-select>
@@ -18,7 +18,7 @@
       <mat-label>Espécie (opcional)</mat-label>
       <mat-select formControlName="idEspecie">
         <mat-option [value]="null">Qualquer da classe</mat-option>
-        @for (e of especiesDaClasse(item.controls.classe.value); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }
+        @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline">

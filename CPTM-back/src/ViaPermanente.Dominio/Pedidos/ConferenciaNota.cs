@@ -30,9 +30,6 @@ public static class ConferenciaNota
             var especie = especies[item.IdEspecie];
             var rotulo = Rotulo(tamanho, item.Classe);
 
-            if (especie.Classe != item.Classe)
-                divergencias.Add($"{especie.NomeCientifico} é de {especie.Classe}ª classe, mas a nota diz {item.Classe}ª.");
-
             var pedidos = pedido.Where(p => p.IdTamanho == item.IdTamanho && p.Classe == item.Classe).ToList();
             if (pedidos.Count == 0)
                 divergencias.Add($"{rotulo} não foi pedido.");

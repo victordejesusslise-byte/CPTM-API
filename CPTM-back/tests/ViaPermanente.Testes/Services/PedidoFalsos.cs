@@ -86,8 +86,8 @@ internal class CatalogoRepositoryFalso : ICatalogoRepository
     ]);
     public Task<IReadOnlyList<Especie>> ListarEspecies() => Task.FromResult<IReadOnlyList<Especie>>(
     [
-        new() { IdEspecie = 1, NomeCientifico = "Ocotea neesiana", Familia = "Lauraceae", Classe = 1, Ativo = true },
-        new() { IdEspecie = 14, NomeCientifico = "Eucalyptus grandis", Familia = "Myrtaceae", Classe = 2, Ativo = true }
+        new() { IdEspecie = 1, NomeCientifico = "Ocotea neesiana", Familia = "Lauraceae", Ativo = true },
+        new() { IdEspecie = 14, NomeCientifico = "Eucalyptus grandis", Familia = "Myrtaceae", Ativo = true }
     ]);
     public Task<IReadOnlyList<Armazem>> ListarArmazens() => throw new NotImplementedException();
     public Task<IReadOnlyList<Pilha>> ListarPilhas() => throw new NotImplementedException();

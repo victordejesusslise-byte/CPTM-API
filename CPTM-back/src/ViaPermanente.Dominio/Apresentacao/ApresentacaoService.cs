@@ -88,7 +88,7 @@ public class ApresentacaoService(IApresentacaoRepository repo)
                 Codigo = $"EX-{sufixo}", DataCompra = DateOnly.FromDateTime(agora), Quantidade = total,
                 CriadoEm = agora, Status = StatusPedido.Aberto
             });
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = pedido.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = especies[0].Classe, Quantidade = total } });
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = pedido.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = total } });
             var nota = await repo.Adicionar(new NotaFiscal
             {
                 IdPedido = pedido.IdPedido, Numero = $"NF-{sufixo}", DataEmissao = DateOnly.FromDateTime(agora),
@@ -98,7 +98,7 @@ public class ApresentacaoService(IApresentacaoRepository repo)
             var m3PorPeca = VolumeHelper.M3(tamanho.ComprimentoM, tamanho.LarguraM, tamanho.AlturaM);
             await repo.AdicionarVarios(especies.Select(e => new NotaFiscalItem
             {
-                IdNota = nota.IdNota, IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = e.Classe,
+                IdNota = nota.IdNota, IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = 1,
                 Quantidade = PecasPorFeixe, VolumeM3 = PecasPorFeixe * m3PorPeca
             }).ToList());
 
@@ -117,7 +117,7 @@ public class ApresentacaoService(IApresentacaoRepository repo)
             var feixes = especies.Select((e, i) => new Feixe
             {
                 IdRecebimento = recebimento.IdRecebimento, NumeroFeixe = $"{i + 1:00}", Quantidade = PecasPorFeixe,
-                IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Tratamento = "CCA",
+                IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = 1, Tratamento = "CCA",
                 IdEmpresaTratamento = tratadora.IdEmpresa, IdEmpresaInspecao = inspetora.IdEmpresa, AnoInspecao = (short)agora.Year
             }).ToList();
             await repo.AdicionarVarios(feixes);

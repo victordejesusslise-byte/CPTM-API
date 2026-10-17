@@ -14,9 +14,9 @@ public class ConferenciaNotaTestes
     };
     private static readonly Dictionary<int, Especie> Especies = new()
     {
-        [1] = new() { IdEspecie = 1, NomeCientifico = "Ocotea neesiana", Classe = 1, Ativo = true },
-        [3] = new() { IdEspecie = 3, NomeCientifico = "Hymenaea courbaril", Classe = 1, Ativo = true },
-        [14] = new() { IdEspecie = 14, NomeCientifico = "Eucalyptus grandis", Classe = 2, Ativo = true }
+        [1] = new() { IdEspecie = 1, NomeCientifico = "Ocotea neesiana", Ativo = true },
+        [3] = new() { IdEspecie = 3, NomeCientifico = "Hymenaea courbaril", Ativo = true },
+        [14] = new() { IdEspecie = 14, NomeCientifico = "Eucalyptus grandis", Ativo = true }
     };
     private static readonly PedidoItem[] Pedido = [new() { IdTamanho = 1, Classe = 1, Quantidade = 28 }];
 
@@ -54,8 +54,8 @@ public class ConferenciaNotaTestes
     }
 
     [Fact]
-    public void Classe_diferente_da_especie_diverge()
-        => Assert.Contains(Conferir([Item(14, 5)]).Divergencias, d => d.Contains("Eucalyptus grandis é de 2ª classe"));
+    public void Qualquer_especie_pode_vir_de_1a_ou_de_2a()
+        => Assert.DoesNotContain(Conferir([Item(14, 5)]).Divergencias, d => d.Contains("ª classe, mas a nota"));
 
     [Fact]
     public void Volume_com_medida_provisoria_so_avisa()

@@ -60,13 +60,19 @@
             <mat-form-field appearance="outline">
               <mat-label>Espécie</mat-label>
               <mat-select formControlName="idEspecie">
-                @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }} · {{ e.classe }}ª</mat-option> }
+                @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Tamanho</mat-label>
               <mat-select formControlName="idTamanho">
                 @for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Classe</mat-label>
+              <mat-select formControlName="classe">
+                <mat-option [value]="null">A do pedido</mat-option><mat-option [value]="1">1ª</mat-option><mat-option [value]="2">2ª</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Tratamento</mat-label><input matInput formControlName="tratamento" /></mat-form-field>

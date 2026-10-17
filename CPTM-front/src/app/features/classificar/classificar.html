@@ -32,7 +32,7 @@
         <mat-form-field appearance="outline">
           <mat-label>Espécie correta</mat-label>
           <mat-select [value]="idEspecie()" (selectionChange)="idEspecie.set($event.value)">
-            @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }} · {{ e.nomeCientifico }} · {{ e.classe }}ª</mat-option> }
+            @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }} · {{ e.nomeCientifico }}</mat-option> }
           </mat-select>
         </mat-form-field>
       }
@@ -50,7 +50,7 @@
         <p class="lbl">O que já foi dito sobre esta peça</p>
         <ol class="linha-tempo">
           @for (c of historico(); track c.id) {
-            <li><span class="quando">{{ dataHora(c.data) }}</span><div><b>{{ c.especie }}</b> · {{ c.classe }}ª · {{ nomeMetodo[c.metodo] ?? c.metodo }}@if (c.umidadePct != null) { · umidade {{ c.umidadePct.toLocaleString('pt-BR') }}%@if (c.confiancaPct != null) { · confiança {{ c.confiancaPct.toLocaleString('pt-BR') }}% } }@if (c.observacao) { <p class="motivo">{{ c.observacao }}</p> }</div></li>
+            <li><span class="quando">{{ dataHora(c.data) }}</span><div><b>{{ c.especie }}</b> · {{ nomeMetodo[c.metodo] ?? c.metodo }}@if (c.umidadePct != null) { · umidade {{ c.umidadePct.toLocaleString('pt-BR') }}%@if (c.confiancaPct != null) { · confiança {{ c.confiancaPct.toLocaleString('pt-BR') }}% } }@if (c.observacao) { <p class="motivo">{{ c.observacao }}</p> }</div></li>
           }
         </ol>
       }
@@ -62,9 +62,9 @@
     <app-estado [carregando]="feitas.isLoading()" [erro]="erroFeitas()" [vazio]="feitas.hasValue() && !feitas.value().length" textoVazio="Nenhuma classificação nos últimos 30 dias." />
     @if (feitas.value()?.length) {
       <div class="tabela"><table class="simples">
-        <thead><tr><th>Quando</th><th class="num">Peça</th><th>Espécie</th><th>Classe</th><th>Como</th></tr></thead>
+        <thead><tr><th>Quando</th><th class="num">Peça</th><th>Espécie</th><th>Como</th></tr></thead>
         <tbody>@for (c of feitas.value(); track c.id) {
-          <tr><td>{{ dataHora(c.data) }}</td><td class="num">{{ c.idDormente }}</td><td>{{ c.especie }}</td><td>{{ c.classe }}ª</td><td>{{ nomeMetodo[c.metodo] ?? c.metodo }}</td></tr>
+          <tr><td>{{ dataHora(c.data) }}</td><td class="num">{{ c.idDormente }}</td><td>{{ c.especie }}</td><td>{{ nomeMetodo[c.metodo] ?? c.metodo }}</td></tr>
         }</tbody>
       </table></div>
     }

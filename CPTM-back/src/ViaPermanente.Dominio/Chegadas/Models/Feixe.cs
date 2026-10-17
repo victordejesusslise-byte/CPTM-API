@@ -9,6 +9,8 @@ public class Feixe
     public int Quantidade { get; set; }
     public int IdEspecie { get; set; }
     public int IdTamanho { get; set; }
+    /// <summary>1ª ou 2ª: vem do item do pedido que o feixe atende (A classe vem do pedido).</summary>
+    public byte Classe { get; set; }
     public string? Tratamento { get; set; }
     public int? IdEmpresaTratamento { get; set; }
     public int? IdEmpresaInspecao { get; set; }
