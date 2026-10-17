@@ -25,24 +25,43 @@ public class OcrPlacaService(IOcrRepository ocr, IFotoRepository fotos, ILeitura
         var modelo = (await leituras.Modelos()).FirstOrDefault(m => m.Ativo) ?? throw new RegraDeNegocioException("Não há modelo de OCR ativo.");
         var pedido = idPedido is int id ? await Pedido(id) ?? throw new RegraDeNegocioException("Pedido não encontrado.") : null;
 
-        ResultadoOcr resultado;
-        try { resultado = ocr.Ler(foto, modelo.ModeloBase); }
+        IReadOnlyList<ResultadoOcr> resultados;
+        try { resultados = ocr.Ler(foto, modelo.ModeloBase); }
         catch (Exception erro) when (erro is not RegraDeNegocioException)
         {
             throw new RegraDeNegocioException($"A foto não pôde ser lida: {erro.Message}");
         }
 
+        // Cada leitura da foto dá os seus campos. De cada campo fica o que confere com o pedido; entre esses, o valor que mais leituras
+        // acharam (a maioria vence) e, no empate, o da leitura que vem antes: o repositório põe primeiro as leituras mais certeiras.
+        var lidos = resultados.Select(r => PlacaDoFeixe.Extrair(r.Linhas)).ToList();
+        var candidatos = lidos.SelectMany((campos, leitura) => campos.Select(c => (Lido: c, Leitura: leitura))).ToList();
+        if (pedido is not null && candidatos.All(c => c.Lido.Campo != CampoOcr.Fornecedor)
+            && PlacaDoFeixe.AcharFornecedor(resultados.SelectMany(r => r.Linhas), pedido.Fornecedor) is { } fornecedor)
+            candidatos.Add((fornecedor, resultados.Count));
+        var escolhidos = candidatos
+            .Select(c => (c.Lido, c.Leitura, Confere: PlacaDoFeixe.Confere(c.Lido.Campo, c.Lido.Valor, pedido)))
+            .GroupBy(c => c.Lido.Campo)
+            .Select(campo => campo
+                .GroupBy(c => c.Confere switch { true => 0, null => 1, false => 2 }).MinBy(g => g.Key)!
+                .GroupBy(c => PlacaDoFeixe.Chave(c.Lido.Valor)).OrderByDescending(g => g.Count()).ThenBy(g => g.Min(c => c.Leitura)).First()
+                .GroupBy(c => c.Lido.Valor).OrderByDescending(g => g.Count()).ThenBy(g => g.Min(c => c.Leitura)).First()
+                .MaxBy(c => c.Lido.Confianca))
+            .ToList();
+        // O texto guardado é o da leitura que achou mais campos; a confiança média é a dos campos escolhidos.
+        var melhor = resultados[lidos.Select((c, i) => (c.Count, i)).OrderByDescending(x => x.Count).First().i];
+
         var agora = DateTime.Now;
         var leitura = new LeituraOcr
         {
-            Origem = OrigemLeituraOcr.PlacaFeixe, FotoArquivo = fotos.Salvar(foto, "ocr", extensao), TextoLido = resultado.Texto.Trim(),
-            ConfiancaMedia = Math.Round(resultado.ConfiancaMedia, 2), IdModelo = modelo.IdModelo, IdUsuario = idUsuario, Data = agora,
-            IdCliente = idCliente, RegistradoEm = registradoEm ?? agora, RecebidoEm = agora
+            Origem = OrigemLeituraOcr.PlacaFeixe, FotoArquivo = fotos.Salvar(foto, "ocr", extensao), TextoLido = melhor.Texto.Trim(),
+            ConfiancaMedia = Math.Round(escolhidos.Count > 0 ? escolhidos.Average(c => c.Lido.Confianca) : melhor.ConfiancaMedia, 2),
+            IdModelo = modelo.IdModelo, IdUsuario = idUsuario, Data = agora, IdCliente = idCliente, RegistradoEm = registradoEm ?? agora, RecebidoEm = agora
         };
-        var campos = PlacaDoFeixe.Extrair(resultado.Linhas).Select(c => new OcrCampo
+        var campos = escolhidos.Select(c => new OcrCampo
         {
-            Campo = c.Campo, ValorLido = c.Valor, Confianca = Math.Round(c.Confianca, 2), ConferePedido = PlacaDoFeixe.Confere(c.Campo, c.Valor, pedido),
-            CaixaX = c.Linha.X, CaixaY = c.Linha.Y, CaixaLargura = c.Linha.Largura, CaixaAltura = c.Linha.Altura
+            Campo = c.Lido.Campo, ValorLido = c.Lido.Valor, Confianca = Math.Round(c.Lido.Confianca, 2), ConferePedido = c.Confere,
+            CaixaX = c.Lido.Linha.X, CaixaY = c.Lido.Linha.Y, CaixaLargura = c.Lido.Linha.Largura, CaixaAltura = c.Lido.Linha.Altura
         }).ToList();
         await leituras.Gravar(leitura, campos);
         return (await BuscarPorId(leitura.IdLeituraOcr))!;
