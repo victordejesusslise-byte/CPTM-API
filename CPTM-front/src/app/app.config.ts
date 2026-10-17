@@ -2,7 +2,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
-import { tokenInterceptor } from './core/auth/token-interceptor';
+import { tokenInterceptor } from './nucleo/interceptadores/token-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Tema } from './core/tema/tema';
+import { Tema } from './nucleo/layout/tema/tema';
 
 @Component({
   selector: 'app-root',
