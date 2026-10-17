@@ -9,8 +9,8 @@ describe('Catalogos', () => {
     const catalogos = TestBed.inject(Catalogos);
     const http = TestBed.inject(HttpTestingController);
     catalogos.tamanhos().subscribe();
-    http.expectOne('http://localhost:5169/api/catalogos/tamanhos').flush([]);
+    http.expectOne('http://localhost:8045/api/catalogos/tamanhos').flush([]);
     catalogos.tamanhos().subscribe();
-    http.expectNone('http://localhost:5169/api/catalogos/tamanhos');
+    http.expectNone('http://localhost:8045/api/catalogos/tamanhos');
   });
 });

@@ -29,7 +29,7 @@ describe('TrocasGestao', () => {
     http.expectNone((r) => r.url.endsWith('/decisao'));
     expect(tela.querySelector('.aviso--erro')?.textContent).toContain('escreva o motivo');
     botao('Aprovar a troca').click();
-    const req = http.expectOne('http://localhost:5169/api/trocas/5/decisao');
+    const req = http.expectOne('http://localhost:8045/api/trocas/5/decisao');
     expect(req.request.body).toEqual({ aprovar: true, motivo: null });
   });
 });

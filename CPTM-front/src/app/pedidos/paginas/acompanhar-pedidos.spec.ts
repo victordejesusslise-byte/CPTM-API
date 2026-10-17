@@ -23,7 +23,7 @@ describe('AcompanharPedidos', () => {
     }).compileComponents();
     const fixture = TestBed.createComponent(AcompanharPedidos);
     fixture.detectChanges();
-    TestBed.inject(HttpTestingController).expectOne('http://localhost:5169/api/pedidos')
+    TestBed.inject(HttpTestingController).expectOne('http://localhost:8045/api/pedidos')
       .flush([pedido(1, 'PD-1', 30, 10, 'RecebidoParcial'), pedido(2, 'PD-2', 20, 20, 'Recebido'), pedido(3, 'PD-3', 15, 0, 'Aberto')]);
     await fixture.whenStable();
     const tela = fixture.nativeElement as HTMLElement;

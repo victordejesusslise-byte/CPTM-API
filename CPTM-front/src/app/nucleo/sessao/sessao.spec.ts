@@ -15,7 +15,7 @@ describe('Sessao', () => {
   it('entra pelo e-mail e senha e guarda o token', () => {
     const { sessao, http } = criar();
     sessao.entrar('ana@cptm.sp.gov.br', 'segredo').subscribe();
-    const req = http.expectOne('http://localhost:5169/api/auth/login');
+    const req = http.expectOne('http://localhost:8045/api/auth/login');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ email: 'ana@cptm.sp.gov.br', senha: 'segredo' });
     req.flush(tokenDeTeste('Tecnico'));

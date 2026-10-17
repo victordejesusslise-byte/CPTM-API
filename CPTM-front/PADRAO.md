@@ -1,7 +1,7 @@
 # Padrão do projeto (front)
 
 - **Stack:** Angular 22 (componentes standalone, signals, controle de fluxo `@if`/`@for`), TypeScript 6, SCSS. Testes com `ng test` (o padrão do Angular 22: Vitest com jsdom), specs ao lado de cada arquivo.
-- **Tipo:** web, cliente da API `CPTM-back` (http://localhost:5169/api). Não tem regra de negócio: a tela mostra, o service chama a API, a API decide.
+- **Tipo:** web, cliente da API `CPTM-back` (http://localhost:8045/api). Não tem regra de negócio: a tela mostra, o service chama a API, a API decide.
 - **Visual:** a marca **YBYRA** (PDF da marca em `2 Oficina do Claude/Arquivos/fontes/marca-ybyra.pdf`): paleta madeira #563624, areia #D5C4A1, verde #64786E, mata #1E2A20 e vinho #512027 sobre o creme #F1E9DF; Josefin Sans em tudo (Tribo e Obra Letra não estão no Google Fonts); logo dos anéis da tora em `compartilhado/componentes/marca`. Tokens em `src/styles.scss`. Sempre o tema claro (creme). Regras do protótipo mantidas: o vinho é a cor da exceção, alvo de toque de 44 px. Angular Material (MIT) nos formulários, diálogos e tabelas, embrulhado em `compartilhado/` (`ui.ts` e os componentes `tabela`, `estado`, `leitura-tag`): as telas não importam a biblioteca direto. **Sem PrimeNG:** a versão 22 virou licença paga e a CPTM não cabe na gratuita.
 - **Pastas:**
 

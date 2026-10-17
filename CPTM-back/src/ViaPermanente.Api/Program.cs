@@ -150,6 +150,7 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ErroHandler>();
 // Enum como texto no JSON: o Angular manda e recebe "Tecnico", não 1.
+builder.Services.AddHealthChecks().AddCheck<BancoHealthCheck>("banco");
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
@@ -182,6 +183,8 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+// GET /hc: o back subiu e alcança o banco? Sem login (padrão do Victor: porta 8045 e /hc em todo back).
+app.MapHealthChecks("/hc", Saude.Opcoes()).AllowAnonymous();
 
 // Primeira subida: aplica as migrações (no Docker) e cria o supervisor do .env se o banco ainda não tem usuário.
 using (var escopo = app.Services.CreateScope())

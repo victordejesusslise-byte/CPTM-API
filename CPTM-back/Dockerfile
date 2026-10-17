@@ -13,7 +13,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 # OCR (Tesseract e Leptonica do Linux) e a fonte do PDF (Liberation Sans, mesmas medidas da Arial).
 # O carregador do Tesseract do .NET abre o libdl.so (sem número), que o Debian 12 não traz: vira um atalho.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends libtesseract5 liblept5 fonts-liberation \
+ && apt-get install -y --no-install-recommends libtesseract5 liblept5 fonts-liberation curl \
  && rm -rf /var/lib/apt/lists/* \
  && ln -sf /usr/lib/x86_64-linux-gnu/libdl.so.2 /usr/lib/x86_64-linux-gnu/libdl.so
 WORKDIR /app
@@ -23,8 +23,8 @@ COPY tessdata ./tessdata
 RUN mkdir -p x64 \
  && ln -sf /usr/lib/x86_64-linux-gnu/liblept.so.5 x64/libleptonica-1.82.0.so \
  && ln -sf /usr/lib/x86_64-linux-gnu/libtesseract.so.5 x64/libtesseract50.so
-ENV ASPNETCORE_HTTP_PORTS=8080 \
+ENV ASPNETCORE_HTTP_PORTS=8045 \
     Ocr__Tessdata=/app/tessdata \
     Fotos__Pasta=/app/fotos
-EXPOSE 8080
+EXPOSE 8045
 ENTRYPOINT ["dotnet", "ViaPermanente.Api.dll"]

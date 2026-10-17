@@ -44,7 +44,14 @@ services:
       TZ: America/Sao_Paulo
       Logging__LogLevel__Microsoft.EntityFrameworkCore: Warning
     ports:
-      - "5169:8080"
+      - "8045:8045"
+    # o back está no ar e alcança o banco? (GET /hc)
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8045/hc"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     volumes:
       - fotos:/app/fotos
     logging: *logs

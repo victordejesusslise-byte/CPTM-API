@@ -16,7 +16,7 @@ describe('CadastrarUsuario', () => {
     const componente = fixture.componentInstance as unknown as { form: { setValue: (v: object) => void } };
     componente.form.setValue({ nome: 'Bia Lima', email: 'bia@cptm.sp.gov.br', cargo: 'Tecnico', senha: 'segredo123' });
     tela.querySelector('form')!.dispatchEvent(new Event('submit'));
-    const req = TestBed.inject(HttpTestingController).expectOne('http://localhost:5169/api/usuarios');
+    const req = TestBed.inject(HttpTestingController).expectOne('http://localhost:8045/api/usuarios');
     expect(req.request.body).toEqual({ nome: 'Bia Lima', email: 'bia@cptm.sp.gov.br', senha: 'segredo123', cargo: 'Tecnico' });
     req.flush({ id: 2, nome: 'Bia Lima', email: 'bia@cptm.sp.gov.br', cargo: 'Tecnico', ativo: true });
     await fixture.whenStable();

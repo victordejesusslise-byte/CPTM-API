@@ -23,7 +23,7 @@ dotnet dotnet-ef database update --project src/ViaPermanente.Dados --startup-pro
 dotnet run --project src/ViaPermanente.Api --launch-profile http
 ```
 
-Swagger: http://localhost:5169/swagger. Faça `POST /api/auth/login` com o e-mail e a senha do supervisor do `.env`, clique em **Authorize** e cole o token.
+Swagger: http://localhost:8045/swagger. Faça `POST /api/auth/login` com o e-mail e a senha do supervisor do `.env`, clique em **Authorize** e cole o token.
 
 Na primeira subida, se o banco não tem usuário, a API cria o supervisor do `.env`. Depois, o supervisor cadastra cada pessoa em `POST /api/usuarios`, cada uma com a própria senha.
 

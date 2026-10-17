@@ -35,6 +35,7 @@
   --sombra: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 18px -12px rgba(0, 0, 0, .7);
   --anel: rgba(213, 196, 161, .4);
   --nota-bom: #9DB3A6;
+  --marcador: #D5C4A1;
   color-scheme: dark;
 }
 :root[data-theme='dark'] { @include escuro; }

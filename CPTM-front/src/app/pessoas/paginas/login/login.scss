@@ -3,9 +3,9 @@
   width: min(400px, 100%); padding: 32px 28px; border: 1px solid var(--linha); border-radius: 14px;
   background: var(--superficie); box-shadow: var(--sombra);
 }
-.login__marca { color: var(--mata); margin-bottom: 8px; }
-.login__nome { margin: 0; font-size: 34px; color: var(--mata); }
-.login__assinatura { margin: 2px 0 14px; color: var(--madeira); font-size: 15px; }
+.login__marca { color: var(--tinta); margin-bottom: 8px; }
+.login__nome { margin: 0; font-size: 34px; color: var(--tinta); }
+.login__assinatura { margin: 2px 0 14px; color: var(--marcador); font-size: 15px; }
 .login__texto { margin: 0 0 24px; color: var(--tinta-2); }
 form { display: flex; flex-direction: column; gap: 4px; }
 button { min-height: 44px; margin-top: 8px; }

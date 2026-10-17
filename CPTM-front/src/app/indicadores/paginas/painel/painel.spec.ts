@@ -28,7 +28,7 @@ describe('Painel', () => {
 
   it('mostra os indicadores e marca em vermelho só o que pede ação', async () => {
     const { fixture, tela, http } = await abrir('Supervisor');
-    http.expectOne((r) => r.url === 'http://localhost:5169/api/indicadores').flush([indicador('a', true), indicador('b', false)]);
+    http.expectOne((r) => r.url === 'http://localhost:8045/api/indicadores').flush([indicador('a', true), indicador('b', false)]);
     await fixture.whenStable();
     expect(tela.querySelectorAll('.indicador')).toHaveLength(2);
     expect(tela.querySelectorAll('.indicador--vermelho')).toHaveLength(1);
@@ -37,7 +37,7 @@ describe('Painel', () => {
 
   it('mostra os atalhos só do cargo', async () => {
     const { fixture, tela, http } = await abrir('OperadorVia', 'hoje');
-    http.expectOne((r) => r.url === 'http://localhost:5169/api/indicadores').flush([]);
+    http.expectOne((r) => r.url === 'http://localhost:8045/api/indicadores').flush([]);
     await fixture.whenStable();
     const atalhos = [...tela.querySelectorAll('.atalho')].map((a) => a.textContent ?? '');
     expect(atalhos.some((a) => a.includes('Alertas'))).toBe(true);
@@ -46,7 +46,7 @@ describe('Painel', () => {
 
   it('mostra o erro da API', async () => {
     const { fixture, tela, http } = await abrir('Supervisor');
-    http.expectOne((r) => r.url === 'http://localhost:5169/api/indicadores').flush({ detail: 'Período inválido.' }, { status: 400, statusText: 'Bad Request' });
+    http.expectOne((r) => r.url === 'http://localhost:8045/api/indicadores').flush({ detail: 'Período inválido.' }, { status: 400, statusText: 'Bad Request' });
     await fixture.whenStable();
     expect(tela.querySelector('.aviso--erro')?.textContent).toContain('Período inválido.');
   });

@@ -25,7 +25,7 @@ describe('Alertas', () => {
 
   it('lista os alertas abertos dos sensores', async () => {
     const { fixture, tela, http } = await abrir('sensores');
-    const req = http.expectOne((r) => r.url === 'http://localhost:5169/api/alertas');
+    const req = http.expectOne((r) => r.url === 'http://localhost:8045/api/alertas');
     expect(req.request.params.get('origem')).toBe('Sensor');
     expect(req.request.params.get('status')).toBe('Aberto');
     req.flush([alerta]);

@@ -34,7 +34,7 @@ describe('Login', () => {
 
   it('não chama a API com o formulário vazio', async () => {
     await enviar();
-    http.expectNone('http://localhost:5169/api/auth/login');
+    http.expectNone('http://localhost:8045/api/auth/login');
     expect(tela.textContent).toContain('Informe o e-mail.');
   });
 
@@ -43,7 +43,7 @@ describe('Login', () => {
     digitar('input[type=email]', 'ana@cptm.sp.gov.br');
     digitar('input[type=password]', 'segredo');
     await enviar();
-    http.expectOne('http://localhost:5169/api/auth/login').flush(tokenDeTeste());
+    http.expectOne('http://localhost:8045/api/auth/login').flush(tokenDeTeste());
     expect(navegar).toHaveBeenCalledWith('/painel');
   });
 
@@ -51,7 +51,7 @@ describe('Login', () => {
     digitar('input[type=email]', 'ana@cptm.sp.gov.br');
     digitar('input[type=password]', 'errada');
     await enviar();
-    http.expectOne('http://localhost:5169/api/auth/login').flush(null, { status: 401, statusText: 'Unauthorized' });
+    http.expectOne('http://localhost:8045/api/auth/login').flush(null, { status: 401, statusText: 'Unauthorized' });
     await fixture.whenStable();
     expect(tela.querySelector('.aviso--erro')?.textContent).toContain('E-mail ou senha não conferem.');
   });

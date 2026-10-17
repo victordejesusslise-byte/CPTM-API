@@ -13,7 +13,7 @@ describe('SepararPeca', () => {
     const fixture = TestBed.createComponent(SepararPeca);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    const pedidos = http.match((r) => r.url === 'http://localhost:5169/api/trocas');
+    const pedidos = http.match((r) => r.url === 'http://localhost:8045/api/trocas');
     expect(pedidos.map((r) => r.request.params.get('status')).sort()).toEqual(['AguardandoPeca', 'Aprovada']);
     pedidos.forEach((r) => r.flush([]));
     await fixture.whenStable();

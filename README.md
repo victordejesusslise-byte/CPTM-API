@@ -82,7 +82,7 @@ Se o Windows perguntar sobre o firewall, permita em **redes privadas**. Funciona
 
 Para apresentar o sistema, a API cria (e depois apaga) uma demonstração **no banco de trabalho**: 1 fornecedor, 3 pedidos (um recebido, um recebido em parte e um aberto), 3 peças na via com 3 alertas e 3 trocas em passos diferentes. Tudo leva a marca `DEMO-`, e a limpeza apaga só isso.
 
-Com a API ligada, abra http://localhost:5169/swagger, entre com o supervisor (`POST /api/auth/login`, **Authorize**) e rode:
+Com a API ligada, abra http://localhost:8045/swagger, entre com o supervisor (`POST /api/auth/login`, **Authorize**) e rode:
 
 - **Criar:** `POST /api/apresentacao/demonstracao`
 - **Apagar:** `DELETE /api/apresentacao/demonstracao`
@@ -100,7 +100,7 @@ Precisa só do [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 docker compose up -d --build
 ```
 
-3. O back fica em http://localhost:5169 (o site Angular continua com `npx ng serve`). Na primeira subida ele cria o banco e o supervisor do `.env`.
+3. O back fica em http://localhost:8045 (o site Angular continua com `npx ng serve`). Na primeira subida ele cria o banco e o supervisor do `.env`.
 4. Os logs:
 
 ```bash
