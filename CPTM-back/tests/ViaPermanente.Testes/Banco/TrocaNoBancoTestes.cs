@@ -168,6 +168,13 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         var ld = (await BancoDeTeste.Laudos(db, pdf).LaudoTroca(troca.Id))!;
         Assert.Equal($"LD-{troca.Id:0000}-v4.pdf", ld.Nome); // pedida, aprovada, separada, feita
         Assert.Contains("Turma de Via 2", pdf.Texto);
+
+        // O mesmo laudo como documento, para a tela mostrar antes de baixar.
+        var documento = (await BancoDeTeste.Laudos(db, pdf).Documento("troca", troca.Id))!;
+        Assert.Equal($"LD-{troca.Id:0000}-v4", documento.Codigo);
+        Assert.Contains(documento.Secoes, s => s.Titulo == "Passos" && s.Tabela!.Linhas.Count == 4);
+        Assert.Null(await BancoDeTeste.Laudos(db, pdf).Documento("troca", 999_999));
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => BancoDeTeste.Laudos(db, pdf).Documento("outro", troca.Id));
     }
 
     [Fact]

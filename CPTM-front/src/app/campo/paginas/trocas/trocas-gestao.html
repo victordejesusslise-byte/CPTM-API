@@ -33,11 +33,30 @@
 
     @if (t.status === 'Feita') {
       <p class="nota">Feita em {{ dataHora(t.data) }} pela equipe {{ t.equipe ?? '—' }}.</p>
-      <div class="acoes">
-        <button mat-stroked-button type="button" (click)="laudo(t, 'liberacao')">Laudo de liberação (LB)</button>
-        <button mat-stroked-button type="button" (click)="laudo(t, 'troca')">Laudo da troca (LD)</button>
-      </div>
     }
+
+    <div class="laudo-previa">
+      <header>
+        <h3>Laudo</h3>
+        <div role="group" aria-label="Qual laudo">
+          <button mat-button type="button" [class.ativo]="tipoLaudo() === 'troca'" [attr.aria-pressed]="tipoLaudo() === 'troca'" (click)="tipoLaudo.set('troca')">Da troca (LD)</button>
+          @if (liberacaoSai(t)) {
+            <button mat-button type="button" [class.ativo]="tipoLaudo() === 'liberacao'" [attr.aria-pressed]="tipoLaudo() === 'liberacao'" (click)="tipoLaudo.set('liberacao')">Liberação (LB)</button>
+          }
+        </div>
+      </header>
+      @if (documentoLaudo.value(); as d) {
+        <div class="laudo-previa__folha" role="button" tabindex="0" aria-label="Abrir o laudo" (click)="laudoAberto.abrir()" (keydown.enter)="laudoAberto.abrir()">
+          <app-folha-laudo [documento]="d" />
+        </div>
+        <div class="acoes"><button mat-flat-button type="button" (click)="laudoAberto.abrir()">Abrir o laudo</button></div>
+        <app-laudo-aberto #laudoAberto [tipo]="tipoLaudo()" [id]="t.id" [documento]="d" />
+      } @else if (documentoLaudo.isLoading()) {
+        <p class="nota">Carregando o laudo…</p>
+      } @else if (erroLaudo()) {
+        <p class="aviso aviso--erro">{{ erroLaudo() }}</p>
+      }
+    </div>
   </section>
 }
 
@@ -49,7 +68,7 @@
       <button type="button" class="cartao-alerta" [class.urgente]="t.status === 'Pedida' || t.status === 'Recusada'" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
         <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
         <span class="tipo">{{ rotulo[t.status] }} · {{ t.motivo ?? '' }}</span>
-        <span class="nota">pedida há {{ t.diasDesdeOPedido }} dias</span>
+        <span class="nota">pedida há {{ t.diasDesdeOPedido }} dias · laudo LD</span>
       </button>
     }
   </div>

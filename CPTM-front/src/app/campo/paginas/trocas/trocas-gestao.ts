@@ -1,14 +1,15 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { Sessao } from '../../../nucleo/sessao/sessao';
-import { abrirArquivo } from '../../../compartilhado/utilitarios/arquivo';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { TrocaDto } from '../../entidades/campo';
 import { StatusTroca } from '../../../compartilhado/entidades/enums';
 import { Laudos, TipoLaudo } from '../../../laudos/servicos/laudos';
+import { FolhaLaudo } from '../../../laudos/componentes/folha-laudo';
+import { LaudoAberto } from '../../../laudos/componentes/laudo-aberto';
 import { Trocas } from '../../servicos/trocas';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
@@ -23,11 +24,24 @@ const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[] }
   feitas: { sobre: 'Campo', titulo: 'Trocas feitas', status: ['Feita'] },
 };
 
-/** Aprovar trocas (supervisor, etapa 11) e Trocas e laudos (técnico e supervisor): decidir, acompanhar, responder a recusa e os laudos. */
+/**
+ * Aprovar trocas (supervisor, etapa 11) e Trocas e laudos (técnico e supervisor): decidir, acompanhar, responder a recusa e os laudos.
+ * Toda troca aberta mostra o laudo: primeiro a folha, sem baixar; "Abrir o laudo" abre a janela com Baixar PDF (Victor, 2026-10-18).
+ */
 @Component({
   selector: 'app-trocas-gestao',
-  imports: [FormsModule, FORMULARIO, Estado, ResumoTroca],
+  imports: [FormsModule, FORMULARIO, Estado, ResumoTroca, FolhaLaudo, LaudoAberto],
   templateUrl: './trocas-gestao.html',
+  styles: `
+    .laudo-previa { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--linha); }
+    .laudo-previa header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px; }
+    .laudo-previa h3 { margin: 0; font-size: 15px; }
+    .laudo-previa .ativo { font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+    .laudo-previa__folha { position: relative; max-height: 340px; overflow: hidden; padding: 12px; border: 1px solid var(--linha); border-radius: 8px;
+      background: var(--superficie-3); cursor: zoom-in; user-select: none; }
+    .laudo-previa__folha::after { content: ''; position: absolute; inset: auto 0 0 0; height: 90px; background: linear-gradient(transparent, var(--superficie-3)); pointer-events: none; }
+    .laudo-previa__folha:focus-visible { outline: 2px solid var(--marcador); outline-offset: 2px; }
+  `,
 })
 export class TrocasGestao {
   readonly aba = input<Aba>('andamento');
@@ -50,6 +64,17 @@ export class TrocasGestao {
   protected readonly rotulo = ROTULO_TROCA;
   protected readonly dataHora = dataHora;
   protected readonly km = km;
+
+  /** O laudo da troca aberta: começa no LD; a liberação (LB) só depois de aprovada. É a primeira visão, sem baixar. */
+  protected readonly tipoLaudo = linkedSignal<number | null, TipoLaudo>({ source: this.idAberta, computation: () => 'troca' });
+  protected readonly documentoLaudo = rxResource({
+    params: () => (this.idAberta() ? { tipo: this.tipoLaudo(), id: this.idAberta()! } : undefined),
+    stream: ({ params }) => this.laudos.documento(params.tipo, params.id),
+  });
+  protected readonly erroLaudo = computed(() => (this.documentoLaudo.error() ? mensagemDeErro(this.documentoLaudo.error()) : null));
+  protected liberacaoSai(t: TrocaDto): boolean {
+    return t.status !== 'Pedida' && t.status !== 'Reprovada';
+  }
 
   protected readonly motivo = signal('');
   protected readonly resposta = signal('');
@@ -82,13 +107,6 @@ export class TrocasGestao {
       this.api.decidirRecusa(t.id, decisao, this.resposta().trim() || null),
       decisao === 'Manter' ? 'Troca mantida: volta para a via fazer.' : 'Recusa aceita: a troca foi cancelada.',
     );
-  }
-
-  protected laudo(t: TrocaDto, tipo: TipoLaudo): void {
-    this.laudos.pdf(tipo, t.id).subscribe({
-      next: (pdf) => abrirArquivo(pdf, `${tipo === 'liberacao' ? 'LB' : 'LD'}-${t.id}.pdf`),
-      error: (e) => this.erro.set(mensagemDeErro(e)),
-    });
   }
 
   private enviar(acao: import('rxjs').Observable<unknown>, ok: string): void {

@@ -23,7 +23,7 @@ namespace ViaPermanente.Dominio.Laudos;
 public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IHistoricoRepository historicos, IUsuarioRepository usuarios,
     ITrocaRepository trocasRepo, ChegadaService chegadas, PecaService consulta, InspecaoService inspecoes, AlertaService alertas, TrocaService trocas)
 {
-    public async Task<ArquivoDto?> BoletimRecebimento(int idRecebimento)
+    private async Task<DocumentoPdf?> DocumentoBoletim(int idRecebimento)
     {
         var recebimento = await pecas.BuscarRecebimento(idRecebimento);
         if (recebimento is null)
@@ -35,7 +35,7 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
         var nomes = await Nomes();
         var codigo = $"BR-{idRecebimento:0000}";
 
-        return Arquivo(new DocumentoPdf("Boletim de recebimento", codigo, $"Pedido {chegada.IdPedido} · lote {chegada.Lote} · {chegada.Armazem}", DateTime.Now,
+        return new DocumentoPdf("Boletim de recebimento", codigo, $"Pedido {chegada.IdPedido} · lote {chegada.Lote} · {chegada.Armazem}", DateTime.Now,
         [
             new("Chegada",
             [
@@ -55,10 +55,10 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
                 new("Aguardando verificação", pecasDaCarga.Count(p => p.Situacao == "AguardandoVerificacao").ToString())
             ], new TabelaPdf(["Peça", "Tag", "Espécie", "Situação"],
                 pecasDaCarga.Select(p => (IReadOnlyList<string>)[p.Codigo, p.Tag ?? "inativa", p.Especie, p.Situacao]).ToList()))
-        ]));
+        ]);
     }
 
-    public async Task<ArquivoDto?> LaudoInspecao(int idInspecao)
+    private async Task<DocumentoPdf?> DocumentoInspecao(int idInspecao)
     {
         var inspecao = await inspecoes.BuscarPorId(idInspecao);
         if (inspecao is null)
@@ -87,11 +87,11 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
         if (alerta is not null)
             secoes.Add(SecaoAlerta(alerta));
         secoes.Add(await SecaoVistorias(inspecao.IdDormente, nomes));
-        return Arquivo(new DocumentoPdf("Laudo de inspeção", $"LI-{idInspecao:0000}", peca.Codigo, DateTime.Now, secoes));
+        return new DocumentoPdf("Laudo de inspeção", $"LI-{idInspecao:0000}", peca.Codigo, DateTime.Now, secoes);
     }
 
     /// <summary>A ordem de troca para a via, numa página, depois da aprovação.</summary>
-    public async Task<ArquivoDto?> Liberacao(int idTroca)
+    private async Task<DocumentoPdf?> DocumentoLiberacao(int idTroca)
     {
         var troca = await trocas.BuscarPorId(idTroca);
         if (troca is null)
@@ -100,7 +100,7 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             throw new RegraDeNegocioException("A liberação sai depois que a troca é aprovada.");
         var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
         var nomes = await Nomes();
-        return Arquivo(new DocumentoPdf("Liberação para troca", $"LB-{idTroca:0000}", $"{saiu.Codigo} · km {Km(troca.Km)}", DateTime.Now,
+        return new DocumentoPdf("Liberação para troca", $"LB-{idTroca:0000}", $"{saiu.Codigo} · km {Km(troca.Km)}", DateTime.Now,
         [
             SecaoPeca(saiu, "Peça que sai"),
             new("Pedido e aprovação",
@@ -115,11 +115,11 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
                 : [new("Peça", troca.CodigoEntrou ?? ""), new("Tag", troca.TagEntrou ?? ""),
                    new("Separada por", troca.IdUsuarioSeparou is int s ? $"{Nome(nomes, s)} em {Data(troca.DataSeparacao)}" : "—")]),
             await SecaoVistorias(troca.IdDormenteSaiu, nomes)
-        ]));
+        ]);
     }
 
     /// <summary>O laudo da troca: cresce a cada passo, e a versão sobe junto.</summary>
-    public async Task<ArquivoDto?> LaudoTroca(int idTroca)
+    private async Task<DocumentoPdf?> DocumentoTroca(int idTroca)
     {
         var troca = await trocas.BuscarPorId(idTroca);
         if (troca is null)
@@ -147,7 +147,7 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
         if (troca.IdInspecao is int idInspecao && await inspecoes.BuscarPorId(idInspecao) is { IdAlerta: int idAlerta } && await alertas.BuscarPorId(idAlerta) is { } alerta)
             secoes.Add(SecaoAlerta(alerta));
         secoes.Add(await SecaoVistorias(troca.IdDormenteSaiu, nomes));
-        return Arquivo(new DocumentoPdf("Laudo da troca", $"LD-{idTroca:0000}-v{versao}", $"{saiu.Codigo} · km {Km(troca.Km)}", DateTime.Now, secoes));
+        return new DocumentoPdf("Laudo da troca", $"LD-{idTroca:0000}-v{versao}", $"{saiu.Codigo} · km {Km(troca.Km)}", DateTime.Now, secoes);
     }
 
     // ---------- seções comuns ----------
@@ -173,6 +173,28 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
         => new("Vistorias no local", [], new TabelaPdf(["Data", "Quem", "O que viu", "Tag lida", "Foto"],
             (await historicos.Buscar(idDormente)).Vistorias.OrderBy(v => v.Data)
                 .Select(v => (IReadOnlyList<string>)[Data(v.Data), Nome(nomes, v.IdUsuario), v.Viu ? "confirmou o defeito" : "não viu defeito", v.TagLida ?? "—", v.FotoArquivo]).ToList()));
+
+    /// <summary>
+    /// O laudo como documento, para a tela desenhar as mesmas páginas do PDF antes de baixar (Victor, 2026-10-18).
+    /// Tipo: recebimento (BR), inspecao (LI), liberacao (LB) ou troca (LD). Nulo se o registro não existe.
+    /// </summary>
+    public Task<DocumentoPdf?> Documento(string tipo, int id) => tipo switch
+    {
+        "recebimento" => DocumentoBoletim(id),
+        "inspecao" => DocumentoInspecao(id),
+        "liberacao" => DocumentoLiberacao(id),
+        "troca" => DocumentoTroca(id),
+        _ => throw new RegraDeNegocioException($"Não há laudo do tipo {tipo}.")
+    };
+
+    /// <summary>BR: boletim de recebimento de uma chegada, em PDF.</summary>
+    public async Task<ArquivoDto?> BoletimRecebimento(int idRecebimento) => await DocumentoBoletim(idRecebimento) is { } d ? Arquivo(d) : null;
+    /// <summary>LI: laudo da inspeção, em PDF.</summary>
+    public async Task<ArquivoDto?> LaudoInspecao(int idInspecao) => await DocumentoInspecao(idInspecao) is { } d ? Arquivo(d) : null;
+    /// <summary>LB: liberação para troca, em PDF.</summary>
+    public async Task<ArquivoDto?> Liberacao(int idTroca) => await DocumentoLiberacao(idTroca) is { } d ? Arquivo(d) : null;
+    /// <summary>LD: laudo da troca, em PDF.</summary>
+    public async Task<ArquivoDto?> LaudoTroca(int idTroca) => await DocumentoTroca(idTroca) is { } d ? Arquivo(d) : null;
 
     private ArquivoDto Arquivo(DocumentoPdf documento) => new($"{documento.Codigo}.pdf", pdf.Montar(documento));
 

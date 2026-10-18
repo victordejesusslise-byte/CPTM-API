@@ -32,4 +32,28 @@ describe('TrocasGestao', () => {
     const req = http.expectOne('http://localhost:8045/api/trocas/5/decisao');
     expect(req.request.body).toEqual({ aprovar: true, motivo: null });
   });
+
+  it('mostra o laudo da troca em andamento sem baixar; baixar só no laudo aberto', async () => {
+    localStorage.clear();
+    entrarComo('Tecnico');
+    await TestBed.configureTestingModule({ imports: [TrocasGestao], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] }).compileComponents();
+    const fixture = TestBed.createComponent(TrocasGestao);
+    fixture.componentRef.setInput('aba', 'andamento');
+    fixture.componentRef.setInput('aberta', '5');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const documento = { titulo: 'Laudo da troca', codigo: 'LD-0005-v1', subtitulo: 'DM-9 · km 213,100', geradoEm: '2026-10-18T10:00:00',
+      secoes: [{ titulo: 'Passos', campos: [{ rotulo: 'Situação', valor: 'Pedida' }], tabela: { colunas: ['Passo', 'Quem'], linhas: [['Pedida', 'Técnico']] } }] };
+    http.match(() => true).forEach((r) => r.flush(r.request.url.endsWith('/documento') ? documento : r.request.url.endsWith('/trocas/5') ? troca : [troca]));
+    await fixture.whenStable();
+    http.match((r) => r.url.endsWith('/laudos/troca/5/documento')).forEach((r) => r.flush(documento));
+    await fixture.whenStable();
+    const tela = fixture.nativeElement as HTMLElement;
+
+    expect(tela.querySelector('.laudo-previa__folha')?.textContent).toContain('LD-0005-v1');
+    const foraDaJanela = [...tela.querySelectorAll('button')].filter((b) => !b.closest('dialog'));
+    expect(foraDaJanela.some((b) => b.textContent?.includes('Baixar'))).toBe(false);
+    expect(foraDaJanela.some((b) => b.textContent?.includes('Liberação'))).toBe(false); // pedida: a liberação ainda não sai
+    expect(tela.querySelector('dialog')?.textContent).toContain('Baixar PDF');
+  });
 });
