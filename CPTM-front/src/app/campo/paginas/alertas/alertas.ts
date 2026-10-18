@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -25,7 +26,7 @@ const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: '
  */
 @Component({
   selector: 'app-alertas',
-  imports: [FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag, Nota],
+  imports: [Esqueleto, FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag, Nota],
   templateUrl: './alertas.html',
 })
 export class Alertas {

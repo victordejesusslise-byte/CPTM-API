@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
@@ -20,7 +21,7 @@ const ABAS: Record<Aba, { titulo: string; status: StatusTroca[] }> = {
 /** Separar peça (protótipo YBYRA, etapa 12): o pátio separa uma peça compatível; o sistema sugere a da frente da pilha. */
 @Component({
   selector: 'app-separar-peca',
-  imports: [FORMULARIO, Estado, LeituraTag, ResumoTroca],
+  imports: [Esqueleto, FORMULARIO, Estado, LeituraTag, ResumoTroca],
   templateUrl: './separar-peca.html',
 })
 export class SepararPeca {

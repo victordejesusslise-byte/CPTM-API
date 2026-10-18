@@ -47,6 +47,9 @@
   </section>
   }
 } @else {
+  @if (idAberto() && alerta.isLoading() && !alerta.value()) {
+    <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando o alerta…" /></section>
+  }
   @if (alerta.value(); as a) {
     @if (idAberto()) {
       <section class="cartao pilha alerta-aberto">

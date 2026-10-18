@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
@@ -16,7 +17,7 @@ const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: '
  */
 @Component({
   selector: 'app-passagem',
-  imports: [FORMULARIO, Estado, Nota],
+  imports: [Esqueleto, FORMULARIO, Estado, Nota],
   templateUrl: './passagem.html',
 })
 export class Passagem {

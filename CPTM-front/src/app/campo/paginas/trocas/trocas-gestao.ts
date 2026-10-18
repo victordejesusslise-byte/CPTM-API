@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -29,7 +30,7 @@ const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[] }
  */
 @Component({
   selector: 'app-trocas-gestao',
-  imports: [FormsModule, FORMULARIO, Estado, ResumoTroca, PreviaLaudo],
+  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, ResumoTroca, PreviaLaudo],
   templateUrl: './trocas-gestao.html',
   styles: `
     .laudo-previa { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--linha); }

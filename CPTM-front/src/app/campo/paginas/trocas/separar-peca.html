@@ -3,6 +3,9 @@
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
+@if (idAberta() && troca.isLoading() && !troca.value()) {
+  <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando a troca…" /></section>
+}
 @if (idAberta() && troca.value(); as t) {
   <section class="cartao pilha">
     <header>

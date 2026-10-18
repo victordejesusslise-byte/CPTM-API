@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -23,7 +24,7 @@ const ABAS: Record<Aba, { titulo: string; status: StatusTroca[] }> = {
 /** Trocas do trecho (protótipo YBYRA, etapa 13): o operador da via troca a peça pela separada, ou recusa com motivo e foto. */
 @Component({
   selector: 'app-trocas-trecho',
-  imports: [FormsModule, FORMULARIO, Estado, LeituraTag, ResumoTroca],
+  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag, ResumoTroca],
   templateUrl: './trocas-trecho.html',
 })
 export class TrocasTrecho {
