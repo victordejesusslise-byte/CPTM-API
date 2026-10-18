@@ -1,4 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { Cargo } from '../../../pessoas/entidades/usuario';
@@ -15,7 +16,7 @@ import { BOTOES } from '../../../compartilhado/ui';
 /** A primeira tela: atalhos do cargo e os indicadores. O que pede atenção vem em vermelho, em destaque e primeiro, com o botão para a tela onde se verifica. */
 @Component({
   selector: 'app-painel',
-  imports: [RouterLink, Estado, BOTOES],
+  imports: [Esqueleto, RouterLink, Estado, BOTOES],
   templateUrl: './painel.html',
   styleUrl: './painel.scss',
 })

@@ -40,7 +40,7 @@
     </mat-form-field>
   </div>
 
-  <app-estado [carregando]="pedidos.isLoading()" [erro]="erro()" />
+  <app-estado esqueleto="tabela" [quantidade]="5" [carregando]="pedidos.isLoading()" [erro]="erro()" />
   @if (pedidos.hasValue()) {
     @if (lista().length) {
       <div class="tabela">

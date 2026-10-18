@@ -1,3 +1,4 @@
+@if (pedido.isLoading() && !pedido.value()) { <app-esqueleto tipo="pagina" [quantidade]="5" rotulo="Carregando o pedido…" /> }
 @if (pedido.value(); as p) {
   <section class="cartao pilha pedido-aberto" aria-live="polite">
     <header>
@@ -94,6 +95,7 @@
             </div>
           </div>
         }
+        @if (chegadas.isLoading()) { <app-esqueleto tipo="tabela" [quantidade]="2" rotulo="Carregando as cargas…" /> }
         @if (chegadas.value()?.length) {
           <div>
             <p class="lbl">Cargas recebidas · toque para ver o boletim (BR)</p>

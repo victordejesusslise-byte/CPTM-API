@@ -16,7 +16,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
     <p class="sobre">Supervisão</p>
     <h1>Usuários cadastrados</h1>
     <div class="acoes"><a mat-flat-button routerLink="/usuarios/novo">Cadastrar usuário</a></div>
-    <app-estado [carregando]="usuarios.isLoading()" [erro]="erro()" [vazio]="usuarios.hasValue() && !usuarios.value().length" />
+    <app-estado esqueleto="tabela" [carregando]="usuarios.isLoading()" [erro]="erro()" [vazio]="usuarios.hasValue() && !usuarios.value().length" />
     @if (usuarios.value()?.length) {
       <app-tabela [colunas]="colunas" [linhas]="usuarios.value() ?? []" />
     }

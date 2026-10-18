@@ -27,7 +27,9 @@
         </mat-select>
       </mat-form-field>
     </div>
+    @if (estoque.isLoading()) { <app-esqueleto tipo="tabela" [quantidade]="5" rotulo="Carregando o estoque…" /> } @else {
     <p class="rotulo">{{ estoque.value()?.length ?? 0 }} peças em estoque.</p>
+    }
     @if (estoque.value()?.length) {
       <app-tabela [colunas]="colunasEstoque" [linhas]="estoque.value() ?? []" />
     }
@@ -60,6 +62,7 @@
   }
 
   @case ('pilhas') {
+    @if (armazens.isLoading()) { <app-esqueleto tipo="cartoes" [quantidade]="3" rotulo="Carregando as pilhas…" /> }
     @for (a of armazens.value() ?? []; track a.id) {
       <section class="cartao">
         <header><h2>{{ a.nome }}</h2><span class="nota">{{ a.linha }} · {{ a.pecas }} peças</span></header>

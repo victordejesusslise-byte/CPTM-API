@@ -31,7 +31,7 @@
       @if (feito()) { <p class="aviso aviso--ok" role="status">{{ feito() }}</p> }
       <div class="tabela"><table class="simples">
         <thead><tr><th>Tamanho</th><th>Classe</th><th>Código no ERP</th></tr></thead>
-        <tbody>@for (c of codigos.value() ?? []; track c.id) { <tr><td>{{ metros(c.comprimentoM) }}</td><td>{{ c.classe }}ª</td><td class="mono">{{ c.codigoErp }}</td></tr> }
+        <tbody>@if (codigos.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (c of codigos.value() ?? []; track c.id) { <tr><td>{{ metros(c.comprimentoM) }}</td><td>{{ c.classe }}ª</td><td class="mono">{{ c.codigoErp }}</td></tr> }
           @empty { <tr><td colspan="3">Nenhum código ainda.</td></tr> }</tbody>
       </table></div>
       @if (ehSupervisor) {
@@ -50,7 +50,7 @@
     <section class="cartao">
       <div class="tabela"><table class="simples">
         <thead><tr><th>Quando</th><th>Sistema</th><th>Tipo</th><th>Situação</th><th class="so-computador">Mensagem</th></tr></thead>
-        <tbody>@for (l of historico.value() ?? []; track l.id) {
+        <tbody>@if (historico.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (l of historico.value() ?? []; track l.id) {
           <tr><td>{{ dataHora(l.data) }}</td><td>{{ l.sistema }} · {{ l.direcao }}</td><td>{{ l.tipo }}</td><td [class.vermelho]="l.status === 'Erro'">{{ l.status }}</td><td class="so-computador">{{ l.mensagem ?? l.arquivo ?? '—' }}</td></tr>
         } @empty { <tr><td colspan="5">Nenhuma integração ainda.</td></tr> }</tbody>
       </table></div>

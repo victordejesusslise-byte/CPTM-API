@@ -38,7 +38,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
         </mat-form-field>
       </div>
     }
-    @if (mapa.isLoading()) { <app-estado [carregando]="true" /> }
+    @if (mapa.isLoading()) { <app-estado esqueleto="pagina" [carregando]="true" /> }
     @if (mapa.value(); as m) {
       <div class="kv cartao">
         <div><span class="lbl">Linha</span><b>{{ m.trecho.linha }}</b></div>

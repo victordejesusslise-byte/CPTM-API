@@ -1,7 +1,9 @@
 <header class="cabecalho">
   <p class="sobre">Painel · {{ aba() === 'hoje' ? 'O que fazer hoje' : aba() === 'sequencia' ? 'Sequência e história' : 'Acompanhamento' }}</p>
   <h1>Olá, {{ usuario()?.nome }}</h1>
-  @if (indicadores.hasValue()) {
+  @if (indicadores.isLoading()) {
+    <app-esqueleto tipo="linhas" [quantidade]="1" rotulo="Carregando os indicadores…" />
+  } @else if (indicadores.hasValue()) {
     <p class="resumo">
       @if (noVermelho()) {
         <span class="vermelho">{{ noVermelho() }} {{ noVermelho() === 1 ? 'indicador pede' : 'indicadores pedem' }} atenção.</span>
@@ -13,7 +15,11 @@
 </header>
 
 @if (aba() === 'hoje') {
-@if (vermelhos().length) {
+@if (indicadores.isLoading()) {
+<section class="atencao" aria-label="Carregando o que pede atenção">
+  <app-esqueleto tipo="cartoes" [quantidade]="2" rotulo="Carregando o que pede atenção…" />
+</section>
+} @else if (vermelhos().length) {
 <section aria-labelledby="t-atencao" class="atencao">
   <h2 id="t-atencao">Pede atenção agora</h2>
   <div class="grade">
@@ -56,7 +62,7 @@
 } @else {
 <section aria-labelledby="t-indicadores">
   <h2 id="t-indicadores">Indicadores</h2>
-  <app-estado [carregando]="indicadores.isLoading()" [erro]="erro()" [vazio]="indicadores.hasValue() && !indicadores.value().length" textoVazio="Sem indicadores no período." />
+  <app-estado esqueleto="cartoes" [quantidade]="6" [carregando]="indicadores.isLoading()" [erro]="erro()" [vazio]="indicadores.hasValue() && !indicadores.value().length" textoVazio="Sem indicadores no período." />
   @if (indicadores.hasValue()) {
     <div class="grade">
       @for (i of ordenados(); track i.chave) {

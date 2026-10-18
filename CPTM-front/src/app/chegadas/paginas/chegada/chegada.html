@@ -57,7 +57,8 @@
       } @else if (placasDoPedido.hasValue()) {
         <p class="nota">Nenhuma placa lida para este pedido. Leia as placas em <a routerLink="/chegadas/placa" [queryParams]="{ pedido: idPedido() }">Placa do feixe</a>, ou preencha os feixes aqui.</p>
       }
-      <div formArrayName="feixes">
+      @if (placasDoPedido.isLoading()) { <app-esqueleto tipo="cartoes" [quantidade]="1" rotulo="Carregando as placas do pedido…" /> }
+      <div formArrayName="feixes" [hidden]="placasDoPedido.isLoading()">
         @for (f of form.controls.feixes.controls; track f; let i = $index) {
           <div class="cartao item" [formGroupName]="i">
             <div class="campos">

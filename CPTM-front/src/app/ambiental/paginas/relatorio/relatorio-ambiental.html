@@ -71,7 +71,7 @@
 @if (aba() === 'mes') {
   <section class="cartao">
     <header><h2>Relatórios anteriores</h2><span class="nota">toque para abrir</span></header>
-    <app-estado [carregando]="relatorios.isLoading()" [erro]="erroLista()" [vazio]="relatorios.hasValue() && !relatorios.value().length" textoVazio="Nenhum relatório ainda." />
+    <app-estado esqueleto="tabela" [carregando]="relatorios.isLoading()" [erro]="erroLista()" [vazio]="relatorios.hasValue() && !relatorios.value().length" textoVazio="Nenhum relatório ainda." />
     @if (relatorios.value()?.length) {
       <div class="tabela">
         <table class="simples">

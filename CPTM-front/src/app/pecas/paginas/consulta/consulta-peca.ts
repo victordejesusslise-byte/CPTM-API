@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { MetodoCaptura } from '../../../compartilhado/entidades/enums';
@@ -11,7 +12,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 /** Consultar a peça pela tag: onde está e tudo o que aconteceu com ela. */
 @Component({
   selector: 'app-consulta-peca',
-  imports: [FORMULARIO, LeituraTag, Nota],
+  imports: [Esqueleto, FORMULARIO, LeituraTag, Nota],
   template: `
     <p class="sobre">Peça</p>
     <h1>Consultar peça</h1>
@@ -49,6 +50,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
       </div>
       <p class="chamada chamada--neutra"><b>Análise da IA:</b> {{ analise() }}</p>
       <h2>Histórico</h2>
+      @if (historico.isLoading()) { <app-esqueleto tipo="lista" [quantidade]="3" rotulo="Carregando o histórico…" /> }
       @for (e of historico.value() ?? []; track $index) {
         <p class="aviso"><strong>{{ dataHora(e.data) }} · {{ e.tipo }}</strong> — {{ e.descricao }}</p>
       }

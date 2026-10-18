@@ -1,4 +1,5 @@
 import { Component, DestroyRef, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -19,7 +20,7 @@ import { PlacaNoFeixe, feixeDaPlaca, placaNoFeixe } from './placa-no-feixe';
  */
 @Component({
   selector: 'app-chegada',
-  imports: [RouterLink, FORMULARIO],
+  imports: [Esqueleto, RouterLink, FORMULARIO],
   templateUrl: './chegada.html',
   styles: `
     .placa-lida { display: grid; grid-template-columns: minmax(0, 160px) 1fr; gap: 14px; align-items: start; margin: 4px 0 10px; padding: 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); }

@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { data, dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
@@ -13,7 +14,7 @@ const TITULOS: Record<Aba, string> = { empresas: 'Empresas', contratos: 'Contrat
 /** Cadastros de apoio (supervisor): empresas, contratos, estações e trechos, parâmetros do sistema. */
 @Component({
   selector: 'app-cadastros',
-  imports: [FormsModule, FORMULARIO],
+  imports: [Esqueleto, FormsModule, FORMULARIO],
   templateUrl: './cadastros.html',
 })
 export class Cadastros {

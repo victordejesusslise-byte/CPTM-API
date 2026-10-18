@@ -49,6 +49,7 @@
       <button mat-button type="button" (click)="proximaTag()">Pegar outra tag</button>
     </div>
   </section>
+  @if (doFeixe.isLoading()) { <app-esqueleto tipo="tabela" [quantidade]="4" rotulo="Carregando as peças do feixe…" /> }
   @if (doFeixe.value()?.length) {
     <h2>Peças do feixe</h2>
     <app-tabela [colunas]="colunas" [linhas]="doFeixe.value() ?? []" />

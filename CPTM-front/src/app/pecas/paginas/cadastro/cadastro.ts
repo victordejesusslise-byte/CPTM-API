@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
@@ -18,7 +19,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
  */
 @Component({
   selector: 'app-cadastro',
-  imports: [FormsModule, FORMULARIO, LeituraTag, Tabela],
+  imports: [Esqueleto, FormsModule, FORMULARIO, LeituraTag, Tabela],
   templateUrl: './cadastro.html',
 })
 export class Cadastro {

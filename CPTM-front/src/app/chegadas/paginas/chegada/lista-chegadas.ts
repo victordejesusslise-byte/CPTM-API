@@ -25,7 +25,7 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
     <h1>{{ texto().titulo }}</h1>
     <section class="cartao">
       <header><h2>{{ texto().titulo }}</h2><span class="nota">{{ cargas.value()?.length ?? 0 }} cargas · {{ texto().nota }}</span></header>
-      <app-estado [carregando]="cargas.isLoading()" [erro]="erro()" [vazio]="cargas.hasValue() && !cargas.value().length" textoVazio="Nenhuma carga chegou ainda." />
+      <app-estado esqueleto="tabela" [carregando]="cargas.isLoading()" [erro]="erro()" [vazio]="cargas.hasValue() && !cargas.value().length" textoVazio="Nenhuma carga chegou ainda." />
       @if (modo() === 'andamento') {
         @for (c of cargas.value() ?? []; track c.chegada.id) {
           <div class="pilha carga">

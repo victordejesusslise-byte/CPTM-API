@@ -1,8 +1,9 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { filter, map } from 'rxjs';
+import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { filter, map, of, switchMap, timer } from 'rxjs';
 import { Sessao } from '../../sessao/sessao';
 import { Tema } from '../tema/tema';
 import { ItemMenu, SubMenu, menuDoCargo } from '../menu/menu';
@@ -23,7 +24,7 @@ interface ItemVisivel extends ItemMenu {
  */
 @Component({
   selector: 'app-casca',
-  imports: [RouterOutlet, RouterLink, Marca],
+  imports: [Esqueleto, RouterOutlet, RouterLink, Marca],
   templateUrl: './casca.html',
   styleUrl: './casca.scss',
 })
@@ -37,6 +38,15 @@ export class Casca {
   protected readonly tema = inject(Tema);
   /** itens com abas que a pessoa recolheu clicando de novo neles */
   private readonly recolhidos = signal(new Set<string>());
+  /** Uma tela nova está carregando (o pedaço dela vem do servidor na primeira vez): mostra o skeleton de página se passar de 150 ms. */
+  protected readonly navegando = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationStart || e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError),
+      // Só se a tela demorar: troca rápida não pisca o skeleton.
+      switchMap((e) => (e instanceof NavigationStart ? timer(150).pipe(map(() => true)) : of(false))),
+    ),
+    { initialValue: false },
+  );
   protected readonly celular = toSignal(inject(BreakpointObserver).observe('(max-width: 820px)').pipe(map((r) => r.matches)), { initialValue: false });
   private readonly url = toSignal(
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd), map(() => this.router.url)),

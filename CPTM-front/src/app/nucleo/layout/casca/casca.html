@@ -46,6 +46,7 @@
         }
       </nav>
     }
-    <router-outlet />
+    @if (navegando()) { <app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Abrindo a tela…" /> }
+    <div [hidden]="navegando()"><router-outlet /></div>
   </main>
 </div>

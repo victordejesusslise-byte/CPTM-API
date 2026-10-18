@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { dataHora, diasDesde, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
@@ -16,7 +17,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 /** O armazém: estoque, entrada na pilha, troca de pilha e conferência pilha por pilha. */
 @Component({
   selector: 'app-armazem',
-  imports: [FormsModule, FORMULARIO, LeituraTag, Tabela, Nota],
+  imports: [Esqueleto, FormsModule, FORMULARIO, LeituraTag, Tabela, Nota],
   templateUrl: './armazem.html',
 })
 export class Armazem {

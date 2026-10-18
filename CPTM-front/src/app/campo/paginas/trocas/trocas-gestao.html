@@ -37,7 +37,7 @@
 
     <div class="laudo-previa">
       <header>
-        <h3>Laudo</h3>
+        <h3>Laudos</h3>
         <div role="group" aria-label="Qual laudo">
           <button mat-button type="button" [class.ativo]="tipoLaudo() === 'troca'" [attr.aria-pressed]="tipoLaudo() === 'troca'" (click)="tipoLaudo.set('troca')">Da troca (LD)</button>
           @if (liberacaoSai(t)) {
