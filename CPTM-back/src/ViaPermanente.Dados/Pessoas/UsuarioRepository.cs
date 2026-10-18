@@ -39,4 +39,22 @@ public class UsuarioRepository(ViaPermanenteContext db) : IUsuarioRepository
         await transacao.CommitAsync();
         return new UsuarioComPessoa(usuario, pessoa);
     }
+
+    public async Task<(bool Ativo, int VersaoSessao)?> Sessao(int idUsuario)
+    {
+        var s = await db.Set<Usuario>().AsNoTracking().Where(u => u.IdUsuario == idUsuario)
+            .Select(u => new { u.Ativo, u.VersaoSessao }).FirstOrDefaultAsync();
+        return s is null ? null : (s.Ativo, s.VersaoSessao);
+    }
+
+    public Task EncerrarSessoes(int idUsuario)
+        => db.Set<Usuario>().Where(u => u.IdUsuario == idUsuario).ExecuteUpdateAsync(s => s.SetProperty(u => u.VersaoSessao, u => u.VersaoSessao + 1));
+
+    public Task DefinirAtivo(int idUsuario, bool ativo)
+        => db.Set<Usuario>().Where(u => u.IdUsuario == idUsuario)
+            .ExecuteUpdateAsync(s => s.SetProperty(u => u.Ativo, ativo).SetProperty(u => u.VersaoSessao, u => u.VersaoSessao + 1));
+
+    public Task RegistrarTentativas(int idUsuario, int tentativas, DateTime? esperarAte)
+        => db.Set<Usuario>().Where(u => u.IdUsuario == idUsuario)
+            .ExecuteUpdateAsync(s => s.SetProperty(u => u.TentativasFalhas, tentativas).SetProperty(u => u.EsperarAte, esperarAte));
 }

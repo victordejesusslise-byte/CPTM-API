@@ -83,7 +83,6 @@ export class Casca {
   }
 
   protected sair(): void {
-    this.sessao.sair();
-    this.router.navigate(['/login']);
+    this.sessao.encerrar().subscribe({ complete: () => this.router.navigate(['/login']) });
   }
 }

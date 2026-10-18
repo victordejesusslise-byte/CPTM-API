@@ -3387,6 +3387,10 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("data_cadastro");
 
+                    b.Property<DateTime?>("EsperarAte")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("esperar_ate");
+
                     b.Property<int>("IdPessoa")
                         .HasColumnType("int")
                         .HasColumnName("id_pessoa");
@@ -3397,11 +3401,19 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("senha_hash");
 
+                    b.Property<int>("TentativasFalhas")
+                        .HasColumnType("int")
+                        .HasColumnName("tentativas_falhas");
+
                     b.Property<string>("TipoCargo")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)")
                         .HasColumnName("tipo_cargo");
+
+                    b.Property<int>("VersaoSessao")
+                        .HasColumnType("int")
+                        .HasColumnName("versao_sessao");
 
                     b.HasKey("IdUsuario");
 

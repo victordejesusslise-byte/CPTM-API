@@ -18,19 +18,20 @@ public class TokenHelperTestes
     [Fact]
     public async Task Token_valido_leva_o_id_e_o_cargo()
     {
-        var token = TokenHelper.Gerar(new UsuarioDto(7, "Ana", "ana@cptm.local", "Tecnico", true), Opcoes, DateTime.UtcNow);
+        var token = TokenHelper.Gerar(new UsuarioDto(7, "Ana", "ana@cptm.local", "Tecnico", true), 3, Opcoes, DateTime.UtcNow);
 
         var resultado = await new JsonWebTokenHandler().ValidateTokenAsync(token.Token, TokenHelper.Parametros(Opcoes));
 
         Assert.True(resultado.IsValid);
         Assert.Equal("7", resultado.ClaimsIdentity.FindFirst(TokenHelper.ClaimId)!.Value);
+        Assert.Equal("3", resultado.ClaimsIdentity.FindFirst(TokenHelper.ClaimVersaoSessao)!.Value);
         Assert.True(new System.Security.Claims.ClaimsPrincipal(resultado.ClaimsIdentity).IsInRole("Tecnico"));
     }
 
     [Fact]
     public async Task Token_assinado_com_outra_chave_nao_vale()
     {
-        var token = TokenHelper.Gerar(new UsuarioDto(7, "Ana", "ana@cptm.local", "Tecnico", true), Opcoes, DateTime.UtcNow);
+        var token = TokenHelper.Gerar(new UsuarioDto(7, "Ana", "ana@cptm.local", "Tecnico", true), 3, Opcoes, DateTime.UtcNow);
         var outra = new JwtOpcoes { Chave = new string('x', 64), Emissor = Opcoes.Emissor, Publico = Opcoes.Publico };
 
         var resultado = await new JsonWebTokenHandler().ValidateTokenAsync(token.Token, TokenHelper.Parametros(outra));

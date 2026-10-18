@@ -7,6 +7,8 @@ export interface UsuarioDto {
   email: string;
   cargo: Cargo;
   ativo: boolean;
+  /** A conta está esperando por senhas erradas seguidas, até esta hora. */
+  esperarAte?: string | null;
 }
 
 export interface TokenDto {

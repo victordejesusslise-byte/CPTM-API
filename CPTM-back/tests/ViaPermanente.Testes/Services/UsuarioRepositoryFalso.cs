@@ -29,4 +29,19 @@ internal class UsuarioRepositoryFalso : IUsuarioRepository
         Linhas.Add(linha);
         return Task.FromResult(linha);
     }
+
+    private Usuario? U(int id) => Linhas.FirstOrDefault(x => x.Usuario.IdUsuario == id)?.Usuario;
+
+    public Task<(bool Ativo, int VersaoSessao)?> Sessao(int idUsuario)
+        => Task.FromResult(U(idUsuario) is { } u ? (u.Ativo, u.VersaoSessao) : ((bool, int)?)null);
+
+    public Task EncerrarSessoes(int idUsuario) { if (U(idUsuario) is { } u) u.VersaoSessao++; return Task.CompletedTask; }
+
+    public Task DefinirAtivo(int idUsuario, bool ativo) { if (U(idUsuario) is { } u) { u.Ativo = ativo; u.VersaoSessao++; } return Task.CompletedTask; }
+
+    public Task RegistrarTentativas(int idUsuario, int tentativas, DateTime? esperarAte)
+    {
+        if (U(idUsuario) is { } u) { u.TentativasFalhas = tentativas; u.EsperarAte = esperarAte; }
+        return Task.CompletedTask;
+    }
 }

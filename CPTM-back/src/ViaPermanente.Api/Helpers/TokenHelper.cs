@@ -13,8 +13,10 @@ public static class TokenHelper
     public const string ClaimId = "sub";
     public const string ClaimCargo = "role";
     public const string ClaimNome = "name";
+    /// <summary>A versão da sessão do usuário quando o token saiu; se não for mais a atual, o token não vale (sair, desativar).</summary>
+    public const string ClaimVersaoSessao = "sv";
 
-    public static TokenDto Gerar(UsuarioDto usuario, JwtOpcoes opcoes, DateTime agoraUtc)
+    public static TokenDto Gerar(UsuarioDto usuario, int versaoSessao, JwtOpcoes opcoes, DateTime agoraUtc)
     {
         var expiraEm = agoraUtc.AddMinutes(opcoes.MinutosValidade);
         var descritor = new SecurityTokenDescriptor
@@ -29,7 +31,8 @@ public static class TokenHelper
                 new Claim(ClaimId, usuario.Id.ToString()),
                 new Claim(ClaimNome, usuario.Nome),
                 new Claim("email", usuario.Email),
-                new Claim(ClaimCargo, usuario.Cargo)
+                new Claim(ClaimCargo, usuario.Cargo),
+                new Claim(ClaimVersaoSessao, versaoSessao.ToString())
             }),
             SigningCredentials = new SigningCredentials(Chave(opcoes), SecurityAlgorithms.HmacSha256)
         };
@@ -45,6 +48,9 @@ public static class TokenHelper
         RoleClaimType = ClaimCargo,
         ClockSkew = TimeSpan.FromMinutes(1)
     };
+
+    /// <summary>A versão da sessão que veio no token (nula em token antigo, sem ela: não vale).</summary>
+    public static int? VersaoSessao(ClaimsPrincipal usuario) => int.TryParse(usuario.FindFirstValue(ClaimVersaoSessao), out var v) ? v : null;
 
     /// <summary>O id do usuário que está chamando a API.</summary>
     public static int IdUsuario(ClaimsPrincipal usuario) => int.Parse(usuario.FindFirstValue(ClaimId)!);

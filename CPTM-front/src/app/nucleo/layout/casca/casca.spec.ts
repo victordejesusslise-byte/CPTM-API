@@ -1,5 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { ambiente } from '../../../../environments/ambiente';
 import { Router, provideRouter } from '@angular/router';
 import { Sessao } from '../../sessao/sessao';
 import { entrarComo } from '../../../compartilhado/testes/sessao-de-teste';
@@ -9,7 +11,7 @@ describe('Casca', () => {
   const abrir = async (cargo: Parameters<typeof entrarComo>[0]) => {
     localStorage.clear();
     entrarComo(cargo);
-    await TestBed.configureTestingModule({ imports: [Casca], providers: [provideRouter([]), provideHttpClient()] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [Casca], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] }).compileComponents();
     const fixture = TestBed.createComponent(Casca);
     await fixture.whenStable();
     return fixture.nativeElement as HTMLElement;
@@ -68,10 +70,12 @@ describe('Casca', () => {
     expect(document.documentElement.dataset['theme']).toBeUndefined();
   });
 
-  it('sair encerra a sessão e volta ao login', async () => {
+  it('sair encerra a sessão no servidor e volta ao login', async () => {
     const tela = await abrir('Tecnico');
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     tela.querySelector<HTMLButtonElement>('.topo__sair')!.click();
+    // o servidor encerra a sessão em todos os aparelhos (segurança, 2026-10-18)
+    TestBed.inject(HttpTestingController).expectOne(`${ambiente.api}/auth/sair`).flush(null);
     expect(TestBed.inject(Sessao).logado()).toBe(false);
     expect(navegar).toHaveBeenCalledWith(['/login']);
   });

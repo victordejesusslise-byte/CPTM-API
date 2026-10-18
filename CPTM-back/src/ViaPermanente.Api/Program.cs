@@ -133,6 +133,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         o.MapInboundClaims = false;
         o.TokenValidationParameters = TokenHelper.Parametros(jwt);
+        // A cada chamada: conta ativa e sessão atual (sair e desativar derrubam o token na hora).
+        o.Events = Seguranca.EventosDoToken();
     })
     .AddScheme<AuthenticationSchemeOptions, ChaveCarroHandler>(ChaveCarroHandler.Esquema, null);
 // Tudo exige login, a não ser o que tem [AllowAnonymous].
@@ -147,6 +149,8 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .AllowAnyHeader()
     .AllowAnyMethod()));
 
+// No máximo N tentativas de login por minuto por aparelho (Seguranca:TentativasPorMinuto, padrão 10).
+builder.Services.AddLimiteDeLogin(builder.Configuration.GetValue("Seguranca:TentativasPorMinuto", 10));
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ErroHandler>();
 // Enum como texto no JSON: o Angular manda e recebe "Tecnico", não 1.
@@ -172,6 +176,9 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// HTTPS de produção (Seguranca:ExigirHttps: verdadeiro no appsettings, falso no Development e no Docker local).
+app.UseHttpsDeProducao(builder.Configuration.GetValue("Seguranca:ExigirHttps", false));
+
 app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
@@ -180,6 +187,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

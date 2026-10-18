@@ -64,6 +64,18 @@ public class UsuarioService(IUsuarioRepository usuarios)
         return true;
     }
 
+    /// <summary>Desativa ou reativa a conta; desativar derruba na hora as sessões abertas. Ninguém desativa a própria conta. Nulo se não existe.</summary>
+    public async Task<UsuarioDto?> DefinirAtivo(int idUsuario, bool ativo, int idQuemFaz)
+    {
+        if (!ativo && idUsuario == idQuemFaz)
+            throw new RegraDeNegocioException("Você não pode desativar a sua própria conta.");
+        if (await usuarios.BuscarPorId(idUsuario) is null)
+            return null;
+        await usuarios.DefinirAtivo(idUsuario, ativo);
+        return await BuscarPorId(idUsuario);
+    }
+
     internal static UsuarioDto ParaDto(UsuarioComPessoa u)
-        => new(u.Usuario.IdUsuario, u.Pessoa.Nome, u.Pessoa.Email ?? "", u.Usuario.TipoCargo.ToString(), u.Usuario.Ativo);
+        => new(u.Usuario.IdUsuario, u.Pessoa.Nome, u.Pessoa.Email ?? "", u.Usuario.TipoCargo.ToString(), u.Usuario.Ativo,
+            u.Usuario.EsperarAte > DateTime.Now ? u.Usuario.EsperarAte : null);
 }

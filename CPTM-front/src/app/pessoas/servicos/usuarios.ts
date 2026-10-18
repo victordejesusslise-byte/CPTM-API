@@ -16,4 +16,8 @@ export class Usuarios {
   criar(novo: NovoUsuarioDto): Observable<UsuarioDto> {
     return this.http.post<UsuarioDto>(this.url, novo);
   }
+  /** Desativar derruba na hora as sessões abertas da conta. */
+  definirAtivo(id: number, ativo: boolean): Observable<UsuarioDto> {
+    return this.http.put<UsuarioDto>(`${this.url}/${id}/ativo`, { ativo });
+  }
 }

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, finalize, of, tap } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
 import { Cargo, TokenDto, UsuarioDto } from '../../pessoas/entidades/usuario';
 
@@ -26,8 +26,18 @@ export class Sessao {
     return this.http.post<TokenDto>(`${ambiente.api}/auth/login`, { email, senha }).pipe(tap((t) => this.guardar(t)));
   }
 
+  /** Limpa a sessão deste aparelho. */
   sair(): void {
     this.guardar(null);
+  }
+
+  /** Sair de verdade: a API encerra a sessão em todos os aparelhos; mesmo sem rede, este aparelho sai. */
+  encerrar(): Observable<void> {
+    const pedido = this.token() ? this.http.post<void>(`${ambiente.api}/auth/sair`, {}) : of(undefined);
+    return pedido.pipe(
+      catchError(() => of(undefined)),
+      finalize(() => this.sair()),
+    );
   }
 
   temCargo(...cargos: Cargo[]): boolean {
