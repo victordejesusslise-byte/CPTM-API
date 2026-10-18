@@ -32,6 +32,7 @@ export class Painel {
   protected readonly atalhos = computed(() => menuDoCargo(this.usuario()?.cargo).filter((i) => i.rota !== '/painel'));
   protected readonly indicadores = rxResource({ stream: () => this.servico.listar() });
   protected readonly erro = computed(() => (this.indicadores.error() ? mensagemDeErro(this.indicadores.error()) : null));
+  protected readonly erroFluxo = computed(() => (this.fluxo.error() ? mensagemDeErro(this.fluxo.error()) : null));
   /** Os que pedem atenção primeiro: em destaque no "O que fazer hoje" e no alto do Acompanhamento. */
   protected readonly vermelhos = computed(() => (this.indicadores.value() ?? []).filter((i) => i.vermelho));
   protected readonly noVermelho = computed(() => this.vermelhos().length);

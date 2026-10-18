@@ -47,6 +47,7 @@
 } @else if (aba() === 'sequencia') {
 <section aria-labelledby="t-sequencia">
   <h2 id="t-sequencia">O caminho da peça</h2>
+  <app-estado esqueleto="cartoes" [quantidade]="6" [carregando]="fluxo.isLoading()" [erro]="erroFluxo()" [vazio]="fluxo.hasValue() && !fluxo.value().length" textoVazio="Sem etapas para mostrar." />
   <div class="grade">
     @for (e of fluxo.value() ?? []; track e.etapa) {
       <article class="cartao indicador">
