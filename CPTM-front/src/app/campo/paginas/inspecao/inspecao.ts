@@ -1,13 +1,13 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { abrirArquivo, novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
+import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
 import { nomeDaFoto } from '../../../compartilhado/utilitarios/foto';
 import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { AtaqueBiologicoInspecao, EstadoConservacao, MetodoCaptura, RachaduraInspecao } from '../../../compartilhado/entidades/enums';
 import { PecaDto } from '../../../pecas/entidades/peca';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { InspecaoDto, Inspecoes } from '../../servicos/inspecoes';
-import { Laudos } from '../../../laudos/servicos/laudos';
+import { PreviaLaudo } from '../../../laudos/componentes/previa-laudo';
 import { Pecas } from '../../../pecas/servicos/pecas';
 import { Trocas } from '../../servicos/trocas';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
@@ -19,7 +19,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
  */
 @Component({
   selector: 'app-inspecao',
-  imports: [FormsModule, FORMULARIO, LeituraTag, Nota],
+  imports: [FormsModule, FORMULARIO, LeituraTag, Nota, PreviaLaudo],
   templateUrl: './inspecao.html',
 })
 export class Inspecao {
@@ -28,7 +28,8 @@ export class Inspecao {
   private readonly pecas = inject(Pecas);
   private readonly inspecoes = inject(Inspecoes);
   private readonly trocas = inject(Trocas);
-  private readonly laudos = inject(Laudos);
+  /** A inspeção cujo laudo (LI) está aberto na primeira visão, sem baixar. */
+  protected readonly laudoDe = signal<number | null>(null);
   protected readonly metros = metros;
   protected readonly km = km;
   protected readonly dataHora = dataHora;
@@ -119,6 +120,6 @@ export class Inspecao {
   }
 
   protected laudo(i: InspecaoDto): void {
-    this.laudos.pdf('inspecao', i.id).subscribe({ next: (pdf) => abrirArquivo(pdf, `LI-${i.id}.pdf`), error: (e) => this.erro.set(mensagemDeErro(e)) });
+    this.laudoDe.set(this.laudoDe() === i.id ? null : i.id);
   }
 }

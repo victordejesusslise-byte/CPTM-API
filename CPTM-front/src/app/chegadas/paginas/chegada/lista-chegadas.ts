@@ -1,10 +1,9 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { forkJoin, map, of, switchMap } from 'rxjs';
-import { abrirArquivo } from '../../../compartilhado/utilitarios/arquivo';
 import { dataHora, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { ChegadaDto, PedidoDto } from '../../../pedidos/entidades/pedido';
-import { Laudos } from '../../../laudos/servicos/laudos';
+import { PreviaLaudo } from '../../../laudos/componentes/previa-laudo';
 import { Pedidos } from '../../../pedidos/servicos/pedidos';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 
@@ -12,7 +11,7 @@ type Modo = 'entregas' | 'andamento' | 'boletins';
 interface Carga { pedido: PedidoDto; chegada: ChegadaDto; }
 
 const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
-  entregas: { sobre: 'Pátio · 02', titulo: 'Entregas recebidas', nota: 'toque numa carga para abrir o boletim (BR) em PDF' },
+  entregas: { sobre: 'Pátio · 02', titulo: 'Entregas recebidas', nota: 'toque numa carga para ver o boletim (BR)' },
   andamento: { sobre: 'Pátio · 03', titulo: 'Andamento da carga', nota: 'quantas peças de cada feixe já ganharam a tag' },
   boletins: { sobre: 'Madeira · 04', titulo: 'Cargas e boletins', nota: 'o boletim de recebimento de cada carga' },
 };
@@ -20,7 +19,7 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
 /** As cargas que chegaram, de todos os pedidos: entregas (Chegada), andamento (Cadastro) e boletins (Qualidade). */
 @Component({
   selector: 'app-lista-chegadas',
-  imports: [Estado],
+  imports: [Estado, PreviaLaudo],
   template: `
     <p class="sobre">{{ texto().sobre }}</p>
     <h1>{{ texto().titulo }}</h1>
@@ -50,7 +49,7 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
             <thead><tr><th>Chegou em</th><th>Pedido</th><th class="so-computador">Fornecedor</th><th>Armazém</th><th class="num">Peças</th><th class="so-computador">Lote</th><th>Conferência</th></tr></thead>
             <tbody>
               @for (c of cargas.value(); track c.chegada.id) {
-                <tr class="clicavel" tabindex="0" (click)="boletim(c.chegada)" (keydown.enter)="boletim(c.chegada)">
+                <tr class="clicavel" tabindex="0" [class.selecionada]="boletimDe() === c.chegada.id" (click)="boletim(c.chegada)" (keydown.enter)="boletim(c.chegada)">
                   <td>{{ dataHora(c.chegada.dataRecebimento) }}</td><td class="mono">{{ c.pedido.codigo }}</td><td class="so-computador">{{ c.pedido.empresa }}</td>
                   <td>{{ c.chegada.armazem }}</td><td class="num">{{ c.chegada.quantidadeRecebida }}</td><td class="mono so-computador">{{ c.chegada.lote }}</td>
                   <td [class.vermelho]="!c.chegada.confere">{{ c.chegada.confere ? 'confere' : c.chegada.divergencias.join(' ') }}</td>
@@ -59,6 +58,7 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
             </tbody>
           </table>
         </div>
+        @if (boletimDe(); as id) { <app-previa-laudo tipo="recebimento" [id]="id" [podeFechar]="true" (fechar)="boletimDe.set(null)" /> }
       }
     </section>
   `,
@@ -68,7 +68,8 @@ export class ListaChegadas {
   /** vem do data da rota */
   readonly modo = input<Modo>('entregas');
   private readonly pedidos = inject(Pedidos);
-  private readonly laudos = inject(Laudos);
+  /** A carga cujo boletim (BR) está aberto na primeira visão, sem baixar. */
+  protected readonly boletimDe = signal<number | null>(null);
   protected readonly dataHora = dataHora;
   protected readonly metros = metros;
   protected readonly texto = computed(() => TEXTOS[this.modo()]);
@@ -85,6 +86,6 @@ export class ListaChegadas {
   protected readonly erro = computed(() => (this.cargas.error() ? mensagemDeErro(this.cargas.error()) : null));
 
   protected boletim(c: ChegadaDto): void {
-    this.laudos.pdf('recebimento', c.id).subscribe((pdf) => abrirArquivo(pdf, `BR-${c.id}.pdf`));
+    this.boletimDe.set(this.boletimDe() === c.id ? null : c.id);
   }
 }

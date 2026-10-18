@@ -2,12 +2,11 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { abrirArquivo } from '../../compartilhado/utilitarios/arquivo';
 import { data, dataHora, m3, mensagemDeErro, metros } from '../../compartilhado/utilitarios/formato';
 import { ChegadaDto, PedidoDto } from '../entidades/pedido';
 import { Cadastros } from '../../catalogos/servicos/cadastros';
 import { Catalogos } from '../../catalogos/servicos/catalogos';
-import { Laudos } from '../../laudos/servicos/laudos';
+import { PreviaLaudo } from '../../laudos/componentes/previa-laudo';
 import { Pedidos } from '../servicos/pedidos';
 import { FORMULARIO } from '../../compartilhado/ui';
 import { FormItem, ItensPedido, itensValidos, novoItemPedido, paraTabela } from './itens-pedido';
@@ -19,7 +18,7 @@ interface Evento { data: string; titulo: string; texto?: string; motivo?: string
 /** O pedido aberto em Acompanhar pedidos: revisão, correção (até a carga chegar), cancelamento e "O que teve". */
 @Component({
   selector: 'app-pedido-aberto',
-  imports: [FORMULARIO, ItensPedido, TabelaItens],
+  imports: [FORMULARIO, ItensPedido, TabelaItens, PreviaLaudo],
   templateUrl: './pedido-aberto.html',
 })
 export class PedidoAberto {
@@ -28,7 +27,8 @@ export class PedidoAberto {
   readonly mudou = output<void>();
 
   private readonly servico = inject(Pedidos);
-  private readonly laudos = inject(Laudos);
+  /** A carga cujo boletim (BR) está aberto na primeira visão, sem baixar. */
+  protected readonly boletimDe = signal<number | null>(null);
   private readonly cadastros = inject(Cadastros);
   private readonly catalogos = inject(Catalogos);
   private readonly fb = inject(NonNullableFormBuilder);
@@ -142,7 +142,7 @@ export class PedidoAberto {
   }
 
   protected abrirBoletim(c: ChegadaDto): void {
-    this.laudos.pdf('recebimento', c.id).subscribe({ next: (pdf) => abrirArquivo(pdf, `BR-${c.id}.pdf`), error: (e) => this.erro.set(mensagemDeErro(e)) });
+    this.boletimDe.set(this.boletimDe() === c.id ? null : c.id);
   }
 
   protected limpar(): void {

@@ -96,19 +96,20 @@
         }
         @if (chegadas.value()?.length) {
           <div>
-            <p class="lbl">Cargas recebidas · toque para abrir o boletim (BR) em PDF</p>
+            <p class="lbl">Cargas recebidas · toque para ver o boletim (BR)</p>
             <div class="tabela">
               <table class="simples">
                 <thead><tr><th>Chegou em</th><th>Armazém</th><th class="num">Peças</th><th>Lote</th><th>Conferência</th></tr></thead>
                 <tbody>
                   @for (c of chegadas.value(); track c.id) {
-                    <tr class="clicavel" tabindex="0" (click)="abrirBoletim(c)" (keydown.enter)="abrirBoletim(c)">
+                    <tr class="clicavel" tabindex="0" [class.selecionada]="boletimDe() === c.id" (click)="abrirBoletim(c)" (keydown.enter)="abrirBoletim(c)">
                       <td>{{ dataHora(c.dataRecebimento) }}</td><td>{{ c.armazem }}</td><td class="num">{{ c.quantidadeRecebida }}</td>
                       <td class="mono">{{ c.lote }}</td><td [class.vermelho]="!c.confere">{{ c.confere ? 'confere' : c.divergencias.join(' ') }}</td></tr>
                   }
                 </tbody>
               </table>
             </div>
+            @if (boletimDe(); as id) { <app-previa-laudo tipo="recebimento" [id]="id" [podeFechar]="true" (fechar)="boletimDe.set(null)" /> }
           </div>
         }
 

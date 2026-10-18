@@ -14,19 +14,21 @@
       @for (i of feitas(); track i.id) {
         <div class="cartao-alerta" (click)="laudo(i)" tabindex="0" (keydown.enter)="laudo(i)" role="button">
           <span class="topo-alerta"><b>{{ dataHora(i.finalizadoEm) }}</b><span class="pilula" [class.pilula--alerta]="i.resultado === 'Reprovada'">{{ i.resultado }}</span></span>
-          <span class="nota">{{ i.estadoConservacao }} · rachadura {{ i.rachadura.toLowerCase() }} · {{ i.motivosDeReprovacao.join('; ') || 'sem motivo de reprovação' }} · toque para o laudo (LI)</span>
+          <span class="nota">{{ i.estadoConservacao }} · rachadura {{ i.rachadura.toLowerCase() }} · {{ i.motivosDeReprovacao.join('; ') || 'sem motivo de reprovação' }} · toque para ver o laudo (LI)</span>
         </div>
+        @if (laudoDe() === i.id) { <app-previa-laudo tipo="inspecao" [id]="i.id" [podeFechar]="true" (fechar)="laudoDe.set(null)" /> }
       } @empty {
         <p class="nota">Nenhuma inspeção desta peça.</p>
       }
     } @else if (resultado(); as i) {
       <div class="chamada" [class.chamada--neutra]="i.resultado === 'Aprovada'"><b>{{ i.resultado }}</b>@if (i.motivosDeReprovacao.length) { — {{ i.motivosDeReprovacao.join('; ') }} }</div>
       <div class="acoes">
-        <button mat-stroked-button type="button" (click)="laudo(i)">Laudo da inspeção (LI)</button>
+        <button mat-stroked-button type="button" (click)="laudo(i)">Ver o laudo da inspeção (LI)</button>
         @if (i.resultado === 'Reprovada' && !trocaPedida()) {
           <button mat-flat-button type="button" (click)="pedirTroca(p, i)" [disabled]="enviando()">Pedir a troca</button>
         }
       </div>
+      @if (laudoDe() === i.id) { <app-previa-laudo tipo="inspecao" [id]="i.id" [podeFechar]="true" (fechar)="laudoDe.set(null)" /> }
     } @else {
       <div class="campos">
         <mat-form-field appearance="outline"><mat-label>Estado de conservação</mat-label>

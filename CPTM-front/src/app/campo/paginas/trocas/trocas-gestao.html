@@ -45,17 +45,7 @@
           }
         </div>
       </header>
-      @if (documentoLaudo.value(); as d) {
-        <div class="laudo-previa__folha" role="button" tabindex="0" aria-label="Abrir o laudo" (click)="laudoAberto.abrir()" (keydown.enter)="laudoAberto.abrir()">
-          <app-folha-laudo [documento]="d" />
-        </div>
-        <div class="acoes"><button mat-flat-button type="button" (click)="laudoAberto.abrir()">Abrir o laudo</button></div>
-        <app-laudo-aberto #laudoAberto [tipo]="tipoLaudo()" [id]="t.id" [documento]="d" />
-      } @else if (documentoLaudo.isLoading()) {
-        <p class="nota">Carregando o laudo…</p>
-      } @else if (erroLaudo()) {
-        <p class="aviso aviso--erro">{{ erroLaudo() }}</p>
-      }
+      <app-previa-laudo [tipo]="tipoLaudo()" [id]="t.id" />
     </div>
   </section>
 }
