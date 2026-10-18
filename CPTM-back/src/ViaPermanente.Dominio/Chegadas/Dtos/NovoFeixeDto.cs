@@ -15,4 +15,6 @@ public class NovoFeixeDto
     public int? IdEmpresaTratamento { get; init; }
     public int? IdEmpresaInspecao { get; init; }
     public short? AnoInspecao { get; init; }
+    /// <summary>A placa lida pela foto (Placa do feixe) de onde o feixe veio: ao registrar a chegada, a placa fica ligada ao feixe.</summary>
+    public int? IdLeituraOcr { get; init; }
 }

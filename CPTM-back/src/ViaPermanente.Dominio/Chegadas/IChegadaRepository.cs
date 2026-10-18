@@ -13,5 +13,6 @@ public interface IChegadaRepository
     Task<IReadOnlyDictionary<int, int>> PecasCadastradas(IReadOnlyCollection<int> idsFeixe);
     Task<Lote?> LoteDoPedido(int idPedido);
     /// <summary>Grava a chegada, o lote (só na primeira) e os feixes juntos.</summary>
-    Task Registrar(Recebimento recebimento, Lote? loteNovo, IReadOnlyList<Feixe> feixes);
+    /// <summary>Grava a chegada e os feixes; placas[i] é a leitura da placa do feixe i (nula se não veio de placa), que fica ligada a ele.</summary>
+    Task Registrar(Recebimento recebimento, Lote? loteNovo, IReadOnlyList<Feixe> feixes, IReadOnlyList<int?> placas);
 }

@@ -24,6 +24,10 @@ public class OcrHandler(OcrPlacaService ocr) : ControllerBase
         return StatusCode(StatusCodes.Status201Created, await ocr.Ler(memoria.ToArray(), Path.GetExtension(foto.FileName), idPedido, TokenHelper.IdUsuario(User), idCliente));
     }
 
+    /// <summary>As placas confirmadas do pedido que ainda não viraram feixe (a chegada do pedido mostra cada uma num feixe).</summary>
+    [HttpGet("placas")]
+    public Task<IReadOnlyList<LeituraOcrDto>> DoPedido([FromQuery] int idPedido) => ocr.PlacasDoPedido(idPedido);
+
     [HttpGet("placas/{id:int}")]
     public async Task<ActionResult<LeituraOcrDto>> Buscar(int id)
     {

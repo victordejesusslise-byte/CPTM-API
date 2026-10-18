@@ -21,6 +21,7 @@ internal static class ChegadaConfiguracao
 
         mb.Entity<LeituraOcr>(e => e.HasKey(x => x.IdLeituraOcr));
         mb.Fk<LeituraOcr, ModeloOcr>(x => x.IdModelo);
+        mb.Fk<LeituraOcr, Pedido>(x => x.IdPedido);
         mb.Fk<LeituraOcr, Recebimento>(x => x.IdRecebimento);
         mb.Fk<LeituraOcr, Feixe>(x => x.IdFeixe);
         mb.Fk<LeituraOcr, Usuario>(x => x.IdUsuario);

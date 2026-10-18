@@ -101,4 +101,34 @@ public class OcrNoBancoTestes : IAsyncLifetime
         Assert.Equal("UFV", campos["Inspetora"].ValorLido);
         Assert.Equal("2025", campos["Ano"].ValorLido);
     }
+
+    /// <summary>
+    /// A placa é do pedido (Victor, 2026-10-17): lida e confirmada em Placa do feixe, ela aparece na chegada daquele pedido; registrada a
+    /// chegada com ela, fica ligada ao feixe e sai da lista. Sem pedido, não lê.
+    /// </summary>
+    [Fact]
+    public async Task A_placa_confirmada_vai_para_a_chegada_do_pedido_e_fica_no_feixe()
+    {
+        var (servico, idPedido, idUsuario) = await Preparar();
+        var foto = await Foto("placa-exemplo.png");
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => servico.Ler(foto, ".png", null, idUsuario));
+        var lida = await servico.Ler(foto, ".png", idPedido, idUsuario);
+        Assert.Empty(await servico.PlacasDoPedido(idPedido)); // só depois de confirmada
+        await servico.Confirmar(lida.Id, new ConfirmarPlacaDto());
+        Assert.Equal([lida.Id], (await servico.PlacasDoPedido(idPedido)).Select(p => p.Id));
+
+        var chegadas = new ChegadaService(new ChegadaRepository(db), new PedidoRepository(db), new NotaFiscalRepository(db), new CatalogoRepository(db), new LeituraOcrRepository(db));
+        NovaChegadaDto Chegada(string numero) => new()
+        {
+            IdArmazem = 3, QuantidadeRecebida = 14,
+            Feixes = [new() { NumeroFeixe = numero, Quantidade = 14, IdEspecie = 1, IdTamanho = 1, Classe = 1, Tratamento = "CCA", IdLeituraOcr = lida.Id }]
+        };
+        var chegada = (await chegadas.Registrar(idPedido, Chegada("01"), idUsuario))!;
+
+        Assert.Empty(await servico.PlacasDoPedido(idPedido));
+        var leitura = (await new LeituraOcrRepository(db).Buscar(lida.Id))!;
+        Assert.Equal(chegada.Id, leitura.IdRecebimento);
+        Assert.Equal(chegada.Feixes.Single().Id, leitura.IdFeixe);
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => chegadas.Registrar(idPedido, Chegada("02"), idUsuario)); // a placa já está num feixe
+    }
 }

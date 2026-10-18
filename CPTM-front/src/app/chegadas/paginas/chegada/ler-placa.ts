@@ -20,7 +20,7 @@ export interface PlacaConfirmada {
 
 /**
  * Ler a placa do feixe pela foto: o servidor lê (OCR), o operador confere e corrige cada campo e confirma.
- * Usado na tela Placa do feixe e dentro de cada feixe da chegada, que preenche o feixe com o que foi confirmado.
+ * Usado na tela Placa do feixe; a placa confirmada aparece depois no feixe, em Registrar chegada do pedido.
  */
 @Component({
   selector: 'app-ler-placa',

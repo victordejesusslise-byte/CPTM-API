@@ -52,6 +52,11 @@
       <mat-form-field appearance="outline"><mat-label>Observação</mat-label><input matInput formControlName="observacao" /></mat-form-field>
 
       <h2>Feixes</h2>
+      @if (placas().size) {
+        <p class="nota">{{ placas().size === 1 ? 'A placa lida' : 'As ' + placas().size + ' placas lidas' }} em Placa do feixe para este pedido já {{ placas().size === 1 ? 'está' : 'estão' }} aqui. Digite o número de cada feixe e confira.</p>
+      } @else if (placasDoPedido.hasValue()) {
+        <p class="nota">Nenhuma placa lida para este pedido. Leia as placas em <a routerLink="/chegadas/placa" [queryParams]="{ pedido: idPedido() }">Placa do feixe</a>, ou preencha os feixes aqui.</p>
+      }
       <div formArrayName="feixes">
         @for (f of form.controls.feixes.controls; track f; let i = $index) {
           <div class="cartao item" [formGroupName]="i">
@@ -81,7 +86,7 @@
             </div>
             @if (placas().get(f); as pl) {
               <div class="placa-lida">
-                <img [src]="pl.foto" alt="Foto da placa do feixe" />
+                @if (fotos().get(pl.idLeitura); as foto) { <img [src]="foto" alt="Foto da placa do feixe" /> } @else { <div class="sem-foto">foto da placa</div> }
                 <div>
                   <h3>Placa do feixe</h3>
                   <dl>
@@ -90,11 +95,8 @@
                 </div>
               </div>
             }
-            @if (placaAberta() === f) {
-              <app-ler-placa [idPedido]="idPedido()" (confirmada)="placaConfirmada(f, $event)" />
-              <div class="acoes"><button mat-button type="button" (click)="placaAberta.set(null)">Fechar a leitura</button></div>
-            } @else {
-              <div class="acoes"><button mat-stroked-button type="button" (click)="placaAberta.set(f)">{{ placas().has(f) ? 'Ler a placa de novo' : 'Ler a placa pela foto' }}</button></div>
+            @if (form.controls.feixes.length > 1) {
+              <div class="acoes"><button mat-button type="button" (click)="removerFeixe(i)">Tirar este feixe</button></div>
             }
           </div>
         }

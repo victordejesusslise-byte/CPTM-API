@@ -10,6 +10,8 @@ public class LeituraOcr : IRegistroDeCampo
     public string? TextoLido { get; set; }
     public decimal? ConfiancaMedia { get; set; }
     public int IdModelo { get; set; }
+    /// <summary>O pedido da placa (escolhido na tela Placa do feixe): a chegada desse pedido mostra a placa no feixe.</summary>
+    public int? IdPedido { get; set; }
     public int? IdRecebimento { get; set; }
     public int? IdFeixe { get; set; }
     public int IdUsuario { get; set; }

@@ -1,10 +1,12 @@
 import { EspecieDto, TamanhoDto } from '../../../catalogos/entidades/catalogo';
-import { NOMES_PLACA, PlacaConfirmada } from './ler-placa';
+import { LeituraOcrDto } from '../../servicos/ocr';
+import { NOMES_PLACA } from './ler-placa';
 
-/** O que a chegada mostra de uma placa confirmada: os 9 campos, na ordem da placa, e a foto tirada. */
+/** O que a chegada mostra de uma placa confirmada: os 9 campos na ordem da placa e os valores (campo → valor) que preenchem o feixe. */
 export interface PlacaNoFeixe {
+  idLeitura: number;
   campos: { nome: string; valor: string; naoBate: boolean }[];
-  foto: string;
+  valores: Record<string, string>;
 }
 
 /** O que a placa preenche no feixe (nulo: a placa não disse ou não deu para reconhecer; o operador escolhe). */
@@ -20,14 +22,18 @@ const ORDEM = ['Fornecedor', 'Ata', 'EspecieClasse', 'Comprimento', 'Tratamento'
 /** Sem acento, sem espaço e sem pontuação, em minúsculas (como a Chave do back): "Ocotea neesiana" vira "ocoteaneesiana". */
 const chave = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-export function placaNoFeixe(p: PlacaConfirmada): PlacaNoFeixe {
+/** A placa confirmada: vale o valor que o operador confirmou; sem ele, o que o OCR leu. */
+export function placaNoFeixe(leitura: LeituraOcrDto): PlacaNoFeixe {
+  const valores: Record<string, string> = {};
+  for (const c of leitura.campos) valores[c.campo] = c.valorConfirmado ?? c.valorLido ?? '';
   return {
+    idLeitura: leitura.id,
     campos: ORDEM.map((campo) => ({
       nome: NOMES_PLACA[campo],
-      valor: p.valores[campo] ?? '',
-      naoBate: p.leitura.campos.some((c) => c.campo === campo && c.conferePedido === false),
+      valor: valores[campo] ?? '',
+      naoBate: leitura.campos.some((c) => c.campo === campo && c.conferePedido === false),
     })),
-    foto: URL.createObjectURL(p.foto),
+    valores,
   };
 }
 

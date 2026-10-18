@@ -30,7 +30,7 @@ export interface ChegadaDto {
   idLote: number; lote: string; feixes: FeixeDto[]; confere: boolean; divergencias: string[]; avisos: string[];
 }
 /** classe: sem ela, vale a do item do pedido; obrigatória quando o pedido tem 1ª e 2ª para o mesmo feixe. */
-export interface NovoFeixeDto { numeroFeixe: string; quantidade: number; idEspecie: number; idTamanho: number; classe?: number | null; tratamento?: string | null; idEmpresaTratamento?: number | null; idEmpresaInspecao?: number | null; anoInspecao?: number | null; }
+export interface NovoFeixeDto { numeroFeixe: string; quantidade: number; idEspecie: number; idTamanho: number; classe?: number | null; tratamento?: string | null; idEmpresaTratamento?: number | null; idEmpresaInspecao?: number | null; anoInspecao?: number | null; idLeituraOcr?: number | null; }
 export interface NovaChegadaDto {
   idNota?: number | null; idArmazem: number; documentoOrigemTipo?: string | null; documentoOrigemNumero?: string | null;
   dataRecebimento?: string | null; quantidadeRecebida: number; observacao?: string | null; feixes: NovoFeixeDto[];

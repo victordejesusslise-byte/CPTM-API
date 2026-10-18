@@ -1893,6 +1893,10 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("int")
                         .HasColumnName("id_modelo");
 
+                    b.Property<int?>("IdPedido")
+                        .HasColumnType("int")
+                        .HasColumnName("id_pedido");
+
                     b.Property<int?>("IdRecebimento")
                         .HasColumnType("int")
                         .HasColumnName("id_recebimento");
@@ -1929,6 +1933,8 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasIndex("IdFeixe");
 
                     b.HasIndex("IdModelo");
+
+                    b.HasIndex("IdPedido");
 
                     b.HasIndex("IdRecebimento");
 
@@ -4056,6 +4062,11 @@ namespace ViaPermanente.Dados.Migrations
                         .HasForeignKey("IdModelo")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("ViaPermanente.Dominio.Pedidos.Models.Pedido", null)
+                        .WithMany()
+                        .HasForeignKey("IdPedido")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ViaPermanente.Dominio.Pedidos.Models.Recebimento", null)
                         .WithMany()

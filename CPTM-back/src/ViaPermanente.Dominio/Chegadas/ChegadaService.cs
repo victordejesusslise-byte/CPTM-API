@@ -13,7 +13,8 @@ namespace ViaPermanente.Dominio.Chegadas;
 /// Etapa 02: a carga chega num armazém, com a nota, o documento de origem e os feixes (dados da placa).
 /// A primeira chegada cria o lote (O lote nasce da chegada) e trava o pedido. A conferência é recalculada a cada consulta.
 /// </summary>
-public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedidos, INotaFiscalRepository notas, ICatalogoRepository catalogo)
+public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedidos, INotaFiscalRepository notas, ICatalogoRepository catalogo,
+    ILeituraOcrRepository leituras)
 {
     /// <summary>Devolve nulo se o pedido não existe.</summary>
     public async Task<ChegadaDto?> Registrar(int idPedido, NovaChegadaDto nova, int idUsuario)
@@ -37,6 +38,9 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
         var numerosJaRegistrados = (await chegadas.Feixes((await chegadas.Listar(idPedido)).Select(r => r.IdRecebimento).ToList()))
             .Select(f => f.NumeroFeixe).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var itensDoPedido = await pedidos.Itens([idPedido]);
+        // A placa do feixe tem de ser deste pedido, confirmada e ainda sem feixe; cada placa vira um feixe só.
+        var placasLivres = (await leituras.PlacasSemFeixe(idPedido)).Select(l => l.IdLeituraOcr).ToHashSet();
+        var placasUsadas = new HashSet<int>();
         var classes = new Dictionary<NovoFeixeDto, byte>();
         foreach (var feixe in nova.Feixes)
         {
@@ -51,6 +55,8 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
                 throw new RegraDeNegocioException($"Feixe {numero}: espécie não encontrada.");
             if (!tamanhos.ContainsKey(feixe.IdTamanho))
                 throw new RegraDeNegocioException($"Feixe {numero}: tamanho de dormente não encontrado.");
+            if (feixe.IdLeituraOcr is int placa && (!placasLivres.Contains(placa) || !placasUsadas.Add(placa)))
+                throw new RegraDeNegocioException($"Feixe {numero}: a placa lida não é deste pedido, não foi confirmada ou já está em outro feixe.");
             classes[feixe] = ClasseDoFeixe(feixe, itensDoPedido, numero);
             await ConferirEmpresa(feixe.IdEmpresaTratamento, PapelEmpresa.Tratadora, numero);
             await ConferirEmpresa(feixe.IdEmpresaInspecao, PapelEmpresa.Inspetora, numero);
@@ -72,7 +78,7 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
             NumeroFeixe = f.NumeroFeixe.Trim(), Quantidade = f.Quantidade, IdEspecie = f.IdEspecie, IdTamanho = f.IdTamanho, Classe = classes[f],
             Tratamento = Limpo(f.Tratamento), IdEmpresaTratamento = f.IdEmpresaTratamento, IdEmpresaInspecao = f.IdEmpresaInspecao,
             AnoInspecao = f.AnoInspecao
-        }).ToList());
+        }).ToList(), nova.Feixes.Select(f => f.IdLeituraOcr).ToList());
 
         return (await Listar(idPedido))!.First(c => c.Id == recebimento.IdRecebimento);
     }

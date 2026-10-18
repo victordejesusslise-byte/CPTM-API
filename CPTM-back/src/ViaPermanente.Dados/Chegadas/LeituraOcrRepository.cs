@@ -23,6 +23,12 @@ public class LeituraOcrRepository(ViaPermanenteContext db) : ILeituraOcrReposito
 
     public async Task<IReadOnlyList<OcrCampo>> Campos(int idLeitura) => await db.Set<OcrCampo>().AsNoTracking().Where(c => c.IdLeituraOcr == idLeitura).ToListAsync();
 
+    public async Task<IReadOnlyList<LeituraOcr>> PlacasSemFeixe(int idPedido)
+        => await db.Set<LeituraOcr>().AsNoTracking()
+            .Where(l => l.IdPedido == idPedido && l.IdFeixe == null
+                && db.Set<OcrCampo>().Any(c => c.IdLeituraOcr == l.IdLeituraOcr && c.ValorConfirmado != null))
+            .OrderBy(l => l.Data).ToListAsync();
+
     public async Task Confirmar(int idLeitura, IReadOnlyList<(int IdCampo, string Valor, bool Corrigido)> confirmacoes, int? idRecebimento, int? idFeixe)
     {
         await using var transacao = await db.Database.BeginTransactionAsync();

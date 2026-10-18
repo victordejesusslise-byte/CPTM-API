@@ -36,7 +36,7 @@ internal static class BancoDeTeste
     public static AlertaService Alertas(ViaPermanenteContext db) => new(new AlertaRepository(db), new PecaRepository(db), new LeituraService(new PecaRepository(db)), Pecas(db));
 
     public static LaudoService Laudos(ViaPermanenteContext db, ViaPermanente.Dominio.Laudos.IDocumentoPdfRepository pdf) => new(pdf, new PecaRepository(db), new HistoricoRepository(db),
-        new UsuarioRepository(db), new TrocaRepository(db), new ChegadaService(new ChegadaRepository(db), new PedidoRepository(db), new NotaFiscalRepository(db), new CatalogoRepository(db)),
+        new UsuarioRepository(db), new TrocaRepository(db), new ChegadaService(new ChegadaRepository(db), new PedidoRepository(db), new NotaFiscalRepository(db), new CatalogoRepository(db), new LeituraOcrRepository(db)),
         Pecas(db), Inspecoes(db), Alertas(db), Trocas(db));
 
     public static async Task Recriar(ViaPermanenteContext db)

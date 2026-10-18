@@ -58,7 +58,7 @@ public class DaChegadaAoArmazemNoBancoTestes : IAsyncLifetime
 
     public Task DisposeAsync() => BancoDeTeste.Apagar(db);
 
-    private ChegadaService Chegadas() => new(new ChegadaRepository(db), new PedidoRepository(db), new NotaFiscalRepository(db), new CatalogoRepository(db));
+    private ChegadaService Chegadas() => new(new ChegadaRepository(db), new PedidoRepository(db), new NotaFiscalRepository(db), new CatalogoRepository(db), new LeituraOcrRepository(db));
     private PecaService Pecas() => new(new PecaRepository(db), new CatalogoRepository(db));
     private QualidadeService Qualidade() => new(new PecaRepository(db), new LeituraService(new PecaRepository(db)), Pecas());
     private ArmazemService Armazem() => new(new PecaRepository(db), new CatalogoRepository(db), new LeituraService(new PecaRepository(db)), Pecas(), new ArmazemRepository(db));

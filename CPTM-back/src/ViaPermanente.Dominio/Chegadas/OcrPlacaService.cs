@@ -22,8 +22,11 @@ public class OcrPlacaService(IOcrRepository ocr, IFotoRepository fotos, ILeitura
     {
         if (foto.Length == 0)
             throw new RegraDeNegocioException("Envie a foto da placa.");
+        // A placa é sempre de um pedido (Victor, 2026-10-17): é por ele que ela aparece na chegada.
+        if (idPedido is not int id)
+            throw new RegraDeNegocioException("Escolha o pedido da placa.");
         var modelo = (await leituras.Modelos()).FirstOrDefault(m => m.Ativo) ?? throw new RegraDeNegocioException("Não há modelo de OCR ativo.");
-        var pedido = idPedido is int id ? await Pedido(id) ?? throw new RegraDeNegocioException("Pedido não encontrado.") : null;
+        var pedido = await Pedido(id) ?? throw new RegraDeNegocioException("Pedido não encontrado.");
 
         IReadOnlyList<ResultadoOcr> resultados;
         try { resultados = ocr.Ler(foto, modelo.ModeloBase); }
@@ -56,7 +59,7 @@ public class OcrPlacaService(IOcrRepository ocr, IFotoRepository fotos, ILeitura
         {
             Origem = OrigemLeituraOcr.PlacaFeixe, FotoArquivo = fotos.Salvar(foto, "ocr", extensao), TextoLido = melhor.Texto.Trim(),
             ConfiancaMedia = Math.Round(escolhidos.Count > 0 ? escolhidos.Average(c => c.Lido.Confianca) : melhor.ConfiancaMedia, 2),
-            IdModelo = modelo.IdModelo, IdUsuario = idUsuario, Data = agora, IdCliente = idCliente, RegistradoEm = registradoEm ?? agora, RecebidoEm = agora
+            IdModelo = modelo.IdModelo, IdPedido = id, IdUsuario = idUsuario, Data = agora, IdCliente = idCliente, RegistradoEm = registradoEm ?? agora, RecebidoEm = agora
         };
         var campos = escolhidos.Select(c => new OcrCampo
         {
@@ -99,6 +102,15 @@ public class OcrPlacaService(IOcrRepository ocr, IFotoRepository fotos, ILeitura
             campos.Any(c => c.ValorConfirmado is not null),
             campos.OrderBy(c => c.Campo).Select(c => new CampoOcrDto(c.IdCampo, c.Campo.ToString(), c.ValorLido, c.Confianca, c.ConferePedido,
                 c.Confianca >= minimo && c.ConferePedido == true, c.ValorConfirmado, c.Corrigido, c.CaixaX, c.CaixaY, c.CaixaLargura, c.CaixaAltura)).ToList());
+    }
+
+    /// <summary>As placas confirmadas do pedido que ainda não viraram feixe: a chegada do pedido já vem com elas.</summary>
+    public async Task<IReadOnlyList<LeituraOcrDto>> PlacasDoPedido(int idPedido)
+    {
+        var lista = new List<LeituraOcrDto>();
+        foreach (var l in await leituras.PlacasSemFeixe(idPedido))
+            if (await BuscarPorId(l.IdLeituraOcr) is { } dto) lista.Add(dto);
+        return lista;
     }
 
     public async Task<IReadOnlyList<ModeloOcrDto>> Modelos()

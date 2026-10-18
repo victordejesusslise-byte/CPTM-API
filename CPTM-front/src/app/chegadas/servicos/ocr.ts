@@ -19,6 +19,10 @@ export class Ocr {
     corpo.append('idCliente', crypto.randomUUID());
     return this.http.post<LeituraOcrDto>(this.url, corpo);
   }
+  /** As placas confirmadas do pedido que ainda não viraram feixe (a chegada do pedido já vem com elas). */
+  doPedido(idPedido: number): Observable<LeituraOcrDto[]> {
+    return this.http.get<LeituraOcrDto[]>(this.url, { params: { idPedido } });
+  }
   confirmar(id: number, campos: { campo: string; valor: string }[]): Observable<LeituraOcrDto> {
     return this.http.post<LeituraOcrDto>(`${this.url}/${id}/confirmacao`, { campos });
   }

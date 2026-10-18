@@ -23,7 +23,7 @@ public class ChegadaRepository(ViaPermanenteContext db) : IChegadaRepository
     public Task<Lote?> LoteDoPedido(int idPedido)
         => db.Set<Lote>().AsNoTracking().OrderBy(l => l.IdLote).FirstOrDefaultAsync(l => l.IdPedido == idPedido);
 
-    public async Task Registrar(Recebimento recebimento, Lote? loteNovo, IReadOnlyList<Feixe> feixes)
+    public async Task Registrar(Recebimento recebimento, Lote? loteNovo, IReadOnlyList<Feixe> feixes, IReadOnlyList<int?> placas)
     {
         await using var transacao = await db.Database.BeginTransactionAsync();
         if (loteNovo is not null)
@@ -34,6 +34,13 @@ public class ChegadaRepository(ViaPermanenteContext db) : IChegadaRepository
             feixe.IdRecebimento = recebimento.IdRecebimento;
         db.AddRange(feixes);
         await db.SaveChangesAsync();
+        for (var i = 0; i < feixes.Count; i++)
+        {
+            if (placas.ElementAtOrDefault(i) is not int idLeitura) continue;
+            var (idRecebimento, idFeixe) = (recebimento.IdRecebimento, feixes[i].IdFeixe);
+            await db.Set<LeituraOcr>().Where(l => l.IdLeituraOcr == idLeitura)
+                .ExecuteUpdateAsync(s => s.SetProperty(l => l.IdRecebimento, idRecebimento).SetProperty(l => l.IdFeixe, idFeixe));
+        }
         await transacao.CommitAsync();
     }
 }

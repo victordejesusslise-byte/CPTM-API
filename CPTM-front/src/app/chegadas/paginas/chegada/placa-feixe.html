@@ -4,11 +4,21 @@
 <section class="cartao pilha">
   <header><h2>Ler a placa</h2><span class="nota">o servidor lê a foto; você confere</span></header>
   <mat-form-field appearance="outline">
-    <mat-label>Pedido (para conferir a placa)</mat-label>
-    <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value)">
-      <mat-option [value]="null">Sem pedido</mat-option>
+    <mat-label>Pedido da placa</mat-label>
+    <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value)" required>
       @for (p of abertos(); track p.id) { <mat-option [value]="p.id">{{ p.codigo }} · {{ p.empresa }}</mat-option> }
     </mat-select>
+    <mat-hint>A placa confirmada já aparece no feixe, em Registrar chegada deste pedido.</mat-hint>
   </mat-form-field>
-  <app-ler-placa [idPedido]="idPedido()" />
+  @if (idPedido(); as id) {
+    <app-ler-placa [idPedido]="id" (confirmada)="confirmadas.set(confirmadas() + 1)" />
+    @if (confirmadas()) {
+      <p class="aviso aviso--ok">
+        {{ confirmadas() === 1 ? '1 placa confirmada' : confirmadas() + ' placas confirmadas' }} para este pedido. Para a próxima, tire outra foto e leia.
+      </p>
+      <div class="acoes"><a mat-flat-button routerLink="/chegadas" [queryParams]="{ pedido: id }">Registrar a chegada deste pedido</a></div>
+    }
+  } @else {
+    <p class="nota">Escolha o pedido para ler a placa.</p>
+  }
 </section>
