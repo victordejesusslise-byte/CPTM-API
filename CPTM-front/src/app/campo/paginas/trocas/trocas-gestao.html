@@ -18,8 +18,8 @@
     @if (t.status === 'Pedida' && ehSupervisor()) {
       <mat-form-field appearance="outline"><mat-label>Motivo (obrigatório para reprovar)</mat-label><input matInput [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" /></mat-form-field>
       <div class="acoes">
-        <button mat-flat-button type="button" (click)="decidir(t, true)" [disabled]="enviando()">Aprovar a troca</button>
-        <button mat-stroked-button type="button" (click)="decidir(t, false)" [disabled]="enviando()">Reprovar</button>
+        <button mat-flat-button type="button" (click)="decidir(t, true)" [disabled]="enviando()" [appCarregando]="enviando()">Aprovar a troca</button>
+        <button mat-stroked-button type="button" (click)="decidir(t, false)" [disabled]="enviando()" [appCarregando]="enviando()">Reprovar</button>
       </div>
     }
 
@@ -28,8 +28,8 @@
       @if (t.status === 'Recusada' && !r.decisao && ehTecnico()) {
         <mat-form-field appearance="outline"><mat-label>Resposta à via (opcional)</mat-label><input matInput [ngModel]="resposta()" (ngModelChange)="resposta.set($event)" /></mat-form-field>
         <div class="acoes">
-          <button mat-flat-button type="button" (click)="decidirRecusa(t, 'Manter')" [disabled]="enviando()">Manter a troca</button>
-          <button mat-stroked-button type="button" (click)="decidirRecusa(t, 'Aceitar')" [disabled]="enviando()">Aceitar a recusa</button>
+          <button mat-flat-button type="button" (click)="decidirRecusa(t, 'Manter')" [disabled]="enviando()" [appCarregando]="enviando()">Manter a troca</button>
+          <button mat-stroked-button type="button" (click)="decidirRecusa(t, 'Aceitar')" [disabled]="enviando()" [appCarregando]="enviando()">Aceitar a recusa</button>
         </div>
       }
     }

@@ -28,7 +28,7 @@
         </div>
         @if (escolhida(); as c) {
           <app-leitura-tag [rotulo]="'Leia a tag da peça ' + c.peca.codigo" [(tag)]="tag" [(metodo)]="metodo" (lida)="separar(t)" />
-          <div class="acoes"><button mat-flat-button type="button" (click)="separar(t)" [disabled]="enviando()">Separar esta peça</button></div>
+          <div class="acoes"><button mat-flat-button type="button" (click)="separar(t)" [disabled]="enviando()" [appCarregando]="enviando()">Separar esta peça</button></div>
         }
       } @else if (compativeis.hasValue()) {
         <p class="aviso aviso--erro">Não há peça compatível no armazém. A troca fica esperando peça.</p>

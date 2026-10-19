@@ -35,7 +35,7 @@ export const CARGOS: Cargo[] = ['Supervisor', 'Tecnico', 'Especialista', 'Operad
       </div>
       @if (feito()) { <p class="aviso aviso--ok" role="status">{{ feito() }}</p> }
       @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
-      <div class="acoes"><button mat-flat-button type="submit" [disabled]="enviando()">Cadastrar usuário</button></div>
+      <div class="acoes"><button mat-flat-button type="submit" [disabled]="enviando()" [appCarregando]="enviando()">Cadastrar usuário</button></div>
     </form>
     <p class="nota">Cadastrada, a pessoa aparece em <a routerLink="/usuarios">Usuários cadastrados</a>.</p>
   `,

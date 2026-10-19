@@ -3,7 +3,7 @@
 
 <div class="acoes">
   <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolher($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto da placa' }}</label>
-  <button mat-flat-button type="button" (click)="ler()" [disabled]="enviando()">{{ enviando() ? 'Lendo…' : 'Ler a placa' }}</button>
+  <button mat-flat-button type="button" (click)="ler()" [disabled]="enviando()" [appCarregando]="enviando()">{{ enviando() ? 'Lendo…' : 'Ler a placa' }}</button>
 </div>
 
 @if (leitura(); as l) {
@@ -21,7 +21,7 @@
       }</tbody>
     </table></div>
     @if (!l.confirmada) {
-      <div class="acoes"><button mat-flat-button type="button" (click)="confirmar(l)" [disabled]="enviando()">Confirmar a placa</button></div>
+      <div class="acoes"><button mat-flat-button type="button" (click)="confirmar(l)" [disabled]="enviando()" [appCarregando]="enviando()">Confirmar a placa</button></div>
     }
   }
 }

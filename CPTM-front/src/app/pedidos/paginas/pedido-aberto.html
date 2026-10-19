@@ -59,7 +59,7 @@
         </mat-form-field>
         <div class="acoes">
           <button mat-stroked-button type="button" (click)="modo.set('ver'); limpar()">Não cancelar</button>
-          <button mat-flat-button class="perigo" type="button" (click)="cancelar()" [disabled]="enviando()">Cancelar o pedido</button>
+          <button mat-flat-button class="perigo" type="button" (click)="cancelar()" [disabled]="enviando()" [appCarregando]="enviando()">Cancelar o pedido</button>
         </div>
       }
       @default {

@@ -5,6 +5,10 @@
 
 @switch (aba()) {
   @case ('estoque') {
+  @if (armazens.isLoading()) {
+    <app-esqueleto tipo="formulario" [quantidade]="2" rotulo="Carregando o estoque…" />
+    <app-esqueleto tipo="tabela" [quantidade]="5" [comMarca]="false" />
+  } @else {
     <div class="campos aba">
       <mat-form-field appearance="outline">
         <mat-label>Armazém</mat-label>
@@ -34,6 +38,7 @@
       <app-tabela [colunas]="colunasEstoque" [linhas]="estoque.value() ?? []" />
     }
   }
+  }
 
   @case ('guardar') {
   @if (armazens.isLoading()) {
@@ -58,7 +63,7 @@
             </mat-select>
           </mat-form-field>
           <div class="acoes">
-            <button mat-flat-button type="button" (click)="guardar()" [disabled]="enviando()">{{ p.entradaArmazemEm && p.idPilha ? 'Trocar de pilha' : 'Guardar na pilha' }}</button>
+            <button mat-flat-button type="button" (click)="guardar()" [disabled]="enviando()" [appCarregando]="enviando()">{{ p.entradaArmazemEm && p.idPilha ? 'Trocar de pilha' : 'Guardar na pilha' }}</button>
           </div>
         </div>
       }
@@ -86,6 +91,9 @@
   }
 
   @case ('conferencia') {
+  @if (armazens.isLoading()) {
+    <app-esqueleto tipo="formulario" [quantidade]="2" rotulo="Carregando a conferência…" />
+  } @else {
     <div class="aba">
       @if (conferencia(); as c) {
         <div class="cartao">
@@ -104,8 +112,8 @@
               <textarea matInput rows="5" class="mono" [ngModel]="tagsLidas()" (ngModelChange)="tagsLidas.set($event)"></textarea>
             </mat-form-field>
             <div class="acoes">
-              <button mat-stroked-button type="button" (click)="lerPilha()" [disabled]="enviando()">Registrar a pilha</button>
-              <button mat-flat-button type="button" (click)="concluir()" [disabled]="enviando()">Concluir conferência</button>
+              <button mat-stroked-button type="button" (click)="lerPilha()" [disabled]="enviando()" [appCarregando]="enviando()">Registrar a pilha</button>
+              <button mat-flat-button type="button" (click)="concluir()" [disabled]="enviando()" [appCarregando]="enviando()">Concluir conferência</button>
             </div>
           } @else {
             @for (f of c.faltando; track f.idDormente) { <p class="aviso aviso--erro">Falta: tag {{ f.tag ?? '—' }} (pilha {{ f.pilhaDela ?? '—' }})</p> }
@@ -125,5 +133,6 @@
         <div class="acoes"><button mat-flat-button type="button" (click)="iniciarConferencia()" [disabled]="!idArmazemConferencia() || enviando()">Abrir conferência</button></div>
       }
     </div>
+  }
   }
 }

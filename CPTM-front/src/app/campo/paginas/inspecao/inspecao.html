@@ -26,7 +26,7 @@
       <div class="acoes">
         <button mat-stroked-button type="button" (click)="laudo(i)">Ver o laudo da inspeção (LI)</button>
         @if (i.resultado === 'Reprovada' && !trocaPedida()) {
-          <button mat-flat-button type="button" (click)="pedirTroca(p, i)" [disabled]="enviando()">Pedir a troca</button>
+          <button mat-flat-button type="button" (click)="pedirTroca(p, i)" [disabled]="enviando()" [appCarregando]="enviando()">Pedir a troca</button>
         }
       </div>
       @if (laudoDe() === i.id) { <app-previa-laudo tipo="inspecao" [id]="i.id" [podeFechar]="true" (fechar)="laudoDe.set(null)" /> }
@@ -44,7 +44,7 @@
       <mat-checkbox [checked]="madeiraConfere()" (change)="madeiraConfere.set($event.checked)">O tipo de madeira confere</mat-checkbox>
       <mat-form-field appearance="outline"><mat-label>Observação</mat-label><textarea matInput rows="2" [ngModel]="observacao()" (ngModelChange)="observacao.set($event)"></textarea></mat-form-field>
       <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto da peça' }}</label>
-      <div class="acoes"><button mat-flat-button type="button" (click)="registrar(p)" [disabled]="enviando()">Registrar a inspeção</button></div>
+      <div class="acoes"><button mat-flat-button type="button" (click)="registrar(p)" [disabled]="enviando()" [appCarregando]="enviando()">Registrar a inspeção</button></div>
     }
   </section>
 }

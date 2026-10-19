@@ -10,7 +10,7 @@ import { Esqueleto, TipoEsqueleto } from '../esqueleto/esqueleto';
   imports: [Esqueleto],
   template: `
     @if (carregando()) {
-      <app-esqueleto [tipo]="esqueleto()" [quantidade]="quantidade()" />
+      <app-esqueleto [tipo]="esqueleto()" [quantidade]="quantidade()" [comMarca]="comMarca()" />
     } @else if (erro()) {
       <p class="aviso aviso--erro" role="alert">{{ erro() }}</p>
     } @else if (vazio()) {
@@ -26,4 +26,6 @@ export class Estado {
   /** A forma do que vai chegar: lista (padrão), cartoes, tabela, folha ou pagina. */
   readonly esqueleto = input<TipoEsqueleto>('lista');
   readonly quantidade = input(3);
+  /** O logo girando; desligue quando já há outro skeleton com o logo na tela. */
+  readonly comMarca = input(true);
 }

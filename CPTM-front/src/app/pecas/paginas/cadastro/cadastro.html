@@ -48,7 +48,7 @@
     @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
     @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
     <div class="acoes">
-      <button mat-flat-button type="button" (click)="cadastrar()" [disabled]="enviando() || f.cadastradas >= f.quantidade">Cadastrar peça</button>
+      <button mat-flat-button type="button" (click)="cadastrar()" [disabled]="enviando() || f.cadastradas >= f.quantidade" [appCarregando]="enviando()">Cadastrar peça</button>
       <button mat-button type="button" (click)="proximaTag()">Pegar outra tag</button>
     </div>
   </section>

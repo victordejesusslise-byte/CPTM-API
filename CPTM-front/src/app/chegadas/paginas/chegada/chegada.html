@@ -109,7 +109,7 @@
         <button mat-stroked-button type="button" (click)="form.controls.feixes.push(novoFeixe())">Mais um feixe</button>
       </div>
       @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
-      <div class="acoes"><button mat-flat-button type="submit" [disabled]="enviando()">Registrar chegada</button></div>
+      <div class="acoes"><button mat-flat-button type="submit" [disabled]="enviando()" [appCarregando]="enviando()">Registrar chegada</button></div>
     </form>
   }
 }

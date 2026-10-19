@@ -49,10 +49,10 @@
       <mat-form-field appearance="outline"><mat-label>Observação</mat-label><input matInput [ngModel]="observacao()" (ngModelChange)="observacao.set($event)" /></mat-form-field>
       <div class="acoes">
         @if (corrigir()) {
-          <button mat-flat-button type="button" (click)="registrar(p, false)" [disabled]="enviando()">Corrigir a espécie</button>
+          <button mat-flat-button type="button" (click)="registrar(p, false)" [disabled]="enviando()" [appCarregando]="enviando()">Corrigir a espécie</button>
           <button mat-button type="button" (click)="corrigir.set(false)">Voltar</button>
         } @else {
-          <button mat-flat-button type="button" (click)="registrar(p, true)" [disabled]="enviando()">Confirmo {{ p.especie }}</button>
+          <button mat-flat-button type="button" (click)="registrar(p, true)" [disabled]="enviando()" [appCarregando]="enviando()">Confirmo {{ p.especie }}</button>
           <button mat-stroked-button type="button" (click)="corrigir.set(true)">É outra espécie</button>
         }
       </div>

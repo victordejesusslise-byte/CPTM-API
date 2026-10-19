@@ -83,7 +83,7 @@
     @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
     <div class="acoes">
       <button mat-stroked-button type="button" (click)="passo.set('preencher')">Voltar e corrigir</button>
-      <button mat-flat-button type="button" (click)="registrar()" [disabled]="enviando()">{{ enviando() ? 'Registrando…' : 'Registrar pedido' }}</button>
+      <button mat-flat-button type="button" (click)="registrar()" [disabled]="enviando()" [appCarregando]="enviando()">{{ enviando() ? 'Registrando…' : 'Registrar pedido' }}</button>
     </div>
   </div>
 }

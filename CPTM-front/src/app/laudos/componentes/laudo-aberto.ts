@@ -18,7 +18,7 @@ import { FolhaLaudo } from './folha-laudo';
         <div class="tit"><h2>{{ documento().titulo }} {{ documento().codigo }}</h2><span>gerado em {{ dataHora(documento().geradoEm) }}</span></div>
         @if (situacao()) { <span class="st" role="status">{{ situacao() }}</span> }
         <button mat-button type="button" (click)="ampliado.set(!ampliado())" [attr.aria-pressed]="ampliado()">{{ ampliado() ? 'Reduzir' : 'Ampliar' }}</button>
-        <button mat-flat-button type="button" (click)="baixar()" [disabled]="baixando()">{{ baixando() ? 'Baixando…' : 'Baixar PDF' }}</button>
+        <button mat-flat-button type="button" (click)="baixar()" [disabled]="baixando()" [appCarregando]="baixando()">{{ baixando() ? 'Baixando…' : 'Baixar PDF' }}</button>
         <button mat-button type="button" (click)="fechar()">Fechar</button>
       </div>
       <div class="paginas" tabindex="0" aria-label="Páginas do laudo"><app-folha-laudo [documento]="documento()" /></div>

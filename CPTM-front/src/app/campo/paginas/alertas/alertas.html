@@ -17,13 +17,14 @@
         @if (pecaDoVinculo(); as p) {
           <p><b class="mono">{{ p.codigo }}</b> · {{ p.especie }} · {{ p.classe }}ª · tag hoje: <span class="mono" [class.vermelho]="!!p.tag">{{ p.tag ?? 'nenhuma' }}</span></p>
           <app-leitura-tag rotulo="Tag lida na peça, no local" [(tag)]="tagVinculo" [(metodo)]="metodoVinculo" />
-          <div class="acoes"><button mat-flat-button type="button" (click)="vincular()" [disabled]="enviando()">Vincular a tag a esta peça</button></div>
+          <div class="acoes"><button mat-flat-button type="button" (click)="vincular()" [disabled]="enviando()" [appCarregando]="enviando()">Vincular a tag a esta peça</button></div>
         }
       </section>
     }
     <section class="cartao">
       <header><h2>Avisos da via</h2><span class="nota">{{ avisos.value()?.length ?? 0 }} esperando vínculo · toque para abrir</span></header>
       <div class="cartoes-alerta">
+        @if (avisos.isLoading()) { <app-esqueleto tipo="lista" [quantidade]="3" rotulo="Carregando os avisos…" /> }
         @for (av of avisos.value() ?? []; track av.idLeitura) {
           <button type="button" class="cartao-alerta urgente" [class.selecionado]="avisoAberto()?.idLeitura === av.idLeitura" (click)="abrirAviso(av)">
             <span class="topo-alerta"><b class="mono">{{ av.tag }}</b><span class="mono nota">{{ av.km !== null ? 'km ' + km(av.km) : '' }}</span></span>
@@ -43,7 +44,7 @@
       <mat-form-field appearance="outline"><mat-label>Km (opcional)</mat-label><input matInput type="number" step="0.001" class="mono" [ngModel]="kmAviso()" (ngModelChange)="kmAviso.set($event)" /></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Observação</mat-label><input matInput [ngModel]="obsAviso()" (ngModelChange)="obsAviso.set($event)" /></mat-form-field>
     </div>
-    <div class="acoes"><button mat-flat-button type="button" (click)="avisar()" [disabled]="enviando()">Avisar o técnico</button></div>
+    <div class="acoes"><button mat-flat-button type="button" (click)="avisar()" [disabled]="enviando()" [appCarregando]="enviando()">Avisar o técnico</button></div>
   </section>
   }
 } @else {
@@ -78,7 +79,7 @@
             <a mat-flat-button routerLink="/inspecoes" [queryParams]="{ alerta: a.id }">Inspecionar a peça</a>
           </div>
           <mat-form-field appearance="outline"><mat-label>Motivo para descartar</mat-label><input matInput [ngModel]="motivoDescarte()" (ngModelChange)="motivoDescarte.set($event)" /></mat-form-field>
-          <div class="acoes"><button mat-stroked-button type="button" (click)="descartar(a)" [disabled]="enviando()">Descartar o alerta</button></div>
+          <div class="acoes"><button mat-stroked-button type="button" (click)="descartar(a)" [disabled]="enviando()" [appCarregando]="enviando()">Descartar o alerta</button></div>
         }
         @if (a.status === 'Aberto' && podeVistoriar()) {
           <p class="lbl">Vistoria no local</p>
@@ -94,7 +95,7 @@
             <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto' }}</label>
           </div>
           <mat-form-field appearance="outline"><mat-label>Observação</mat-label><textarea matInput rows="2" [ngModel]="observacao()" (ngModelChange)="observacao.set($event)"></textarea></mat-form-field>
-          <div class="acoes"><button mat-flat-button type="button" (click)="vistoriar(a)" [disabled]="enviando()">Registrar vistoria</button></div>
+          <div class="acoes"><button mat-flat-button type="button" (click)="vistoriar(a)" [disabled]="enviando()" [appCarregando]="enviando()">Registrar vistoria</button></div>
         }
       </section>
     }

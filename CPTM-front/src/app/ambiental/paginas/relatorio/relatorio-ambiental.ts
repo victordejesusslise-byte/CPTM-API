@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { abrirArquivo } from '../../../compartilhado/utilitarios/arquivo';
@@ -16,7 +17,7 @@ const nomeDoMes = (iso: string) => new Date(`${iso.slice(0, 7)}-15T12:00:00`).to
  */
 @Component({
   selector: 'app-relatorio-ambiental',
-  imports: [FormsModule, FORMULARIO, Estado],
+  imports: [Esqueleto, FormsModule, FORMULARIO, Estado],
   templateUrl: './relatorio-ambiental.html',
 })
 export class RelatorioAmbiental {

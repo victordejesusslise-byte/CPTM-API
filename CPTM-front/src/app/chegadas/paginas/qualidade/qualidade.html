@@ -35,6 +35,6 @@
     <p><mat-checkbox formControlName="placaConfere">A placa confere com o feixe</mat-checkbox></p>
     <mat-form-field appearance="outline"><mat-label>Motivo (obrigatório se reprovar)</mat-label><input matInput formControlName="motivo" /></mat-form-field>
     <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto da peça (obrigatória)' }}</label>
-    <div class="acoes"><button mat-flat-button type="submit" [disabled]="enviando()">Registrar verificação</button></div>
+    <div class="acoes"><button mat-flat-button type="submit" [disabled]="enviando()" [appCarregando]="enviando()">Registrar verificação</button></div>
   </form>
 }

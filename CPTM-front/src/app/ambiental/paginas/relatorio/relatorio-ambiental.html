@@ -11,11 +11,13 @@
       <input matInput type="month" [ngModel]="mes()" (ngModelChange)="mes.set($event); escolhido.set(null)" />
     </mat-form-field>
     @if (aba() === 'mes') {
-      <button mat-flat-button type="button" (click)="gerar()" [disabled]="enviando() || relatorio()?.status === 'Enviado'">{{ relatorio() ? 'Gerar de novo' : 'Gerar o relatório do mês' }}</button>
+      <button mat-flat-button type="button" (click)="gerar()" [disabled]="enviando() || relatorio()?.status === 'Enviado'" [appCarregando]="enviando()">{{ relatorio() ? 'Gerar de novo' : 'Gerar o relatório do mês' }}</button>
     }
   </div>
 
-  @if (relatorio(); as r) {
+  @if (relatorios.isLoading()) {
+    <app-esqueleto tipo="tabela" [quantidade]="5" rotulo="Carregando o relatório…" />
+  } @else if (relatorio(); as r) {
     <div class="kv">
       <div><span class="lbl">Mês</span><b>{{ nomeDoMes(r.mesReferencia) }}</b></div>
       <div><span class="lbl">Situação</span><b><span class="pilula" [class.pilula--solida]="r.status === 'Enviado'" [class.pilula--quieta]="r.status === 'Rascunho'">{{ r.status }}</span></b></div>
@@ -41,7 +43,7 @@
         @if (r.status === 'Rascunho') {
           @if (confirmarEnvio()) {
             <span class="chamada">Enviado, o relatório fica <b>congelado</b> e não pode ser gerado de novo.</span>
-            <button mat-flat-button type="button" (click)="enviar(r)" [disabled]="enviando()">Confirmar o envio</button>
+            <button mat-flat-button type="button" (click)="enviar(r)" [disabled]="enviando()" [appCarregando]="enviando()">Confirmar o envio</button>
             <button mat-button type="button" (click)="confirmarEnvio.set(false)">Ainda não</button>
           } @else {
             <button mat-flat-button type="button" (click)="confirmarEnvio.set(true)">Enviar o relatório</button>
@@ -71,7 +73,7 @@
 @if (aba() === 'mes') {
   <section class="cartao">
     <header><h2>Relatórios anteriores</h2><span class="nota">toque para abrir</span></header>
-    <app-estado esqueleto="tabela" [carregando]="relatorios.isLoading()" [erro]="erroLista()" [vazio]="relatorios.hasValue() && !relatorios.value().length" textoVazio="Nenhum relatório ainda." />
+    <app-estado esqueleto="tabela" [comMarca]="false" [carregando]="relatorios.isLoading()" [erro]="erroLista()" [vazio]="relatorios.hasValue() && !relatorios.value().length" textoVazio="Nenhum relatório ainda." />
     @if (relatorios.value()?.length) {
       <div class="tabela">
         <table class="simples">

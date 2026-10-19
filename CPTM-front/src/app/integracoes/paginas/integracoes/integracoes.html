@@ -8,7 +8,7 @@
       <header><h2>Importar as notas</h2><span class="nota">cada nota é conferida com o pedido na hora</span></header>
       <div class="acoes">
         <label class="btn-foto"><input type="file" accept=".xlsx" (change)="escolher($event)" /> {{ arquivo() ? arquivo()!.name : 'Escolher a planilha (.xlsx)' }}</label>
-        <button mat-flat-button type="button" (click)="importar()" [disabled]="enviando()">Importar</button>
+        <button mat-flat-button type="button" (click)="importar()" [disabled]="enviando()" [appCarregando]="enviando()">Importar</button>
         <button mat-button type="button" (click)="baixarModelo()">Baixar o modelo da planilha</button>
       </div>
       @if (resultado(); as r) {
@@ -21,6 +21,10 @@
     </section>
   }
   @case ('erp') {
+  @if (codigos.isLoading()) {
+    <app-esqueleto tipo="tabela" [quantidade]="4" rotulo="Carregando os códigos do ERP…" />
+    <app-esqueleto tipo="formulario" [quantidade]="3" [comMarca]="false" />
+  } @else {
     <section class="cartao pilha">
       <header><h2>Estoque para o ERP</h2><span class="nota">modelo provisório até chegar o real</span></header>
       <p>A planilha traz o estoque do armazém por código de material (tamanho e classe), para subir no ERP.</p>
@@ -46,7 +50,11 @@
       }
     </section>
   }
+  }
   @case ('historico') {
+  @if (historico.isLoading()) {
+    <app-esqueleto tipo="tabela" [quantidade]="5" rotulo="Carregando o histórico…" />
+  } @else {
     <section class="cartao">
       <div class="tabela"><table class="simples">
         <thead><tr><th>Quando</th><th>Sistema</th><th>Tipo</th><th>Situação</th><th class="so-computador">Mensagem</th></tr></thead>
@@ -55,5 +63,6 @@
         } @empty { <tr><td colspan="5">Nenhuma integração ainda.</td></tr> }</tbody>
       </table></div>
     </section>
+  }
   }
 }

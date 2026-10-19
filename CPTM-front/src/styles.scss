@@ -185,3 +185,26 @@ button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-butt
 .comparar { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 12px; }
 .comparar figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .comparar img { width: 100%; max-height: 320px; object-fit: contain; border-radius: 4px; background: var(--superficie-3); }
+
+// Botão em skeleton enquanto envia (Victor, 2026-10-18): o texto some e uma barra corre para a direita, como no skeleton YBYRA.
+@keyframes ybyra-para-direita {
+  0% { transform: translateX(-60%); opacity: 0; }
+  25%, 75% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(60%); opacity: 0; }
+}
+.botao-carregando {
+  position: relative; overflow: hidden; pointer-events: none;
+  --mat-button-filled-disabled-container-color: color-mix(in srgb, var(--tinta) 12%, transparent);
+  --mat-button-filled-disabled-label-text-color: transparent;
+  --mat-button-outlined-disabled-label-text-color: transparent;
+  --mat-button-outlined-disabled-outline-color: color-mix(in srgb, var(--tinta) 12%, transparent);
+  --mat-button-text-disabled-label-text-color: transparent;
+  background-color: color-mix(in srgb, var(--tinta) 12%, transparent) !important;
+  color: transparent !important;
+  > * { visibility: hidden; }
+}
+.botao-carregando::after {
+  content: ''; position: absolute; top: 50%; left: 20%; right: 20%; height: 10px; margin-top: -5px; border-radius: 6px;
+  background: color-mix(in srgb, var(--tinta) 24%, transparent); animation: ybyra-para-direita 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .botao-carregando::after { animation: none; } }

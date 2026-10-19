@@ -31,7 +31,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
             <td [class.vermelho]="!u.ativo || u.esperarAte">{{ situacao(u) }}</td>
             <td>
               @if (u.id !== idProprio()) {
-                <button mat-button type="button" (click)="definirAtivo(u, !u.ativo)" [disabled]="enviando()">{{ u.ativo ? 'Desativar' : 'Reativar' }}</button>
+                <button mat-button type="button" (click)="definirAtivo(u, !u.ativo)" [disabled]="enviando()" [appCarregando]="enviando()">{{ u.ativo ? 'Desativar' : 'Reativar' }}</button>
               }
             </td>
           </tr>

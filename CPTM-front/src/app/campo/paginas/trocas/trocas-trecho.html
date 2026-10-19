@@ -32,7 +32,7 @@
           <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto da troca' }}</label>
           <div class="acoes">
             <button mat-stroked-button type="button" (click)="acao.set(null)">Voltar</button>
-            <button mat-flat-button type="button" (click)="executar(t)" [disabled]="enviando()">Registrar a troca</button>
+            <button mat-flat-button type="button" (click)="executar(t)" [disabled]="enviando()" [appCarregando]="enviando()">Registrar a troca</button>
           </div>
         }
         @case ('recusar') {
@@ -42,7 +42,7 @@
           <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto' }}</label>
           <div class="acoes">
             <button mat-stroked-button type="button" (click)="acao.set(null)">Voltar</button>
-            <button mat-flat-button class="perigo" type="button" (click)="recusar(t)" [disabled]="enviando()">Enviar a recusa ao técnico</button>
+            <button mat-flat-button class="perigo" type="button" (click)="recusar(t)" [disabled]="enviando()" [appCarregando]="enviando()">Enviar a recusa ao técnico</button>
           </div>
         }
         @default {
