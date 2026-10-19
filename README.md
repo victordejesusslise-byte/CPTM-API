@@ -114,6 +114,8 @@ npm run celular
 
 4. No celular, abra `http://SEU-IP:4200` (ex.: `http://192.168.0.10:4200`) e entre com o seu e-mail e senha.
 
+**Com o Docker, o passo 2 não é preciso:** o back do `docker compose up -d` já fica aberto para a rede (porta 8045) e aceita o site aberto no celular. Basta o passo 3 (`npm run celular`) e abrir `http://SEU-IP:4200` no celular.
+
 Se o Windows perguntar sobre o firewall, permita em **redes privadas**. Funciona só no mesmo Wi-Fi; para usar fora, o sistema precisa ir para um servidor.
 
 ## Banco de demonstração
