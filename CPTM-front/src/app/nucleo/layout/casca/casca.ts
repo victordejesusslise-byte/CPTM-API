@@ -1,9 +1,9 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { filter, map, of, switchMap, timer } from 'rxjs';
+import { filter, map } from 'rxjs';
 import { Sessao } from '../../sessao/sessao';
 import { Tema } from '../tema/tema';
 import { ItemMenu, SubMenu, menuDoCargo } from '../menu/menu';
@@ -22,6 +22,12 @@ interface ItemVisivel extends ItemMenu {
  * Tela com abas (Pedidos: Cadastrar e Acompanhar): no computador as abas abrem embaixo do item no menu;
  * no celular viram abas no alto. Aba "só computador" some no celular; uma aba sozinha não vira menu.
  */
+/** Quanto tempo, no mínimo, o skeleton de página fica ao abrir uma tela. */
+const MINIMO_DO_SKELETON_MS = 300;
+
+/** A tela sem o ?… e o #…: abrir um item ou trocar um filtro não é abrir outra tela. */
+const semConsulta = (url: string) => url.split(/[?#]/)[0];
+
 @Component({
   selector: 'app-casca',
   imports: [Esqueleto, RouterOutlet, RouterLink, Marca],
@@ -38,15 +44,13 @@ export class Casca {
   protected readonly tema = inject(Tema);
   /** itens com abas que a pessoa recolheu clicando de novo neles */
   private readonly recolhidos = signal(new Set<string>());
-  /** Uma tela nova está carregando (o pedaço dela vem do servidor na primeira vez): mostra o skeleton de página se passar de 150 ms. */
-  protected readonly navegando = toSignal(
-    this.router.events.pipe(
-      filter((e) => e instanceof NavigationStart || e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError),
-      // Só se a tela demorar: troca rápida não pisca o skeleton.
-      switchMap((e) => (e instanceof NavigationStart ? timer(150).pipe(map(() => true)) : of(false))),
-    ),
-    { initialValue: false },
-  );
+  /**
+   * Toda tela que abre mostra o skeleton de página por pelo menos 0,3 s (Victor, 2026-10-18: "skeleton curto ao abrir toda tela"),
+   * e mais, se o pedaço dela ainda vier do servidor. Abrir um item ou trocar um filtro na mesma tela (só muda o ?…) não mostra.
+   */
+  protected readonly navegando = signal(true);
+  private inicioDaTela = Date.now();
+  private esperaDoSkeleton = setTimeout(() => this.navegando.set(false), MINIMO_DO_SKELETON_MS);
   protected readonly celular = toSignal(inject(BreakpointObserver).observe('(max-width: 820px)').pipe(map((r) => r.matches)), { initialValue: false });
   private readonly url = toSignal(
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd), map(() => this.router.url)),
@@ -68,6 +72,21 @@ export class Casca {
     return [...grupos].map(([nome, itensDoGrupo]) => ({ nome, itens: itensDoGrupo }));
   });
   protected readonly abasNoAlto = computed(() => (this.celular() ? (this.grupos().flatMap((g) => g.itens).find((i) => i.ativo)?.abas ?? []) : []));
+
+  constructor() {
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((e) => {
+      if (e instanceof NavigationStart) {
+        if (semConsulta(e.url) === semConsulta(this.router.url)) return; // a mesma tela
+        clearTimeout(this.esperaDoSkeleton);
+        this.inicioDaTela = Date.now();
+        this.navegando.set(true);
+      } else if ((e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError) && this.navegando()) {
+        clearTimeout(this.esperaDoSkeleton);
+        const falta = Math.max(0, MINIMO_DO_SKELETON_MS - (Date.now() - this.inicioDaTela));
+        this.esperaDoSkeleton = setTimeout(() => this.navegando.set(false), falta);
+      }
+    });
+  }
 
   /** No item aberto, o clique recolhe ou abre as abas (sem sair da tela); nos outros, navega e abre. */
   protected clicar(item: ItemVisivel): void {
