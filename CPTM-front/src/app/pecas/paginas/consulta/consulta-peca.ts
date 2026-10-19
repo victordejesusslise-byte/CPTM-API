@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { finalize } from 'rxjs';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
@@ -19,7 +20,8 @@ import { FORMULARIO } from '../../../compartilhado/ui';
     <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
     <div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Buscar</button></div>
     @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
-    @if (peca(); as p) {
+    @if (buscando()) { <app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Buscando a peça…" /> }
+    @if (!buscando() && peca(); as p) {
       <div class="cartao">
         <h2 class="mono">{{ p.codigo }}</h2>
         <p>{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª classe · <span class="etiqueta">{{ p.situacao }}</span> <app-nota [nota]="p.nota" /></p>
@@ -58,6 +60,8 @@ import { FORMULARIO } from '../../../compartilhado/ui';
   `,
 })
 export class ConsultaPeca implements OnInit, OnDestroy {
+  /** Buscando a peça pela tag: o cartão dela mostra o skeleton. */
+  protected readonly buscando = signal(false);
   /** a tag que veio na rota (?tag=), do mapa do trecho */
   readonly tagDaRota = input<string | undefined>(undefined, { alias: 'tag' });
   private readonly pecas = inject(Pecas);
@@ -107,7 +111,8 @@ export class ConsultaPeca implements OnInit, OnDestroy {
   protected buscar(): void {
     if (!this.tag().trim()) return;
     this.erro.set(null);
-    this.pecas.porTag(this.tag()).subscribe({
+    this.buscando.set(true);
+    this.pecas.porTag(this.tag()).pipe(finalize(() => this.buscando.set(false))).subscribe({
       next: (p) => {
         this.peca.set(p);
         this.carregarFotos(p.id);

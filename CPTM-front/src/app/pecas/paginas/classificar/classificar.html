@@ -12,7 +12,8 @@
   <app-leitura-tag [(tag)]="tag" [(metodo)]="metodoLeitura" (lida)="buscar()" />
   <div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Ler a peça</button></div>
 
-  @if (peca(); as p) {
+  @if (buscando()) { <app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Buscando a peça…" /> }
+  @if (!buscando() && peca(); as p) {
     <section class="cartao pilha">
       <header><h2 class="mono">{{ p.codigo }}</h2><span class="nota">{{ metros(p.comprimentoM) }} · feixe {{ p.numeroFeixe }}</span></header>
       <div class="kv">

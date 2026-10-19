@@ -5,6 +5,10 @@
 
 @switch (aba()) {
   @case ('empresas') {
+  @if (empresas.isLoading()) {
+    <app-esqueleto tipo="formulario" [quantidade]="4" rotulo="Carregando…" />
+    <app-esqueleto tipo="tabela" [quantidade]="4" [comMarca]="false" />
+  } @else {
     <section class="cartao pilha">
       <header><h2>Nova empresa</h2><span class="nota">fornecedor, tratadora ou inspetora</span></header>
       <div class="campos">
@@ -25,7 +29,12 @@
       </table></div>
     </section>
   }
+  }
   @case ('contratos') {
+  @if (contratos.isLoading() || empresas.isLoading()) {
+    <app-esqueleto tipo="formulario" [quantidade]="4" rotulo="Carregando…" />
+    <app-esqueleto tipo="tabela" [quantidade]="4" [comMarca]="false" />
+  } @else {
     <section class="cartao pilha">
       <header><h2>Novo contrato</h2><span class="nota">o pedido escolhe o contrato pelo fornecedor</span></header>
       <div class="campos">
@@ -47,7 +56,12 @@
       </table></div>
     </section>
   }
+  }
   @case ('via') {
+  @if (estacoes.isLoading() || trechos.isLoading()) {
+    <app-esqueleto tipo="formulario" [quantidade]="4" rotulo="Carregando…" />
+    <app-esqueleto tipo="tabela" [quantidade]="4" [comMarca]="false" />
+  } @else {
     <section class="cartao pilha">
       <header><h2>Nova estação</h2><span class="nota">o trecho vai de uma estação a outra</span></header>
       <div class="campos">
@@ -79,7 +93,12 @@
       </table></div>
     </section>
   }
+  }
   @case ('parametros') {
+  @if (parametros.isLoading()) {
+    <app-esqueleto tipo="formulario" [quantidade]="4" rotulo="Carregando…" />
+    <app-esqueleto tipo="tabela" [quantidade]="4" [comMarca]="false" />
+  } @else {
     <section class="cartao">
       <header><h2>Parâmetros do sistema</h2><span class="nota">mudou, vale para o que for feito daqui em diante</span></header>
       <div class="tabela"><table class="simples">
@@ -93,7 +112,12 @@
       </table></div>
     </section>
   }
+  }
   @case ('leitores') {
+  @if (leitores.isLoading()) {
+    <app-esqueleto tipo="formulario" [quantidade]="4" rotulo="Carregando…" />
+    <app-esqueleto tipo="tabela" [quantidade]="4" [comMarca]="false" />
+  } @else {
     <section class="cartao pilha">
       <header><h2>Novo leitor</h2><span class="nota">o módulo do celular é reconhecido pelo número de série</span></header>
       <div class="campos">
@@ -111,5 +135,6 @@
           @empty { <tr><td colspan="4">Nenhum leitor ainda.</td></tr> }</tbody>
       </table></div>
     </section>
+  }
   }
 }

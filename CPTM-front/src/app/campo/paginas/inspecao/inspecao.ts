@@ -1,4 +1,6 @@
 import { Component, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
+import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
 import { nomeDaFoto } from '../../../compartilhado/utilitarios/foto';
@@ -19,10 +21,12 @@ import { FORMULARIO } from '../../../compartilhado/ui';
  */
 @Component({
   selector: 'app-inspecao',
-  imports: [FormsModule, FORMULARIO, LeituraTag, Nota, PreviaLaudo],
+  imports: [Esqueleto, FormsModule, FORMULARIO, LeituraTag, Nota, PreviaLaudo],
   templateUrl: './inspecao.html',
 })
 export class Inspecao {
+  /** Buscando a peça pela tag: o cartão dela mostra o skeleton. */
+  protected readonly buscando = signal(false);
   readonly aba = input<'checklist' | 'historico'>('checklist');
   readonly alerta = input<string>();
   private readonly pecas = inject(Pecas);
@@ -59,7 +63,8 @@ export class Inspecao {
     this.mensagem.set(null);
     this.resultado.set(null);
     this.trocaPedida.set(false);
-    this.pecas.porTag(this.tag()).subscribe({
+    this.buscando.set(true);
+    this.pecas.porTag(this.tag()).pipe(finalize(() => this.buscando.set(false))).subscribe({
       next: (p) => {
         this.peca.set(p);
         this.iniciadoEm.set(new Date().toISOString());

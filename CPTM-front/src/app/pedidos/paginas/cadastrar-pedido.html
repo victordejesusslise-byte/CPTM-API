@@ -1,5 +1,8 @@
 <p class="sobre">Compra · 01</p>
 <h1>Cadastrar pedido</h1>
+@if (fornecedores.isLoading()) {
+  <app-esqueleto tipo="formulario" [quantidade]="6" rotulo="Carregando os fornecedores…" />
+} @else {
 
 @if (passo() === 'preencher') {
   <form class="cartao pilha" [formGroup]="form" (ngSubmit)="revisar()" novalidate>
@@ -85,3 +88,4 @@
   </div>
 }
 <p class="nota">Registrado, o pedido aparece em <a routerLink="/pedidos">Acompanhar pedidos</a>, onde dá para corrigir até a carga chegar.</p>
+}

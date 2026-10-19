@@ -36,11 +36,15 @@
   }
 
   @case ('guardar') {
+  @if (armazens.isLoading()) {
+    <app-esqueleto tipo="formulario" [quantidade]="2" rotulo="Carregando os armazéns…" />
+  } @else {
     <div class="aba">
       <p class="rotulo">Entrada da peça aprovada na pilha, ou troca de pilha de uma peça que já está no armazém.</p>
       <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
       <div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Buscar peça</button></div>
-      @if (peca(); as p) {
+      @if (buscando()) { <app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Buscando a peça…" /> }
+      @if (!buscando() && peca(); as p) {
         <div class="cartao">
           <h2 class="mono">{{ p.codigo }}</h2>
           <p class="rotulo">{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª · {{ p.armazem }} · pilha {{ p.pilha ?? 'nenhuma' }} · {{ p.situacao }} <app-nota [nota]="p.nota" /></p>
@@ -59,6 +63,7 @@
         </div>
       }
     </div>
+  }
   }
 
   @case ('pilhas') {

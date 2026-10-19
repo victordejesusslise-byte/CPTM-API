@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Esqueleto } from '../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -25,7 +26,7 @@ const codigoNovo = () => {
  */
 @Component({
   selector: 'app-cadastrar-pedido',
-  imports: [RouterLink, FORMULARIO, ItensPedido, TabelaItens],
+  imports: [Esqueleto, RouterLink, FORMULARIO, ItensPedido, TabelaItens],
   templateUrl: './cadastrar-pedido.html',
 })
 export class CadastrarPedido {

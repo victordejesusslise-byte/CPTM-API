@@ -1,4 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
+import { finalize } from 'rxjs';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { dataHora, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
@@ -23,7 +25,7 @@ const NOME_METODO: Record<string, string> = { PlacaFornecedor: 'Placa do fornece
  */
 @Component({
   selector: 'app-classificar',
-  imports: [FormsModule, FORMULARIO, Estado, LeituraTag],
+  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag],
   templateUrl: './classificar.html',
   styles: `
     .passos { margin: 0 0 16px; padding-left: 20px; color: var(--tinta-2); li { margin: 2px 0; } }
@@ -33,6 +35,8 @@ const NOME_METODO: Record<string, string> = { PlacaFornecedor: 'Placa do fornece
   `,
 })
 export class Classificar {
+  /** Buscando a peça pela tag: o cartão dela mostra o skeleton. */
+  protected readonly buscando = signal(false);
   readonly aba = input<'peca' | 'feitas'>('peca');
   private readonly api = inject(Classificacoes);
   private readonly pecas = inject(Pecas);
@@ -66,7 +70,8 @@ export class Classificar {
     this.erro.set(null);
     this.mensagem.set(null);
     this.corrigir.set(false);
-    this.pecas.porTag(this.tag()).subscribe({
+    this.buscando.set(true);
+    this.pecas.porTag(this.tag()).pipe(finalize(() => this.buscando.set(false))).subscribe({
       next: (p) => {
         this.peca.set(p);
         this.idEspecie.set(p.idEspecie);

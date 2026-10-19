@@ -1,5 +1,8 @@
 <p class="sobre">Peça · 3</p>
 <h1>Cadastro da peça</h1>
+@if (lista.isLoading()) {
+  <app-esqueleto tipo="formulario" [quantidade]="3" rotulo="Carregando os pedidos…" />
+} @else {
 
 <div class="campos">
   <mat-form-field appearance="outline">
@@ -54,4 +57,5 @@
     <h2>Peças do feixe</h2>
     <app-tabela [colunas]="colunas" [linhas]="doFeixe.value() ?? []" />
   }
+}
 }

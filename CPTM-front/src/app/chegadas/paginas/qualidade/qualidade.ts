@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
-import { switchMap } from 'rxjs';
+import { switchMap, finalize } from 'rxjs';
 import { FormBuilder, Validators } from '@angular/forms';
 import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
 import { mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
@@ -13,10 +14,12 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 /** A verificação de qualidade (especialista): lê a peça, marca o que viu e aprova ou reprova. */
 @Component({
   selector: 'app-qualidade',
-  imports: [FORMULARIO, LeituraTag, Nota],
+  imports: [Esqueleto, FORMULARIO, LeituraTag, Nota],
   templateUrl: './qualidade.html',
 })
 export class Qualidade {
+  /** Buscando a peça pela tag: o cartão dela mostra o skeleton. */
+  protected readonly buscando = signal(false);
   private readonly pecas = inject(Pecas);
   protected readonly metros = metros;
   protected readonly tag = signal('');
@@ -45,7 +48,8 @@ export class Qualidade {
     if (!this.tag().trim()) return;
     this.erro.set(null);
     this.mensagem.set(null);
-    this.pecas.porTag(this.tag()).subscribe({
+    this.buscando.set(true);
+    this.pecas.porTag(this.tag()).pipe(finalize(() => this.buscando.set(false))).subscribe({
       next: (p) => this.peca.set(p),
       error: (e) => {
         this.peca.set(null);

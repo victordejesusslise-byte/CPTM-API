@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { finalize } from 'rxjs';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -21,6 +22,8 @@ import { FORMULARIO } from '../../../compartilhado/ui';
   templateUrl: './armazem.html',
 })
 export class Armazem {
+  /** Buscando a peça pela tag: o cartão dela mostra o skeleton. */
+  protected readonly buscando = signal(false);
   /** a aba vem do data da rota: Guardar na pilha, Pilhas dos armazéns, Estoque, Conferência */
   readonly aba = input<'guardar' | 'pilhas' | 'estoque' | 'conferencia'>('guardar');
   protected readonly titulos = { guardar: 'Guardar na pilha', pilhas: 'Pilhas dos armazéns', estoque: 'Estoque', conferencia: 'Conferência' };
@@ -65,7 +68,8 @@ export class Armazem {
   protected buscar(): void {
     if (!this.tag().trim()) return;
     this.limpar();
-    this.pecas.porTag(this.tag()).subscribe({
+    this.buscando.set(true);
+    this.pecas.porTag(this.tag()).pipe(finalize(() => this.buscando.set(false))).subscribe({
       next: (p) => {
         this.peca.set(p);
         this.idPilha.set(p.idPilha);

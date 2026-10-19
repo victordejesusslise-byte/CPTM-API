@@ -7,7 +7,8 @@
 <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
 <div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Ler a peça</button></div>
 
-@if (peca(); as p) {
+@if (buscando()) { <app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Buscando a peça…" /> }
+@if (!buscando() && peca(); as p) {
   <section class="cartao pilha">
     <header><h2 class="mono">{{ p.codigo }}</h2><span class="nota">{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª @if (p.kmProjeto !== null) { · km {{ km(p.kmProjeto) }} } @if (p.posicao) { · <span class="mono">{{ p.posicao }}</span> }</span> <app-nota [nota]="p.nota" /></header>
     @if (aba() === 'historico') {

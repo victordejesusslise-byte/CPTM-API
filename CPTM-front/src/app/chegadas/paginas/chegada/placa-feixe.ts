@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Pedidos } from '../../../pedidos/servicos/pedidos';
@@ -11,7 +12,7 @@ import { LerPlaca } from './ler-placa';
  */
 @Component({
   selector: 'app-placa-feixe',
-  imports: [RouterLink, FORMULARIO, LerPlaca],
+  imports: [Esqueleto, RouterLink, FORMULARIO, LerPlaca],
   templateUrl: './placa-feixe.html',
 })
 export class PlacaFeixe {

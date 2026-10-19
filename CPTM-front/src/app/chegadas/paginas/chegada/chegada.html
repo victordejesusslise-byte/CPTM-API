@@ -1,5 +1,8 @@
 <p class="sobre">Peça · 2</p>
 <h1>Chegada da carga</h1>
+@if (lista.isLoading()) {
+  <app-esqueleto tipo="formulario" [quantidade]="6" rotulo="Carregando os pedidos…" />
+} @else {
 
 @if (resultado(); as r) {
   <div class="cartao">
@@ -109,4 +112,5 @@
       <div class="acoes"><button mat-flat-button type="submit" [disabled]="enviando()">Registrar chegada</button></div>
     </form>
   }
+}
 }

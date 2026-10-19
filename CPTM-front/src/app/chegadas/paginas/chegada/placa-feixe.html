@@ -1,5 +1,8 @@
 <p class="sobre">Pátio · 02</p>
 <h1>Placa do feixe</h1>
+@if (lista.isLoading()) {
+  <app-esqueleto tipo="formulario" [quantidade]="2" rotulo="Carregando os pedidos…" />
+} @else {
 
 <section class="cartao pilha">
   <header><h2>Ler a placa</h2><span class="nota">o servidor lê a foto; você confere</span></header>
@@ -22,3 +25,4 @@
     <p class="nota">Escolha o pedido para ler a placa.</p>
   }
 </section>
+}
