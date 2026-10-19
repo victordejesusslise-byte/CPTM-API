@@ -2,6 +2,44 @@
 
 **YBYRA**, qualidade e rastreamento de dormentes ferroviários (CPTM, Via Permanente). Tem duas partes: a API em `CPTM-back` (C# com .NET 8 e SQL Server) e o site em `CPTM-front` (Angular).
 
+## Todos os comandos
+
+### Com Docker (o jeito mais simples; dentro de `CPTM-back`)
+
+| Para quê | Comando |
+|---|---|
+| Subir o back e o banco (a primeira vez baixa as imagens e demora) | `docker compose up -d --build` |
+| Ver se o back subiu e alcança o banco | `curl http://localhost:8045/hc` (ou abra o endereço no navegador) |
+| Ver os logs do back | `docker compose logs -f back` |
+| Ver os logs do banco | `docker compose logs -f banco` |
+| Ver o que está rodando | `docker compose ps` |
+| Reconstruir o back depois de mudar o código | `docker compose up -d --build back` |
+| Rodar os testes do back no Docker | `docker compose --profile testes run --rm testes` |
+| Parar sem apagar nada | `docker compose stop` |
+| Parar e remover os containers (o banco e as fotos ficam nos volumes) | `docker compose down` |
+
+### Sem Docker (dentro de `CPTM-back`)
+
+| Para quê | Comando |
+|---|---|
+| Restaurar a ferramenta do EF (a primeira vez) | `dotnet tool restore` |
+| Criar ou atualizar o banco | `dotnet dotnet-ef database update --project src/ViaPermanente.Dados --startup-project src/ViaPermanente.Api` |
+| Ligar a API no PC | `dotnet run --project src/ViaPermanente.Api --launch-profile http` |
+| Ligar a API aberta para o celular | `dotnet run --project src/ViaPermanente.Api --launch-profile celular` |
+| Rodar todos os testes | `dotnet test` |
+| Rodar só os testes que não usam o banco | `dotnet test --filter "Categoria!=Banco"` |
+| Criar uma migração depois de mudar o banco | `dotnet dotnet-ef migrations add NomeDaMudanca --project src/ViaPermanente.Dados --startup-project src/ViaPermanente.Api` |
+
+### O site (dentro de `CPTM-front`)
+
+| Para quê | Comando |
+|---|---|
+| Instalar as dependências | `npm install` |
+| Ligar o site (http://localhost:4200) | `npx ng serve` |
+| Ligar o site aberto para o celular | `npm run celular` |
+| Rodar os testes | `npx ng test --watch=false` |
+| Gerar a versão de produção | `npx ng build` |
+
 ## Como rodar em outra máquina
 
 ### 1. Instale
@@ -107,4 +145,19 @@ docker compose up -d --build
 docker compose logs -f back
 ```
 
+5. Os testes do back, no Docker (usam o SQL Server do compose; o banco de teste é criado e apagado a cada teste):
+
+```bash
+docker compose --profile testes run --rm testes
+```
+
+Para ver se o back está no ar: http://localhost:8045/hc (responde 200 quando o back e o banco estão bem).
+
 Para parar: `docker compose down` (o banco e as fotos ficam guardados nos volumes do Docker). O banco do container também abre no SSMS em `localhost,14330`, usuário `sa`.
+
+## Segurança
+
+- O login vale 8 horas. "Sair" encerra a sessão em todos os aparelhos, e o supervisor desativa uma conta em Usuários (a sessão dela cai na hora).
+- Depois de 5 senhas erradas seguidas, a conta espera (30 s, depois 1 min, depois 5 min); cada aparelho tenta no máximo 10 vezes por minuto.
+- Em produção (`Seguranca__ExigirHttps`, ligado fora do Development), a API recusa senha e token sem HTTPS vindos da rede: o servidor precisa de certificado.
+- Depois de uma atualização de segurança, todos precisam entrar de novo uma vez.

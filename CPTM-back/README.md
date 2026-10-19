@@ -2,6 +2,21 @@
 
 Back-end do controle de dormentes (CPTM, Linha 9-Esmeralda). Padrão do código: [PADRAO.md](PADRAO.md).
 
+## Comandos
+
+| Para quê | Comando |
+|---|---|
+| Ligar a API no PC (http://localhost:8045) | `dotnet run --project src/ViaPermanente.Api --launch-profile http` |
+| Ver se a API subiu e alcança o banco | `curl http://localhost:8045/hc` |
+| Rodar todos os testes | `dotnet test` |
+| Rodar só os testes que não usam o banco | `dotnet test --filter "Categoria!=Banco"` |
+| Rodar os testes no Docker | `docker compose --profile testes run --rm testes` |
+| Subir o back e o banco no Docker | `docker compose up -d --build` |
+| Logs do back no Docker | `docker compose logs -f back` |
+| Parar o Docker | `docker compose down` |
+| Criar ou atualizar o banco (sem Docker) | `dotnet dotnet-ef database update --project src/ViaPermanente.Dados --startup-project src/ViaPermanente.Api` |
+| Criar uma migração | `dotnet dotnet-ef migrations add NomeDaMudanca --project src/ViaPermanente.Dados --startup-project src/ViaPermanente.Api` |
+
 ## Precisa ter
 
 - .NET SDK 8
@@ -81,6 +96,21 @@ Os testes da categoria `Banco` usam o SQL Server de verdade (criam e apagam `Via
 dotnet test --filter "Categoria!=Banco"
 ```
 
+No Docker, sem precisar de .NET nem de SQL Server no PC (usa o SQL Server do compose; a imagem de teste traz o Tesseract e as fontes do Linux):
+
+```bash
+docker compose --profile testes run --rm testes
+```
+
+Os testes do banco leem a conexão de `VIA_TESTE_CONEXAO`; sem ela, usam o SQL Server Express local.
+
+## Segurança
+
+- O token vale 8 horas (`Jwt__MinutosValidade`) e leva a versão da sessão: "Sair" (`POST /api/auth/sair`) e desativar a conta derrubam todos os tokens dela na hora.
+- Login: no máximo `Seguranca__TentativasPorMinuto` (10) por aparelho; depois de 5 senhas erradas seguidas, a conta espera 30 s, 1 min e 5 min.
+- `Seguranca__ExigirHttps`: ligado no `appsettings.json` (produção) e desligado no Development e no Docker local. Ligado, a API recusa HTTP vindo da rede (menos o `/hc`).
+- Detalhes: `src/ViaPermanente.Api/Comum/Seguranca.cs`.
+
 ## Mudou o banco
 
 ```bash
@@ -93,7 +123,9 @@ Para rodar SQL à mão no `sqlcmd`, use `-I` (os índices filtrados exigem `QUOT
 
 | Rota | Quem |
 |---|---|
-| `POST /api/auth/login` | aberto |
+| `GET /hc` (o back subiu e alcança o banco: 200 ou 503) | aberto |
+| `POST /api/auth/login` (10 por minuto por aparelho; espera crescente por conta) | aberto |
+| `POST /api/auth/sair` (encerra a sessão em todos os aparelhos) | logado |
 | `GET /api/auth/eu` | logado |
 | `GET /api/catalogos/tamanhos` · `GET /api/catalogos/especies` · `GET /api/catalogos/armazens` | logado |
 | `GET /api/pedidos` · `GET /api/pedidos/{id}` · `POST /api/pedidos` | supervisor e operador de pátio |
@@ -132,13 +164,14 @@ Para rodar SQL à mão no `sqlcmd`, use `-I` (os índices filtrados exigem `QUOT
 | `POST /api/integracoes/notas` (planilha .xlsx, campo `arquivo`) · `GET /api/integracoes/notas/modelo` · `GET /api/integracoes/log` | supervisor e operador de pátio |
 | `GET /api/integracoes/erp/estoque` (planilha do estoque com o código de material) · `GET /api/integracoes/codigos-material` · `POST /api/integracoes/codigos-material` (supervisor) | supervisor e operador de pátio |
 | `GET /api/relatorios-ambientais/{id}/planilha` (planilha para o IBAMA) | especialista e supervisor |
-| `POST /api/ocr/placas` (foto da placa, campo `foto`, e `idPedido`) · `GET /api/ocr/placas/{id}` · `POST /api/ocr/placas/{id}/confirmacao` · `GET /api/ocr/modelos` | operador de pátio e supervisor |
+| `POST /api/ocr/placas` (foto da placa, campo `foto`, e `idPedido`, obrigatório) · `GET /api/ocr/placas?idPedido=` (as placas confirmadas do pedido, ainda sem feixe) · `GET /api/ocr/placas/{id}` · `POST /api/ocr/placas/{id}/confirmacao` · `GET /api/ocr/modelos` | operador de pátio e supervisor |
 | `GET /api/indicadores?de=&ate=` (os 18 indicadores; sem datas, os últimos 30 dias) | logado |
-| `GET /api/laudos/recebimento/{idRecebimento}` (BR) · `/api/laudos/inspecao/{id}` (LI) · `/api/laudos/liberacao/{idTroca}` (LB) · `/api/laudos/troca/{idTroca}` (LD) | logado |
+| `GET /api/laudos/recebimento/{idRecebimento}` (BR) · `/api/laudos/inspecao/{id}` (LI) · `/api/laudos/liberacao/{idTroca}` (LB) · `/api/laudos/troca/{idTroca}` (LD), em PDF | logado |
+| `GET /api/laudos/{tipo}/{id}/documento` (o mesmo laudo como documento, para a tela mostrar antes de baixar) | logado |
 | `GET /api/manutencao/leituras-via` (as semanas) · `POST /api/manutencao/leituras-via` (roda a manutenção agora; ela também roda sozinha todo dia) | supervisor |
 | `GET /api/relatorios-ambientais` · `POST /api/relatorios-ambientais?mes=2026-10-01` (gera o rascunho) · `POST /api/relatorios-ambientais/{id}/envio` (congela) | especialista e supervisor |
 | `GET /api/apresentacao/fluxo` (opcional `?idPedido=`) | logado |
 | `POST /api/apresentacao/exemplo` (só em desenvolvimento) | supervisor |
 | `GET /api/parametros` | logado |
 | `PUT /api/parametros/{chave}` | supervisor |
-| `GET /api/usuarios` · `GET /api/usuarios/{id}` · `POST /api/usuarios` | supervisor |
+| `GET /api/usuarios` · `GET /api/usuarios/{id}` · `POST /api/usuarios` · `PUT /api/usuarios/{id}/ativo` (desativar derruba as sessões; ninguém desativa a si mesmo) | supervisor |

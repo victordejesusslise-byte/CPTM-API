@@ -1,59 +1,31 @@
-# CptmFront
+# CPTM-front · YBYRA
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.2.
+O site do YBYRA (controle de dormentes da CPTM, Via Permanente), em Angular 22. Fala com a API do `CPTM-back` na porta 8045. Padrão do código: [PADRAO.md](PADRAO.md).
 
-## Development server
+## Precisa ter
 
-To start a local development server, run:
+- [Node.js 24 LTS](https://nodejs.org/)
+- A API ligada (no Docker ou com `dotnet run`; veja o README do `CPTM-back`)
 
-```bash
-ng serve
-```
+## Comandos
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Todos dentro de `CPTM-front`.
 
-## Code scaffolding
+| Para quê | Comando |
+|---|---|
+| Instalar as dependências (a primeira vez e depois de mudar o `package.json`) | `npm install` |
+| Ligar o site no PC (abre em http://localhost:4200) | `npx ng serve` |
+| Ligar o site aberto para o celular no mesmo Wi-Fi (abre em `http://SEU-IP:4200`) | `npm run celular` |
+| Rodar os testes uma vez (Vitest) | `npx ng test --watch=false` |
+| Rodar os testes e continuar olhando as mudanças | `npx ng test` |
+| Gerar a versão de produção (vai para `dist/`) | `npx ng build` |
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Entrar
 
-```bash
-ng generate component component-name
-```
+Abra http://localhost:4200 e entre com o e-mail e a senha do supervisor do `.env` do back. O login vale 8 horas; "Sair" encerra a sessão em todos os aparelhos.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Depois de uma atualização de segurança, todos precisam entrar de novo uma vez: os logins de antes deixam de valer.
 
-```bash
-ng generate --help
-```
+## Onde fica cada coisa
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+`src/app/<parte>/` com `paginas/`, `servicos/` e `entidades/` (as mesmas partes do back: pedidos, chegadas, pecas, armazens, campo, via, laudos, indicadores…); `nucleo/` (sessão, guardas, interceptadores, layout) e `compartilhado/` (componentes, como o skeleton e a folha do laudo, e utilitários). O endereço da API está em `src/environments/ambiente.ts`: usa o mesmo endereço e protocolo por onde o site foi aberto, na porta 8045.

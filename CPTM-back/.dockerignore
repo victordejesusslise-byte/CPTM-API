@@ -1,6 +1,5 @@
 **/bin/
 **/obj/
-tests/
 fotos/
 .env
 .vs/

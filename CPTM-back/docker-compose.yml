@@ -1,5 +1,6 @@
 # O back do YBYRA no Docker: o back, o SQL Server Express e os logs do próprio Docker.
 # Subir:    docker compose up -d --build      Logs: docker compose logs -f back
+# Testes:   docker compose --profile testes run --rm testes
 # Os segredos vêm do .env (o mesmo do back); a senha do banco do container é Banco__SenhaSa.
 name: ybyra
 
@@ -55,6 +56,20 @@ services:
     volumes:
       - fotos:/app/fotos
     logging: *logs
+
+  # Os testes do back, no Docker, contra o SQL Server acima (o banco ViaPermanente_Testes é criado e apagado a cada teste).
+  # Rodar: docker compose --profile testes run --rm testes   (não sobe com o "docker compose up")
+  testes:
+    profiles: ["testes"]
+    build:
+      context: .
+      target: testes
+    depends_on:
+      banco:
+        condition: service_healthy
+    environment:
+      VIA_TESTE_CONEXAO: "Server=banco;Database=ViaPermanente_Testes;User Id=sa;Password=${Banco__SenhaSa};TrustServerCertificate=True"
+      TZ: America/Sao_Paulo
 
 volumes:
   banco:
