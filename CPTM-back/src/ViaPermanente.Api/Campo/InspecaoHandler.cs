@@ -10,13 +10,17 @@ namespace ViaPermanente.Api.Campo;
 /// <summary>Etapa 10: a inspeção (checklist v2). Quem faz: o técnico.</summary>
 [ApiController]
 [Route("api/inspecoes")]
-public class InspecaoHandler(InspecaoService inspecoes) : ControllerBase
+public class InspecaoHandler(InspecaoService inspecoes, AvisoAoVivo aoVivo) : ControllerBase
 {
     /// <summary>Registra o checklist com a peça lida e a foto; fecha os alertas abertos da peça.</summary>
     [HttpPost]
     [Authorize(Roles = nameof(Cargo.Tecnico))]
     public async Task<ActionResult<InspecaoDto>> Registrar(NovaInspecaoDto dto)
-        => StatusCode(StatusCodes.Status201Created, await inspecoes.Registrar(dto, TokenHelper.IdUsuario(User)));
+    {
+        var inspecao = await inspecoes.Registrar(dto, TokenHelper.IdUsuario(User));
+        await aoVivo.Avisar(AvisoAoVivo.AlertaFechado, dto.IdAlerta);
+        return StatusCode(StatusCodes.Status201Created, inspecao);
+    }
 
     /// <summary>Correção: só quem fez, com motivo. Se passa a aprovar, cancela a troca aberta pela inspeção.</summary>
     [HttpPost("{id:int}/correcao")]
@@ -24,6 +28,8 @@ public class InspecaoHandler(InspecaoService inspecoes) : ControllerBase
     public async Task<ActionResult<InspecaoDto>> Corrigir(int id, CorrigirInspecaoDto dto)
     {
         var inspecao = await inspecoes.Corrigir(id, dto, TokenHelper.IdUsuario(User));
+        // Passou a aprovar: a troca aberta pela inspeção foi cancelada e sai do plano.
+        await aoVivo.Avisar(AvisoAoVivo.TrocaNoPlano, null);
         return inspecao is null ? NotFound() : inspecao;
     }
 

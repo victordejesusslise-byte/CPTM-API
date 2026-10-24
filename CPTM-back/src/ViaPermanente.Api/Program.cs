@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using ViaPermanente.Api.Campo;
 using ViaPermanente.Api.Via;
 using ViaPermanente.Api.Comum;
 using ViaPermanente.Api.Helpers;
@@ -117,6 +118,10 @@ builder.Services.AddScoped<AlertaService>();
 builder.Services.AddScoped<InspecaoService>();
 builder.Services.AddScoped<TrocaService>();
 builder.Services.AddScoped<FotoTrocaService>();
+builder.Services.AddScoped<PlanoCampoService>();
+// O ao vivo do campo: o celular logado recebe os avisos do trabalho da noite (CampoHub em /hub/campo).
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<AvisoAoVivo>();
 builder.Services.AddScoped<RelatorioAmbientalService>();
 builder.Services.AddScoped<ManutencaoLeituraViaService>();
 builder.Services.AddScoped<ConferenciaService>();
@@ -194,6 +199,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<CampoHub>("/hub/campo");
 // GET /hc: o back subiu e alcança o banco? Sem login (padrão do Victor: porta 8045 e /hc em todo back).
 app.MapHealthChecks("/hc", Saude.Opcoes()).AllowAnonymous();
 

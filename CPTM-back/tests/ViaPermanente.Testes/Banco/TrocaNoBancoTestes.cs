@@ -166,6 +166,26 @@ public class TrocaNoBancoTestes : IAsyncLifetime
     }
 
     [Fact]
+    public async Task O_plano_da_noite_leva_as_trocas_desta_noite_e_nao_as_de_amanha()
+    {
+        var hoje = await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(2), Motivo = "Dormente podre" }, tecnico);
+        var amanha = await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(3), Motivo = "Dormente rachado" }, tecnico);
+        foreach (var troca in new[] { hoje, amanha })
+            await Trocas().Decidir(troca.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Supervisor, 1);
+        var meioDia = DateTime.Today.AddHours(12);
+        var noite = DateOnly.FromDateTime(meioDia);
+        await db.Set<Troca>().Where(t => t.IdTroca == hoje.Id).ExecuteUpdateAsync(s => s.SetProperty(t => t.NoiteDoPlano, noite));
+        await db.Set<Troca>().Where(t => t.IdTroca == amanha.Id).ExecuteUpdateAsync(s => s.SetProperty(t => t.NoiteDoPlano, noite.AddDays(1)));
+
+        var plano = await new PlanoCampoService(Trocas(), BancoDeTeste.Alertas(db)).Montar(meioDia);
+        Assert.Equal(noite, plano.Noite);
+        Assert.Equal([hoje.Id], plano.Trocas.Select(t => t.Id));
+        // No dia seguinte, a de amanhã entra (e a de hoje, que não foi feita, continua).
+        var depois = await new PlanoCampoService(Trocas(), BancoDeTeste.Alertas(db)).Montar(meioDia.AddDays(1));
+        Assert.Equal(new[] { hoje.Id, amanha.Id }.Order(), depois.Trocas.Select(t => t.Id).Order());
+    }
+
+    [Fact]
     public async Task Correcao_que_aprova_cancela_a_troca_e_devolve_a_peca()
     {
         var inspecao = await Reprovar(3);

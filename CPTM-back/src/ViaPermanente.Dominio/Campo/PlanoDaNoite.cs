@@ -25,6 +25,13 @@ public static class PlanoDaNoite
         return urgente || TimeOnly.FromDateTime(aprovadaEm) <= corte ? dia : dia.AddDays(1);
     }
 
+    /// <summary>A noite que está valendo agora: antes do fim da noite (06:00) ainda é a noite de ontem.</summary>
+    public static DateOnly NoiteAtual(DateTime agora)
+    {
+        var dia = DateOnly.FromDateTime(agora);
+        return TimeOnly.FromDateTime(agora) < FimDaNoite ? dia.AddDays(-1) : dia;
+    }
+
     /// <summary>A troca está no plano de uma noite que já fechou e ainda não acabou: não pode ser cancelada agora.</summary>
     public static bool Travada(DateOnly? noite, DateTime agora, TimeOnly corte)
         => noite is DateOnly n && agora >= n.ToDateTime(corte) && agora < n.AddDays(1).ToDateTime(FimDaNoite);

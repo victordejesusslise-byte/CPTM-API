@@ -22,6 +22,14 @@ public static class Seguranca
     /// <summary>Depois de conferir assinatura e validade do token, confere a conta e a sessão no banco.</summary>
     public static JwtBearerEvents EventosDoToken() => new()
     {
+        // O ao vivo (SignalR) abre um WebSocket, que não leva o cabeçalho Authorization: o token vem em ?access_token=, só nas rotas /hub.
+        OnMessageReceived = contexto =>
+        {
+            var token = contexto.Request.Query["access_token"].ToString();
+            if (token.Length > 0 && contexto.HttpContext.Request.Path.StartsWithSegments("/hub"))
+                contexto.Token = token;
+            return Task.CompletedTask;
+        },
         OnTokenValidated = async contexto =>
         {
             var principal = contexto.Principal;

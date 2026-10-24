@@ -12,7 +12,7 @@ namespace ViaPermanente.Api.Campo;
 [ApiController]
 [Route("api/alertas")]
 [Authorize(Roles = $"{nameof(Cargo.Tecnico)},{nameof(Cargo.OperadorVia)},{nameof(Cargo.Supervisor)}")]
-public class AlertaHandler(AlertaService alertas) : ControllerBase
+public class AlertaHandler(AlertaService alertas, AvisoAoVivo aoVivo) : ControllerBase
 {
     /// <summary>A fila. origem: Imagem ou Sensor (as duas abas). status: Aberto, Confirmado ou Descartado.</summary>
     [HttpGet]
@@ -40,6 +40,8 @@ public class AlertaHandler(AlertaService alertas) : ControllerBase
     public async Task<ActionResult<AlertaDto>> Descartar(int id, DescartarAlertaDto dto)
     {
         var alerta = await alertas.Descartar(id, dto.Motivo, TokenHelper.IdUsuario(User));
+        if (alerta is not null)
+            await aoVivo.Avisar(AvisoAoVivo.AlertaFechado, id);
         return alerta is null ? NotFound() : alerta;
     }
 }

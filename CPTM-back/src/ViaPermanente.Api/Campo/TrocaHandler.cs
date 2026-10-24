@@ -13,7 +13,7 @@ namespace ViaPermanente.Api.Campo;
 /// <summary>Etapas 11 a 13: a troca em quatro passos (técnico pede, supervisor aprova, pátio separa, via troca).</summary>
 [ApiController]
 [Route("api/trocas")]
-public class TrocaHandler(TrocaService trocas) : ControllerBase
+public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerBase
 {
     [HttpGet]
     public Task<IReadOnlyList<TrocaDto>> Listar([FromQuery] StatusTroca? status) => trocas.Listar(status);
@@ -36,6 +36,7 @@ public class TrocaHandler(TrocaService trocas) : ControllerBase
     {
         var cargo = Enum.Parse<Cargo>(User.FindFirstValue(TokenHelper.ClaimCargo)!);
         var troca = await trocas.Decidir(id, dto, cargo, TokenHelper.IdUsuario(User));
+        await aoVivo.Troca(troca);
         return troca is null ? NotFound() : troca;
     }
 
@@ -53,6 +54,7 @@ public class TrocaHandler(TrocaService trocas) : ControllerBase
     public async Task<ActionResult<TrocaDto>> Separar(int id, SepararTrocaDto dto)
     {
         var troca = await trocas.Separar(id, dto, TokenHelper.IdUsuario(User));
+        await aoVivo.Troca(troca);
         return troca is null ? NotFound() : troca;
     }
 
@@ -61,6 +63,7 @@ public class TrocaHandler(TrocaService trocas) : ControllerBase
     public async Task<ActionResult<TrocaDto>> Executar(int id, ExecutarTrocaDto dto)
     {
         var troca = await trocas.Executar(id, dto, TokenHelper.IdUsuario(User));
+        await aoVivo.Troca(troca);
         return troca is null ? NotFound() : troca;
     }
 
@@ -82,6 +85,7 @@ public class TrocaHandler(TrocaService trocas) : ControllerBase
     public async Task<ActionResult<TrocaDto>> Recusar(int id, RecusarTrocaDto dto)
     {
         var troca = await trocas.Recusar(id, dto, TokenHelper.IdUsuario(User));
+        await aoVivo.Troca(troca);
         return troca is null ? NotFound() : troca;
     }
 
@@ -91,6 +95,7 @@ public class TrocaHandler(TrocaService trocas) : ControllerBase
     public async Task<ActionResult<TrocaDto>> DecidirRecusa(int id, DecidirRecusaDto dto)
     {
         var troca = await trocas.DecidirRecusa(id, dto, TokenHelper.IdUsuario(User));
+        await aoVivo.Troca(troca);
         return troca is null ? NotFound() : troca;
     }
 }

@@ -26,7 +26,10 @@ public class SegurancaDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
     private static readonly Dictionary<string, string> GravamSemCargo = new()
     {
         ["POST api/auth/sair"] = "cada um encerra a própria sessão",
-        ["POST api/trocas/{id:int}/decisao"] = "o cargo que aprova é um parâmetro (troca.quem_aprova); o serviço confere"
+        ["POST api/trocas/{id:int}/decisao"] = "o cargo que aprova é um parâmetro (troca.quem_aprova); o serviço confere",
+        ["POST hub/campo/negotiate"] = "o ao vivo só escuta: o celular logado recebe os avisos do trabalho da noite, nada é gravado",
+        ["POST hub/campo"] = "o ao vivo só escuta (o mesmo canal, pelo transporte que não é WebSocket)",
+        ["DELETE hub/campo"] = "o ao vivo só escuta (fecha o canal)"
     };
 
     private record Rota(string Nome, string Metodo, string Modelo, string[]? Cargos, bool Anonima, bool Multipart, ControllerActionDescriptor? Acao)

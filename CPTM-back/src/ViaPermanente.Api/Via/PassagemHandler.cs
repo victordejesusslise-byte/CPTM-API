@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ViaPermanente.Api.Campo;
 using ViaPermanente.Dominio.Pessoas.Models;
 using ViaPermanente.Dominio.Via;
 using ViaPermanente.Dominio.Via.Dtos;
@@ -11,10 +12,15 @@ namespace ViaPermanente.Api.Via;
 [ApiController]
 [Route("api/passagens")]
 [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{ChaveCarroHandler.Esquema}", Roles = $"{nameof(Cargo.Supervisor)},{ChaveCarroHandler.Papel}")]
-public class PassagemHandler(VarreduraService varredura) : ControllerBase
+public class PassagemHandler(VarreduraService varredura, AvisoAoVivo aoVivo) : ControllerBase
 {
     /// <summary>Grava a passagem e devolve o resumo: leituras, sem resposta, fora de posição e os alertas abertos.</summary>
     [HttpPost]
     public async Task<ActionResult<PassagemDto>> Registrar(NovaPassagemDto nova)
-        => StatusCode(StatusCodes.Status201Created, await varredura.Registrar(nova));
+    {
+        var passagem = await varredura.Registrar(nova);
+        if (passagem.AlertasSensor + passagem.AlertasImagem > 0)
+            await aoVivo.Avisar(AvisoAoVivo.AlertaNovo, null);
+        return StatusCode(StatusCodes.Status201Created, passagem);
+    }
 }

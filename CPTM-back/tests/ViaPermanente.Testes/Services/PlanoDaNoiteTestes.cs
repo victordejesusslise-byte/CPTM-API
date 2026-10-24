@@ -17,6 +17,13 @@ public class PlanoDaNoiteTestes
         => Assert.Equal(Dia.AddDays(diasDepois), PlanoDaNoite.NoiteDe(Dia.ToDateTime(new TimeOnly(hora, minuto)), Corte, urgente));
 
     [Theory]
+    [InlineData(5, 59, -1)] // de madrugada ainda é a noite de ontem
+    [InlineData(6, 0, 0)]   // a noite acabou: vale a de hoje
+    [InlineData(22, 0, 0)]
+    public void A_noite_que_esta_valendo(int hora, int minuto, int dias)
+        => Assert.Equal(Dia.AddDays(dias), PlanoDaNoite.NoiteAtual(Dia.ToDateTime(new TimeOnly(hora, minuto))));
+
+    [Theory]
     [InlineData(0, 19, 0, false)]  // antes do corte da noite: pode cancelar
     [InlineData(0, 22, 0, true)]   // depois do corte: travada
     [InlineData(1, 3, 12, true)]   // de madrugada: travada
