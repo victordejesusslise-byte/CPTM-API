@@ -35,6 +35,7 @@ export class PedidoAberto {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly tamanhos = toSignal(this.catalogos.tamanhos(), { initialValue: [] });
   private readonly especies = toSignal(this.catalogos.especies(), { initialValue: [] });
+  private readonly fornecedores = toSignal(this.cadastros.empresas('Fornecedor'), { initialValue: [] });
 
   protected readonly pedido = rxResource({ params: () => this.id(), stream: ({ params }) => this.servico.buscar(params) });
   protected readonly notas = rxResource({ params: () => this.id(), stream: ({ params }) => this.servico.notas(params) });
@@ -59,7 +60,7 @@ export class PedidoAberto {
   protected readonly lote = computed(() => this.chegadas.value()?.[0]?.lote ?? null);
   protected readonly cadastradas = computed(() => (this.chegadas.value() ?? []).flatMap((c) => c.feixes).reduce((a, f) => a + f.cadastradas, 0));
   protected readonly itensTabela = computed<ItemParaTabela[]>(() =>
-    (this.pedido.value()?.itens ?? []).map((i) => ({ comprimentoM: i.comprimentoM, classe: i.classe, especie: i.especie, quantidade: i.quantidade, volumeM3: i.volumeM3 })),
+    (this.pedido.value()?.itens ?? []).map((i) => ({ comprimentoM: i.comprimentoM, classe: i.classe, especie: i.especie, medida: i.medida, quantidade: i.quantidade, volumeM3: i.volumeM3 })),
   );
   protected readonly eventos = computed<Evento[]>(() => {
     const p = this.pedido.value();
@@ -93,7 +94,7 @@ export class PedidoAberto {
 
   protected corrigir(p: PedidoDto): void {
     this.itensCorrecao.clear();
-    for (const i of p.itens) this.itensCorrecao.push(novoItemPedido(this.fb, { idTamanho: i.idTamanho, classe: i.classe, idEspecie: i.idEspecie, quantidade: i.quantidade }));
+    for (const i of p.itens) this.itensCorrecao.push(novoItemPedido(this.fb, { idTamanho: i.idTamanho, classe: i.classe, idEspecie: i.idEspecie, quantidade: i.quantidade, idMedida: i.idMedida }));
     this.correcao.patchValue({ idContrato: p.idContrato, dataCompra: p.dataCompra, motivo: '' });
     this.limpar();
     this.modo.set('corrigir');
@@ -110,11 +111,12 @@ export class PedidoAberto {
       this.erro.set('A 2ª classe passou do limite: acerte os itens.');
       return;
     }
-    const novos = paraTabela(itensValidos(this.itensCorrecao), this.tamanhos(), this.especies());
+    const medidas = this.fornecedores().find((f) => f.id === p.idEmpresa)?.medidas ?? [];
+    const novos = paraTabela(itensValidos(this.itensCorrecao), this.tamanhos(), this.especies(), medidas);
     const dif: string[] = [];
     if (v.dataCompra !== p.dataCompra) dif.push(`Data da compra: ${data(p.dataCompra)} → ${data(v.dataCompra)}`);
     if (v.idContrato !== p.idContrato) dif.push(`Contrato: ${p.contrato ?? '—'} → ${this.contratos.value()?.find((c) => c.id === v.idContrato)?.numeroContrato ?? '—'}`);
-    const chave = (i: ItemParaTabela) => `${metros(i.comprimentoM)} · ${i.classe}ª · ${i.especie ?? 'qualquer da classe'}`;
+    const chave = (i: ItemParaTabela) => `${metros(i.comprimentoM)} · ${i.classe}ª · ${i.especie ?? 'qualquer da classe'} · ${i.medida ?? 'sem padrão'}`;
     const antes = new Map(this.itensTabela().map((i) => [chave(i), i.quantidade]));
     const depois = new Map(novos.map((i) => [chave(i), i.quantidade]));
     for (const [k, q] of depois) if (antes.get(k) !== q) dif.push(antes.has(k) ? `${k}: ${antes.get(k)} → ${q} peças` : `Entrou ${k}: ${q} peças`);

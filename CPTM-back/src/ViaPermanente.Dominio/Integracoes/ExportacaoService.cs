@@ -46,24 +46,27 @@ public class ExportacaoService(IPlanilhaExportacaoRepository planilha, IIntegrac
         return arquivo;
     }
 
-    /// <summary>Os códigos do ERP cadastrados, um por tamanho e classe (guardados no próprio tamanho; o id é tamanho × 10 + classe).</summary>
+    /// <summary>Os códigos do ERP cadastrados, um por comprimento e classe (guardados em PARAMETRO; o id é comprimento × 10 + classe).</summary>
     public async Task<IReadOnlyList<CodigoMaterialDto>> CodigosMaterial()
-        => (await catalogo.ListarTamanhos())
+    {
+        var codigos = await catalogo.CodigosErp();
+        return (await catalogo.ListarTamanhos())
             .SelectMany(t => new[] { (Tamanho: t, Classe: (byte)1), (Tamanho: t, Classe: (byte)2) })
-            .Where(x => !string.IsNullOrWhiteSpace(x.Tamanho.CodigoErp(x.Classe)))
-            .Select(x => new CodigoMaterialDto(x.Tamanho.IdTamanho * 10 + x.Classe, x.Tamanho.IdTamanho, x.Tamanho.ComprimentoM, x.Classe, x.Tamanho.CodigoErp(x.Classe)!))
+            .Where(x => codigos.ContainsKey((x.Tamanho.IdTamanho, x.Classe)))
+            .Select(x => new CodigoMaterialDto(x.Tamanho.IdTamanho * 10 + x.Classe, x.Tamanho.IdTamanho, x.Tamanho.ComprimentoM, x.Classe, codigos[(x.Tamanho.IdTamanho, x.Classe)]))
             .ToList();
+    }
 
     /// <summary>Um código por tamanho e classe.</summary>
     public async Task<CodigoMaterialDto> NovoCodigoMaterial(NovoCodigoMaterialDto dto)
     {
-        var tamanho = (await catalogo.ListarTamanhos()).FirstOrDefault(t => t.IdTamanho == dto.IdTamanho)
-            ?? throw new RegraDeNegocioException("Tamanho de dormente não encontrado.");
+        if ((await catalogo.ListarTamanhos()).All(t => t.IdTamanho != dto.IdTamanho))
+            throw new RegraDeNegocioException("Comprimento de dormente não encontrado.");
         if (dto.Classe is not (1 or 2))
             throw new RegraDeNegocioException("A classe é 1 ou 2.");
         if (string.IsNullOrWhiteSpace(dto.CodigoErp))
             throw new RegraDeNegocioException("Informe o código do ERP.");
-        if (!string.IsNullOrWhiteSpace(tamanho.CodigoErp(dto.Classe)))
+        if ((await catalogo.CodigosErp()).ContainsKey((dto.IdTamanho, dto.Classe)))
             throw new RegraDeNegocioException("Este tamanho e esta classe já têm código de material.");
         await catalogo.DefinirCodigoErp(dto.IdTamanho, dto.Classe, dto.CodigoErp.Trim());
         return (await CodigosMaterial()).First(c => c.IdTamanho == dto.IdTamanho && c.Classe == dto.Classe);

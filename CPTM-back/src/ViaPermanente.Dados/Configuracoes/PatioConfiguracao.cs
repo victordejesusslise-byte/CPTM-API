@@ -118,7 +118,6 @@ internal static class PatioConfiguracao
             e.HasData(PilhasDeExemplo());
         });
         mb.Fk<Pilha, Armazem>(x => x.IdArmazem);
-        mb.Fk<Pilha, TamanhoDormente>(x => x.IdTamanho);
 
         mb.Entity<Rfid>(e =>
         {

@@ -24,6 +24,17 @@ public class CadastroHandler(CadastroService cadastros) : ControllerBase
     [Authorize(Roles = nameof(Cargo.Supervisor))]
     public async Task<IActionResult> Ativar(int id, [FromQuery] bool ativo) => await cadastros.AtivarEmpresa(id, ativo) ? NoContent() : NotFound();
 
+    /// <summary>Mais um padrão de medida (largura × altura) para o fornecedor.</summary>
+    [HttpPost("empresas/{id:int}/medidas")]
+    [Authorize(Roles = nameof(Cargo.Supervisor))]
+    public async Task<ActionResult<MedidaDto>> NovaMedida(int id, NovaMedidaDto dto)
+        => await cadastros.NovaMedida(id, dto) is { } medida ? StatusCode(StatusCodes.Status201Created, medida) : NotFound();
+
+    /// <summary>Ativa ou desativa um padrão de medida (desativar não apaga: os pedidos que já usam continuam com ele).</summary>
+    [HttpPut("medidas/{id:int}/ativo")]
+    [Authorize(Roles = nameof(Cargo.Supervisor))]
+    public async Task<IActionResult> AtivarMedida(int id, [FromQuery] bool ativo) => await cadastros.AtivarMedida(id, ativo) ? NoContent() : NotFound();
+
     [HttpGet("contratos")]
     public Task<IReadOnlyList<ContratoDto>> Contratos([FromQuery] int? idEmpresa) => cadastros.Contratos(idEmpresa);
 

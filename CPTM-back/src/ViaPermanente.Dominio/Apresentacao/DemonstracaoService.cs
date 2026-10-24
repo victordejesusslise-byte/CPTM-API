@@ -33,8 +33,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
 
         await repo.EmTransacao(async () =>
         {
-            var tamanho = await repo.Primeiro<TamanhoDormente>(t => t.ComprimentoM == 2.80m)
-                ?? throw new RegraDeNegocioException("Falta o tamanho de 2,80 m no catálogo.");
+            var tamanho = TamanhoDormente.Todos.First(t => t.ComprimentoM == 2.80m);
             var especies = new List<Especie>();
             foreach (var nome in new[] { "Ocotea neesiana", "Hymenaea courbaril" })
                 especies.Add(await repo.Primeiro<Especie>(e => e.NomeCientifico == nome)
@@ -51,6 +50,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             var inspetora = await Empresa("UFV", PapelEmpresa.Inspetora);
             var contrato = await repo.Primeiro<Contrato>(c => c.NumeroContrato == "AR00224-03")
                 ?? await repo.Adicionar(new Contrato { IdEmpresa = fornecedor.IdEmpresa, NumeroAta = "AR00224", NumeroContrato = "AR00224-03" });
+            var padrao = await PadraoDoFornecedor(fornecedor);
 
             Pedido NovoPedido(int n, int quantidade, int dias) => new()
             {
@@ -60,8 +60,8 @@ public class DemonstracaoService(IApresentacaoRepository repo)
 
             // Pedido 1: chegou inteiro, cadastrado, verificado (1 reprovada) e guardado; 3 peças já foram para a via.
             var p1 = await repo.Adicionar(NovoPedido(1, PecasPorFeixe * 2, 20));
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p1.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = p1.Quantidade } });
-            var m3 = VolumeHelper.M3(tamanho.ComprimentoM, tamanho.LarguraM, tamanho.AlturaM);
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p1.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = p1.Quantidade, IdMedida = padrao.IdMedida } });
+            var m3 = VolumeHelper.M3(tamanho.ComprimentoM, padrao);
             var nota = await repo.Adicionar(new NotaFiscal
             {
                 IdPedido = p1.IdPedido, Numero = $"{Marca}NF-01", DataEmissao = DateOnly.FromDateTime(agora.AddDays(-15)), Origem = OrigemNota.Manual,
@@ -71,7 +71,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             {
                 IdNota = nota.IdNota, IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = PecasPorFeixe, VolumeM3 = PecasPorFeixe * m3
             }).ToList());
-            var (dormentes1, tags1) = await Chegada(p1, nota.IdNota, idArmazem, especies, PecasPorFeixe, PecasPorFeixe, agora.AddDays(-14), 1, tamanho, tratadora, inspetora, fornecedor, idUsuario);
+            var (dormentes1, tags1) = await Chegada(p1, nota.IdNota, idArmazem, especies, PecasPorFeixe, PecasPorFeixe, agora.AddDays(-14), 1, tamanho, padrao, tratadora, inspetora, fornecedor, idUsuario);
 
             var verificacoes = dormentes1.Select((d, n) => new VerificacaoQualidade
             {
@@ -109,12 +109,12 @@ public class DemonstracaoService(IApresentacaoRepository repo)
 
             // Pedido 2: chegou só uma parte (4 de 8) e só 2 peças ganharam a tag.
             var p2 = await repo.Adicionar(NovoPedido(2, PecasPorFeixe * 2, 6));
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p2.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = p2.Quantidade } });
-            var (dormentes2, _) = await Chegada(p2, null, idArmazem, especies.Take(1).ToList(), PecasPorFeixe, 2, agora.AddDays(-2), 2, tamanho, tratadora, inspetora, fornecedor, idUsuario);
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p2.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = p2.Quantidade, IdMedida = padrao.IdMedida } });
+            var (dormentes2, _) = await Chegada(p2, null, idArmazem, especies.Take(1).ToList(), PecasPorFeixe, 2, agora.AddDays(-2), 2, tamanho, padrao, tratadora, inspetora, fornecedor, idUsuario);
 
             // Pedido 3: aberto, esperando a carga.
             var p3 = await repo.Adicionar(NovoPedido(3, 6, 1));
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p3.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = 6 } });
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p3.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = 6, IdMedida = padrao.IdMedida } });
 
             // A passagem da noite: uma peça fora de posição, uma com a tag muda, uma com suspeita de rachadura.
             var passagem = await repo.Adicionar(new Passagem
@@ -222,6 +222,11 @@ public class DemonstracaoService(IApresentacaoRepository repo)
         => await repo.Primeiro<Empresa>(e => e.Nome == nome && e.Papel == papel)
             ?? await repo.Adicionar(new Empresa { Nome = nome, Papel = papel, Ativo = true });
 
+    /// <summary>O padrão de medida do fornecedor do exemplo (0,24 × 0,17 m, para todas as espécies), criado uma vez.</summary>
+    private async Task<MedidaFornecedor> PadraoDoFornecedor(Empresa fornecedor)
+        => await repo.Primeiro<MedidaFornecedor>(m => m.IdEmpresa == fornecedor.IdEmpresa && m.IdEspecie == null && m.Ativo)
+            ?? await repo.Adicionar(new MedidaFornecedor { IdEmpresa = fornecedor.IdEmpresa, LarguraM = 0.24m, AlturaM = 0.17m, Ativo = true });
+
     private async Task<Trecho> TrechoDemo()
     {
         var inicio = await repo.Adicionar(new Estacao { Nome = $"{EstacaoDemo}Estação A", Linha = "9-Esmeralda", Km = 212.000m, Ordem = 901 });
@@ -231,7 +236,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
 
     /// <summary>A chegada com um feixe por espécie; cadastra as primeiras "cadastradas" peças de cada feixe, com tag e a espécie da placa.</summary>
     private async Task<(List<Dormente> Dormentes, List<Rfid> Tags)> Chegada(Pedido pedido, int? idNota, int idArmazem, List<Especie> especies, int porFeixe,
-        int cadastradas, DateTime quando, int n, TamanhoDormente tamanho, Empresa tratadora, Empresa inspetora, Empresa fornecedor, int idUsuario)
+        int cadastradas, DateTime quando, int n, TamanhoDormente tamanho, MedidaFornecedor padrao, Empresa tratadora, Empresa inspetora, Empresa fornecedor, int idUsuario)
     {
         var recebimento = await repo.Adicionar(new Recebimento
         {
@@ -244,7 +249,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
         });
         var feixes = especies.Select((e, i) => new Feixe
         {
-            IdRecebimento = recebimento.IdRecebimento, NumeroFeixe = $"{n}{i + 1:00}", Quantidade = porFeixe, IdEspecie = e.IdEspecie, Classe = 1, IdTamanho = tamanho.IdTamanho,
+            IdRecebimento = recebimento.IdRecebimento, NumeroFeixe = $"{n}{i + 1:00}", Quantidade = porFeixe, IdEspecie = e.IdEspecie, Classe = 1, IdTamanho = tamanho.IdTamanho, IdMedida = padrao.IdMedida,
             Tratamento = "CCA", IdEmpresaTratamento = tratadora.IdEmpresa, IdEmpresaInspecao = inspetora.IdEmpresa, AnoInspecao = (short)quando.Year
         }).ToList();
         await repo.AdicionarVarios(feixes);

@@ -41,6 +41,15 @@ internal static class BancoDeTeste
         new UsuarioRepository(db), new TrocaRepository(db), new ChegadaService(new ChegadaRepository(db), new PedidoRepository(db), new NotaFiscalRepository(db), new CatalogoRepository(db), new LeituraOcrRepository(db)),
         Pecas(db), Inspecoes(db), Alertas(db), Trocas(db));
 
+    /// <summary>Um padrão de medida (0,24 × 0,17 m, para todas as espécies) para o fornecedor; devolve o id.</summary>
+    public static async Task<int> Padrao(ViaPermanenteContext db, int idEmpresa)
+    {
+        var padrao = new ViaPermanente.Dominio.Pedidos.Models.MedidaFornecedor { IdEmpresa = idEmpresa, LarguraM = 0.24m, AlturaM = 0.17m, Ativo = true };
+        db.Add(padrao);
+        await db.SaveChangesAsync();
+        return padrao.IdMedida;
+    }
+
     public static async Task Recriar(ViaPermanenteContext db)
     {
         await db.Database.EnsureDeletedAsync();

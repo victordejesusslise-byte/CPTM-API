@@ -38,16 +38,17 @@ public class PedidoNoBancoTestes : IAsyncLifetime
         var fornecedor = new Empresa { Nome = "TG–Três Guri", Papel = PapelEmpresa.Fornecedor, Ativo = true };
         db.Add(fornecedor);
         await db.SaveChangesAsync();
+        var padrao = await BancoDeTeste.Padrao(db, fornecedor.IdEmpresa);
         var service = Pedidos();
 
         var criado = await service.Criar(new NovoPedidoDto
         {
             Codigo = "PED-BANCO-1", IdEmpresa = fornecedor.IdEmpresa,
-            Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 24 }, new() { IdTamanho = 1, Classe = 2, Quantidade = 4 }]
+            Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 24, IdMedida = padrao }, new() { IdTamanho = 1, Classe = 2, Quantidade = 4, IdMedida = padrao }]
         }, idUsuario);
         var corrigido = await service.Corrigir(criado.Id, new CorrigirPedidoDto
         {
-            Motivo = "Mais peças de 1ª", Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 30 }, new() { IdTamanho = 1, Classe = 2, Quantidade = 4 }]
+            Motivo = "Mais peças de 1ª", Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 30, IdMedida = padrao }, new() { IdTamanho = 1, Classe = 2, Quantidade = 4, IdMedida = padrao }]
         }, idUsuario);
         Assert.Equal(34, corrigido!.Quantidade);
         Assert.Equal(2, await db.Set<PedidoItem>().CountAsync(i => i.IdPedido == criado.Id));

@@ -6,12 +6,21 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Dados.Configuracoes;
 
-/// <summary>CONTRATO, EMPRESA, NOTA_FISCAL, NOTA_FISCAL_ITEM, OFERTA_FORNECEDOR, PEDIDO, PEDIDO_HISTORICO, PEDIDO_ITEM e RECEBIMENTO.</summary>
+/// <summary>CONTRATO, EMPRESA, MEDIDA_FORNECEDOR, NOTA_FISCAL, NOTA_FISCAL_ITEM, OFERTA_FORNECEDOR, PEDIDO, PEDIDO_HISTORICO, PEDIDO_ITEM e RECEBIMENTO.</summary>
 internal static class ComprasConfiguracao
 {
     public static void Aplicar(ModelBuilder mb)
     {
         mb.Entity<Empresa>(e => e.HasKey(x => x.IdEmpresa));
+
+        // Os padrões de largura × altura de cada fornecedor (sem espécie: valem para todas).
+        mb.Entity<MedidaFornecedor>(e =>
+        {
+            e.HasKey(x => x.IdMedida);
+            e.ToTable(t => t.HasCheckConstraint("CK_MEDIDA_FORNECEDOR_medidas", "[largura_m] > 0 AND [altura_m] > 0"));
+        });
+        mb.Fk<MedidaFornecedor, Empresa>(x => x.IdEmpresa);
+        mb.Fk<MedidaFornecedor, Especie>(x => x.IdEspecie);
 
         mb.Entity<Contrato>(e =>
         {
@@ -27,12 +36,10 @@ internal static class ComprasConfiguracao
         mb.Entity<NotaFiscalItem>(e => e.HasKey(x => x.IdNotaItem));
         mb.Fk<NotaFiscalItem, NotaFiscal>(x => x.IdNota);
         mb.Fk<NotaFiscalItem, Especie>(x => x.IdEspecie);
-        mb.Fk<NotaFiscalItem, TamanhoDormente>(x => x.IdTamanho);
 
         mb.Entity<OfertaFornecedor>(e => e.HasKey(x => x.IdOferta));
         mb.Fk<OfertaFornecedor, Empresa>(x => x.IdEmpresa);
         mb.Fk<OfertaFornecedor, Especie>(x => x.IdEspecie);
-        mb.Fk<OfertaFornecedor, TamanhoDormente>(x => x.IdTamanho);
 
         mb.Entity<Pedido>(e =>
         {
@@ -49,7 +56,7 @@ internal static class ComprasConfiguracao
 
         mb.Entity<PedidoItem>(e => e.HasKey(x => x.IdPedidoItem));
         mb.Fk<PedidoItem, Pedido>(x => x.IdPedido);
-        mb.Fk<PedidoItem, TamanhoDormente>(x => x.IdTamanho);
+        mb.Fk<PedidoItem, MedidaFornecedor>(x => x.IdMedida);
         mb.Fk<PedidoItem, Especie>(x => x.IdEspecie);
 
         mb.Entity<Recebimento>(e => e.HasKey(x => x.IdRecebimento));

@@ -20,4 +20,9 @@ public class CadastroRepository(ViaPermanenteContext db) : ICadastroRepository
 
     public Task AtivarEmpresa(int idEmpresa, bool ativo)
         => db.Set<Empresa>().Where(e => e.IdEmpresa == idEmpresa).ExecuteUpdateAsync(s => s.SetProperty(e => e.Ativo, ativo));
+
+    public async Task<IReadOnlyList<MedidaFornecedor>> Medidas() => await db.Set<MedidaFornecedor>().AsNoTracking().ToListAsync();
+
+    public Task AtivarMedida(int idMedida, bool ativo)
+        => db.Set<MedidaFornecedor>().Where(m => m.IdMedida == idMedida).ExecuteUpdateAsync(s => s.SetProperty(m => m.Ativo, ativo));
 }

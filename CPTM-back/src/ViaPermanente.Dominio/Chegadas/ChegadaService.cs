@@ -76,6 +76,8 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
         await chegadas.Registrar(recebimento, loteNovo, nova.Feixes.Select(f => new Feixe
         {
             NumeroFeixe = f.NumeroFeixe.Trim(), Quantidade = f.Quantidade, IdEspecie = f.IdEspecie, IdTamanho = f.IdTamanho, Classe = classes[f],
+            // O padrão de medida é o do item do pedido que o feixe atende (sem item do comprimento, o do primeiro item).
+            IdMedida = (MedidasDoPedido.ItemQueAtende(itensDoPedido, f.IdTamanho, classes[f], f.IdEspecie) ?? itensDoPedido[0]).IdMedida,
             Tratamento = Limpo(f.Tratamento), IdEmpresaTratamento = f.IdEmpresaTratamento, IdEmpresaInspecao = f.IdEmpresaInspecao,
             AnoInspecao = f.AnoInspecao
         }).ToList(), nova.Feixes.Select(f => f.IdLeituraOcr).ToList());

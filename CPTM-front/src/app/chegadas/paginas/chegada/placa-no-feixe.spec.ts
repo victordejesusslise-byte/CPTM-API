@@ -6,8 +6,8 @@ const especies: EspecieDto[] = [
   { id: 3, nomeCientifico: 'Hymenaea courbaril', familia: 'Fabaceae', nomePopular: 'Jatobá' },
 ];
 const tamanhos: TamanhoDto[] = [
-  { id: 1, comprimentoM: 2.8, larguraM: 0.24, alturaM: 0.17, volumeM3: 0.11, medidaProvisoria: false },
-  { id: 2, comprimentoM: 3, larguraM: 0.24, alturaM: 0.17, volumeM3: 0.12, medidaProvisoria: false },
+  { id: 1, comprimentoM: 2.8 },
+  { id: 2, comprimentoM: 3 },
 ];
 
 describe('feixeDaPlaca', () => {

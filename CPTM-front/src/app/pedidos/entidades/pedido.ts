@@ -1,12 +1,13 @@
 export interface LimiteDto { valido: boolean; percentual: number; unidade: string; limite: number; mensagem: string; }
-export interface PedidoItemDto { id: number; idTamanho: number; comprimentoM: number; classe: number; idEspecie: number | null; especie: string | null; quantidade: number; volumeM3: number; }
+export interface PedidoItemDto { id: number; idTamanho: number; comprimentoM: number; classe: number; idEspecie: number | null; especie: string | null; quantidade: number; volumeM3: number; idMedida: number; medida: string; }
 export interface PedidoDto {
   id: number; codigo: string; idEmpresa: number; empresa: string; idContrato: number | null; contrato: string | null;
   dataCompra: string; criadoEm: string; quantidade: number; volumeM3: number;
   status: string; situacao: string; pecasRecebidas: number; segundaClasse: LimiteDto; itens: PedidoItemDto[];
 }
 export interface PedidoHistoricoDto { id: number; data: string; idUsuario: number; motivo: string; retratoAntes: string; retratoDepois: string; }
-export interface NovoPedidoItemDto { idTamanho: number; classe: number; idEspecie?: number | null; quantidade: number; }
+/** O item do pedido: comprimento, classe, espécie opcional e o padrão de medida do fornecedor (largura × altura). */
+export interface NovoPedidoItemDto { idTamanho: number; classe: number; idEspecie?: number | null; quantidade: number; idMedida: number; }
 export interface NovoPedidoDto { codigo: string; idEmpresa: number; idContrato?: number | null; dataCompra?: string | null; itens: NovoPedidoItemDto[]; }
 export interface AvisoOfertaDto { idTamanho: number; classe: number; idEspecie: number | null; volumeM3Pedido: number; volumeM3Ofertado: number | null; mensagem: string; }
 export interface VerificacaoPedidoDto { segundaClasse: LimiteDto; oferta: AvisoOfertaDto[]; }

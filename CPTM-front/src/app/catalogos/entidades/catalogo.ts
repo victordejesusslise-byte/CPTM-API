@@ -1,4 +1,5 @@
-export interface TamanhoDto { id: number; comprimentoM: number; larguraM: number; alturaM: number; volumeM3: number; medidaProvisoria: boolean; }
+/** Um comprimento da lista fixa do código (1 = 2,80 · 2 = 3,00 · 3 = 4,00 · 4 = 4,80 m); a largura e a altura são do padrão do fornecedor. */
+export interface TamanhoDto { id: number; comprimentoM: number; }
 export interface EspecieDto { id: number; nomeCientifico: string; familia: string; nomePopular: string | null; }
 export interface PilhaDto { id: number; codigo: string; setor: string; comprimentoM: number; classe: number; pecas: number; }
 export interface ArmazemDto { id: number; nome: string; linha: string; km: number | null; pecas: number; pilhas: PilhaDto[]; }

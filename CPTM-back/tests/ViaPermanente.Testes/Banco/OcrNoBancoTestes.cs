@@ -40,13 +40,14 @@ public class OcrNoBancoTestes : IAsyncLifetime
         var fornecedor = new Empresa { Nome = "TG–Três Guri", Papel = PapelEmpresa.Fornecedor, Ativo = true };
         db.Add(fornecedor);
         await db.SaveChangesAsync();
+        var padrao = await BancoDeTeste.Padrao(db, fornecedor.IdEmpresa);
         var contrato = new Contrato { IdEmpresa = fornecedor.IdEmpresa, NumeroAta = "AR00224", NumeroContrato = "AR00224-03" };
         db.Add(contrato);
         await db.SaveChangesAsync();
         var ofertas = new OfertaService(new OfertaRepository(db), new PedidoRepository(db), new CatalogoRepository(db));
         var pedido = await new PedidoService(new PedidoRepository(db), new CatalogoRepository(db), new ParametroRepository(db), ofertas).Criar(new NovoPedidoDto
         {
-            Codigo = "PED-OCR", IdEmpresa = fornecedor.IdEmpresa, IdContrato = contrato.IdContrato, Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 28 }]
+            Codigo = "PED-OCR", IdEmpresa = fornecedor.IdEmpresa, IdContrato = contrato.IdContrato, Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 28, IdMedida = padrao }]
         }, idUsuario);
         var servico = new OcrPlacaService(new TesseractOcrRepository(Tessdata()), new FotoRepository(fotos), new LeituraOcrRepository(db),
             new PedidoRepository(db), new CatalogoRepository(db), new ParametroRepository(db));

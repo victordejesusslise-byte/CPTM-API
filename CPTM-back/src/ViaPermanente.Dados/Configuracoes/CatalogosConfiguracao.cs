@@ -58,17 +58,6 @@ internal static class CatalogosConfiguracao
         });
         mb.Fk<Parametro, Usuario>(x => x.AlteradoPor);
 
-        // Medidas provisórias até a CPTM confirmar (Medidas reais de cada tamanho).
-        mb.Entity<TamanhoDormente>(e =>
-        {
-            e.HasKey(x => x.IdTamanho);
-            e.HasIndex(x => x.ComprimentoM).IsUnique();
-            e.HasData(
-                new TamanhoDormente { IdTamanho = 1, ComprimentoM = 2.80m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true },
-                new TamanhoDormente { IdTamanho = 2, ComprimentoM = 3.00m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true },
-                new TamanhoDormente { IdTamanho = 3, ComprimentoM = 4.00m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true },
-                new TamanhoDormente { IdTamanho = 4, ComprimentoM = 4.80m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true });
-        });
     }
 
     private static Especie Especie(int id, string cientifico, string familia, string? popular)

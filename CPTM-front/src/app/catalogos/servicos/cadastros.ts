@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
 import { consulta } from '../../compartilhado/utilitarios/consulta';
 import {
-  ContratoDto, EmpresaDto, EstacaoDto, NovaEmpresaDto, NovaEstacaoDto, NovoContratoDto, NovoTrechoDto, ParametroDto, TrechoDto,
+  ContratoDto, EmpresaDto, EstacaoDto, MedidaDto, NovaEmpresaDto, NovaEstacaoDto, NovaMedidaDto, NovoContratoDto, NovoTrechoDto, ParametroDto, TrechoDto,
 } from '../entidades/cadastro';
 import { PapelEmpresa } from '../../compartilhado/entidades/enums';
 
@@ -22,6 +22,13 @@ export class Cadastros {
   }
   ativarEmpresa(id: number, ativo: boolean): Observable<void> {
     return this.http.put<void>(`${this.api}/empresas/${id}/ativo`, null, { params: consulta({ ativo }) });
+  }
+  /** Mais um padrão de medida (largura × altura) para o fornecedor. */
+  novaMedida(idEmpresa: number, dto: NovaMedidaDto): Observable<MedidaDto> {
+    return this.http.post<MedidaDto>(`${this.api}/empresas/${idEmpresa}/medidas`, dto);
+  }
+  ativarMedida(id: number, ativo: boolean): Observable<void> {
+    return this.http.put<void>(`${this.api}/medidas/${id}/ativo`, null, { params: consulta({ ativo }) });
   }
   contratos(idEmpresa?: number | null): Observable<ContratoDto[]> {
     return this.http.get<ContratoDto[]>(`${this.api}/contratos`, { params: consulta({ idEmpresa }) });

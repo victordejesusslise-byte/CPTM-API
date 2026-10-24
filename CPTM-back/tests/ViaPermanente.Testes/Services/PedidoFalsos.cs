@@ -81,9 +81,18 @@ internal class CatalogoRepositoryFalso : ICatalogoRepository
 {
     public Task<IReadOnlyList<TamanhoDormente>> ListarTamanhos() => Task.FromResult<IReadOnlyList<TamanhoDormente>>(
     [
-        new() { IdTamanho = 1, ComprimentoM = 2.80m, LarguraM = 0.24m, AlturaM = 0.17m },
-        new() { IdTamanho = 4, ComprimentoM = 4.80m, LarguraM = 0.24m, AlturaM = 0.17m }
+        new() { IdTamanho = 1, ComprimentoM = 2.80m },
+        new() { IdTamanho = 4, ComprimentoM = 4.80m }
     ]);
+    public Task<IReadOnlyList<MedidaFornecedor>> ListarMedidas() => Task.FromResult<IReadOnlyList<MedidaFornecedor>>(
+    [
+        new() { IdMedida = 1, IdEmpresa = 1, LarguraM = 0.24m, AlturaM = 0.17m, Ativo = true },
+        new() { IdMedida = 2, IdEmpresa = 1, IdEspecie = 14, LarguraM = 0.22m, AlturaM = 0.16m, Ativo = true },
+        new() { IdMedida = 3, IdEmpresa = 2, LarguraM = 0.24m, AlturaM = 0.17m, Ativo = true },
+        new() { IdMedida = 4, IdEmpresa = 1, LarguraM = 0.30m, AlturaM = 0.20m, Ativo = false }
+    ]);
+    public Task<IReadOnlyDictionary<(int IdTamanho, byte Classe), string>> CodigosErp()
+        => Task.FromResult<IReadOnlyDictionary<(int IdTamanho, byte Classe), string>>(new Dictionary<(int, byte), string>());
     public Task<IReadOnlyList<Especie>> ListarEspecies() => Task.FromResult<IReadOnlyList<Especie>>(
     [
         new() { IdEspecie = 1, NomeCientifico = "Ocotea neesiana", Familia = "Lauraceae", Ativo = true },

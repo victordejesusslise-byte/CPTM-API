@@ -1,3 +1,4 @@
+using ViaPermanente.Dominio.Catalogos.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -48,6 +49,9 @@ public class ViaPermanenteContext(DbContextOptions<ViaPermanenteContext> options
 
                 if (coluna is "classe" or "classe_exigida")
                     entidade.AddCheckConstraint($"CK_{tabela}_{coluna}", $"[{coluna}] IN (1, 2)");
+                // O comprimento é a lista fixa do código (TamanhoDormente.Todos): o banco só aceita os números dela.
+                if (coluna == "id_tamanho")
+                    entidade.AddCheckConstraint($"CK_{tabela}_id_tamanho", $"[id_tamanho] IN ({string.Join(", ", TamanhoDormente.Todos.Select(t => t.IdTamanho))})");
             }
 
             // Tabela de evento só recebe inserção: nada apaga em cascata.

@@ -137,8 +137,15 @@ details.cartao[open] summary { margin-bottom: 12px; }
 .linha-tempo .quando { font-family: var(--fonte-mono); font-size: 12px; color: var(--tinta-3); padding-top: 2px; }
 .linha-tempo .motivo { margin: 4px 0 0; font-size: 13.5px; color: var(--tinta-2); border-left: 2px solid var(--linha-2); padding-left: 10px; }
 @media (max-width: 620px) { .linha-tempo li { grid-template-columns: 1fr; } }
-.linha-item { display: grid; grid-template-columns: 1.1fr 1fr 1.2fr 100px 44px; gap: 10px; align-items: start; padding: 12px 12px 0; border: 1px solid var(--linha); border-radius: 3px; background: var(--superficie-2); margin-bottom: 10px; }
+.linha-item { display: grid; grid-template-columns: 1fr .9fr 1.2fr 1.4fr 90px 44px; gap: 10px; align-items: start; padding: 12px 12px 0; border: 1px solid var(--linha); border-radius: 3px; background: var(--superficie-2); margin-bottom: 10px; }
 @media (max-width: 760px) { .linha-item { grid-template-columns: 1fr 1fr; } }
+/* Os padrões de medida do fornecedor (Cadastros › Empresas) */
+.padroes { display: grid; gap: 6px; margin-top: 4px; }
+.campos--padrao { display: grid; grid-template-columns: 130px 130px minmax(180px, 1fr) auto; gap: 10px; align-items: start; }
+@media (max-width: 760px) { .campos--padrao { grid-template-columns: 1fr 1fr; } }
+.padroes-lista { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 2px; }
+.padroes-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.padroes-lista li.inativo { color: var(--tinta-3); }
 .tirar { width: 44px; height: 44px; margin-top: 6px; border-radius: 3px; border: 1px solid var(--linha-2); background: var(--superficie); color: var(--tinta-3); cursor: pointer; font-size: 18px; &:hover:not(:disabled) { color: var(--vermelho); border-color: var(--vermelho); } &:disabled { opacity: .4; cursor: default; } }
 .escrita { font-family: var(--fonte-mono); font-size: 11px; color: var(--tinta-3); }
 .tabela table.simples { border-collapse: collapse; width: 100%; font-size: 14px; }

@@ -15,4 +15,6 @@ public class Feixe
     public int? IdEmpresaTratamento { get; set; }
     public int? IdEmpresaInspecao { get; set; }
     public short? AnoInspecao { get; set; }
+    /// <summary>O padrão de medida do item do pedido que o feixe atende (para o m³ de cada peça).</summary>
+    public int IdMedida { get; set; }
 }

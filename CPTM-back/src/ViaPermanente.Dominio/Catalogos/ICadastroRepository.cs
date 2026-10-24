@@ -12,4 +12,6 @@ public interface ICadastroRepository
     Task<IReadOnlyList<Trecho>> Trechos();
     Task Adicionar<T>(T entidade) where T : class;
     Task AtivarEmpresa(int idEmpresa, bool ativo);
+    Task<IReadOnlyList<MedidaFornecedor>> Medidas();
+    Task AtivarMedida(int idMedida, bool ativo);
 }

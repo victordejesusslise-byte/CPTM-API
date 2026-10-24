@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using ViaPermanente.Dados;
 using ViaPermanente.Dominio.Catalogos.Models;
 using ViaPermanente.Dominio.Pecas.Models;
+using ViaPermanente.Dominio.Pedidos.Models;
 using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Testes.Banco;
@@ -47,10 +48,10 @@ public class MigracoesNoBancoTestes : IAsyncLifetime
 
         await MigrarAte("20261024004958_CodigoErpNoTamanho");
 
-        var tamanhos = await db.Set<TamanhoDormente>().AsNoTracking().ToDictionaryAsync(t => t.IdTamanho);
-        Assert.Equal("ERP-280-2A", tamanhos[1].CodigoErpClasse2);
-        Assert.Null(tamanhos[1].CodigoErpClasse1);
-        Assert.Equal("ERP-400-1A", tamanhos[3].CodigoErpClasse1);
+        string? Codigo(int id, int classe) => db.Database.SqlQueryRaw<string?>($"SELECT codigo_erp_classe{classe} AS Value FROM TAMANHO_DORMENTE WHERE id_tamanho = {id}").AsEnumerable().Single();
+        Assert.Equal("ERP-280-2A", Codigo(1, 2));
+        Assert.Null(Codigo(1, 1));
+        Assert.Equal("ERP-400-1A", Codigo(3, 1));
     }
 
     [Fact]
@@ -69,5 +70,28 @@ public class MigracoesNoBancoTestes : IAsyncLifetime
         Assert.Equal(TipoLeitor.Carro, tipos["CAR-01"]);
         // O banco só aceita os três tipos da lista.
         await Assert.ThrowsAnyAsync<Exception>(() => db.Database.ExecuteSqlRawAsync("INSERT INTO LEITOR (tipo, codigo, ativo) VALUES (4, 'X-01', 1);"));
+    }
+
+    [Fact]
+    public async Task O_tamanho_vai_para_o_codigo_e_o_fornecedor_ganha_o_padrao()
+    {
+        await MigrarAte("20261024010302_TipoLeitorNoCodigo");
+        await db.Database.ExecuteSqlRawAsync(
+            "UPDATE TAMANHO_DORMENTE SET codigo_erp_classe1 = 'ERP-280-1' WHERE id_tamanho = 1;" +
+            "INSERT INTO USUARIO (nome, email, tipo_cargo, data_cadastro, senha_hash, ativo, versao_sessao, tentativas_falhas) VALUES ('Ana', 'ana@teste.local', 'Supervisor', GETDATE(), 'h', 1, 0, 0);" +
+            "INSERT INTO EMPRESA (nome, ativo, papel) VALUES ('TG', 1, 'Fornecedor'), ('Granoski', 1, 'Tratadora');" +
+            "INSERT INTO PEDIDO (id_empresa, id_usuario, codigo, data_compra, quantidade, criado_em, status) " +
+            "SELECT e.id_empresa, u.id_usuario, 'PED-1', '2026-10-01', 10, GETDATE(), 'Aberto' FROM EMPRESA e, USUARIO u WHERE e.nome = 'TG';" +
+            "INSERT INTO PEDIDO_ITEM (id_pedido, id_tamanho, classe, quantidade) SELECT id_pedido, 4, 1, 10 FROM PEDIDO;");
+
+        await MigrarAte("20261024021234_TamanhoNoCodigoEPadraoDoFornecedor");
+
+        var padrao = await db.Set<MedidaFornecedor>().AsNoTracking().SingleAsync(); // só o fornecedor ganha padrão, não a tratadora
+        Assert.Equal((0.24m, 0.17m, (int?)null), (padrao.LarguraM, padrao.AlturaM, padrao.IdEspecie));
+        var item = await db.Set<PedidoItem>().AsNoTracking().SingleAsync();
+        Assert.Equal((4, padrao.IdMedida), (item.IdTamanho, item.IdMedida));
+        Assert.Equal("ERP-280-1", (await db.Set<Parametro>().AsNoTracking().SingleAsync(p => p.Chave == "erp_codigo_material_1_1")).Valor);
+        // O banco só aceita os comprimentos da lista do código.
+        await Assert.ThrowsAnyAsync<Exception>(() => db.Database.ExecuteSqlRawAsync($"UPDATE PEDIDO_ITEM SET id_tamanho = 9 WHERE id_pedido_item = {item.IdPedidoItem};"));
     }
 }

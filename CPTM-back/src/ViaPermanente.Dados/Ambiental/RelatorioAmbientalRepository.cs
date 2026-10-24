@@ -4,26 +4,31 @@ using ViaPermanente.Dominio.Ambiental.Models;
 using ViaPermanente.Dominio.Armazens.Models;
 using ViaPermanente.Dominio.Catalogos.Models;
 using ViaPermanente.Dominio.Chegadas.Models;
+using ViaPermanente.Dominio.Helpers;
 using ViaPermanente.Dominio.Pecas.Models;
+using ViaPermanente.Dominio.Pedidos.Models;
 
 namespace ViaPermanente.Dados.Ambiental;
 
 public class RelatorioAmbientalRepository(ViaPermanenteContext db) : IRelatorioAmbientalRepository
 {
+    /// <summary>As peças aprovadas, com o m³ de cada uma: comprimento do feixe × o padrão de medida do fornecedor que o feixe usa.</summary>
     public async Task<IReadOnlyList<PecaParaRelatorio>> Pecas()
-        => await (
+        => (await (
             from d in db.Set<Dormente>().AsNoTracking()
             where db.Set<VerificacaoQualidade>().Any(v => v.IdDormente == d.IdDormente && v.Resultado == ResultadoVerificacao.Aprovada)
             join f in db.Set<Feixe>() on d.IdFeixe equals f.IdFeixe
-            join t in db.Set<TamanhoDormente>() on f.IdTamanho equals t.IdTamanho
-            select new PecaParaRelatorio(
-                db.Set<ClassificacaoMadeira>().Where(c => c.IdDormente == d.IdDormente).OrderByDescending(c => c.IdClassificacao)
+            join m in db.Set<MedidaFornecedor>() on f.IdMedida equals m.IdMedida
+            select new
+            {
+                IdEspecie = db.Set<ClassificacaoMadeira>().Where(c => c.IdDormente == d.IdDormente).OrderByDescending(c => c.IdClassificacao)
                     .Select(c => (int?)c.IdEspecie).FirstOrDefault() ?? f.IdEspecie,
-                Math.Round(t.ComprimentoM * t.LarguraM * t.AlturaM, 5),
-                d.EntradaArmazemEm,
-                db.Set<Movimentacao>().Where(m => m.IdDormente == d.IdDormente && m.Tipo == TipoMovimentacao.Saida)
-                    .OrderBy(m => m.Data).Select(m => (DateTime?)m.Data).FirstOrDefault())
-        ).ToListAsync();
+                f.IdTamanho, m.LarguraM, m.AlturaM, d.EntradaArmazemEm,
+                Saida = db.Set<Movimentacao>().Where(x => x.IdDormente == d.IdDormente && x.Tipo == TipoMovimentacao.Saida)
+                    .OrderBy(x => x.Data).Select(x => (DateTime?)x.Data).FirstOrDefault()
+            }).ToListAsync())
+            .Select(p => new PecaParaRelatorio(p.IdEspecie, VolumeHelper.M3(TamanhoDormente.Comprimento(p.IdTamanho), p.LarguraM, p.AlturaM), p.EntradaArmazemEm, p.Saida))
+            .ToList();
 
     public async Task<IReadOnlyList<RelatorioAmbiental>> Listar(int? idRelatorio = null, DateOnly? mes = null)
         => await db.Set<RelatorioAmbiental>().AsNoTracking()

@@ -25,8 +25,9 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
     public async Task<VerificacaoPedidoDto> Verificar(VerificarPedidoDto pedido)
     {
         var tamanhos = await TamanhosAtivos();
+        var medidas = await Medidas();
         var (unidade, limite) = await LimiteVigente();
-        var segundaClasse = ParaDto(LimiteSegundaClasse.Validar(ParaLimite(pedido.Itens, tamanhos), unidade, limite));
+        var segundaClasse = ParaDto(LimiteSegundaClasse.Validar(ParaLimite(pedido.Itens, tamanhos, medidas), unidade, limite));
         var oferta = pedido.IdEmpresa is int idEmpresa ? await ofertas.Avisos(idEmpresa, pedido.Itens) : [];
         return new VerificacaoPedidoDto(segundaClasse, oferta);
     }
@@ -54,12 +55,13 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
         if (novo.Itens.Count == 0)
             throw new RegraDeNegocioException("O pedido precisa de pelo menos um item.");
         var tamanhos = await TamanhosAtivos();
+        var medidas = await Medidas();
         var especies = (await catalogo.ListarEspecies()).Where(e => e.Ativo).ToDictionary(e => e.IdEspecie);
         foreach (var item in novo.Itens)
-            ConferirItem(item, tamanhos, especies);
+            ConferirItem(item, tamanhos, especies, medidas, empresa.IdEmpresa);
 
         var (unidade, limite) = await LimiteVigente();
-        var resultado = LimiteSegundaClasse.Validar(ParaLimite(novo.Itens, tamanhos), unidade, limite);
+        var resultado = LimiteSegundaClasse.Validar(ParaLimite(novo.Itens, tamanhos, medidas), unidade, limite);
         if (!resultado.Valido)
             throw new RegraDeNegocioException(resultado.Mensagem);
 
@@ -72,7 +74,7 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
         };
         await pedidos.Criar(pedido, novo.Itens.Select(i => new PedidoItem
         {
-            IdTamanho = i.IdTamanho, Classe = i.Classe, IdEspecie = i.IdEspecie, Quantidade = i.Quantidade
+            IdTamanho = i.IdTamanho, Classe = i.Classe, IdEspecie = i.IdEspecie, Quantidade = i.Quantidade, IdMedida = i.IdMedida
         }).ToList());
 
         return (await BuscarPorId(pedido.IdPedido))!;
@@ -129,16 +131,17 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
         if (dto.Itens.Count == 0)
             throw new RegraDeNegocioException("O pedido precisa de pelo menos um item.");
         var tamanhos = await TamanhosAtivos();
+        var medidas = await Medidas();
         var especies = (await catalogo.ListarEspecies()).Where(e => e.Ativo).ToDictionary(e => e.IdEspecie);
         foreach (var item in dto.Itens)
-            ConferirItem(item, tamanhos, especies);
+            ConferirItem(item, tamanhos, especies, medidas, pedido.IdEmpresa);
         var (unidade, limite) = await LimiteVigente();
-        var resultado = LimiteSegundaClasse.Validar(ParaLimite(dto.Itens, tamanhos), unidade, limite);
+        var resultado = LimiteSegundaClasse.Validar(ParaLimite(dto.Itens, tamanhos, medidas), unidade, limite);
         if (!resultado.Valido)
             throw new RegraDeNegocioException(resultado.Mensagem);
 
         var antes = Retrato(pedido, await pedidos.Itens([idPedido]));
-        var novosItens = dto.Itens.Select(i => new PedidoItem { IdTamanho = i.IdTamanho, Classe = i.Classe, IdEspecie = i.IdEspecie, Quantidade = i.Quantidade }).ToList();
+        var novosItens = dto.Itens.Select(i => new PedidoItem { IdTamanho = i.IdTamanho, Classe = i.Classe, IdEspecie = i.IdEspecie, Quantidade = i.Quantidade, IdMedida = i.IdMedida }).ToList();
         pedido.IdContrato = dto.IdContrato;
         pedido.DataCompra = dto.DataCompra ?? pedido.DataCompra;
         pedido.Quantidade = novosItens.Sum(i => i.Quantidade);
@@ -167,6 +170,7 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
         var empresas = await pedidos.NomesEmpresas(lista.Select(p => p.IdEmpresa).Distinct().ToList());
         var contratos = await pedidos.NumerosContratos(lista.Where(p => p.IdContrato != null).Select(p => p.IdContrato!.Value).Distinct().ToList());
         var tamanhos = (await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho);
+        var medidas = await Medidas();
         var especies = (await catalogo.ListarEspecies()).ToDictionary(e => e.IdEspecie);
         var (unidade, limite) = await LimiteVigente();
 
@@ -175,11 +179,13 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
             var dele = itens[p.IdPedido].Select(i =>
             {
                 var t = tamanhos[i.IdTamanho];
+                var medida = medidas[i.IdMedida];
                 var especie = i.IdEspecie is int e && especies.TryGetValue(e, out var achada) ? achada.NomeCientifico : null;
                 return new PedidoItemDto(i.IdPedidoItem, i.IdTamanho, t.ComprimentoM, i.Classe, i.IdEspecie, especie,
-                    i.Quantidade, i.Quantidade * M3(t));
+                    i.Quantidade, i.Quantidade * VolumeHelper.M3(t.ComprimentoM, medida), i.IdMedida, MedidasDoPedido.Rotulo(medida));
             }).ToList();
-            var paraLimite = itens[p.IdPedido].Select(i => new ItemParaLimite(i.Classe, i.Quantidade, M3(tamanhos[i.IdTamanho]))).ToList();
+            var paraLimite = itens[p.IdPedido].Select(i => new ItemParaLimite(i.Classe, i.Quantidade,
+                VolumeHelper.M3(tamanhos[i.IdTamanho].ComprimentoM, medidas[i.IdMedida]))).ToList();
             var pecasRecebidas = recebidas.GetValueOrDefault(p.IdPedido);
             return new PedidoDto(p.IdPedido, p.Codigo, p.IdEmpresa, empresas.GetValueOrDefault(p.IdEmpresa, ""),
                 p.IdContrato, p.IdContrato is int c ? contratos.GetValueOrDefault(c) : null,
@@ -198,7 +204,8 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
 
     // ---------- regras dos itens e do parâmetro ----------
 
-    private static void ConferirItem(NovoPedidoItemDto item, IReadOnlyDictionary<int, TamanhoDormente> tamanhos, IReadOnlyDictionary<int, Especie> especies)
+    private static void ConferirItem(NovoPedidoItemDto item, IReadOnlyDictionary<int, TamanhoDormente> tamanhos, IReadOnlyDictionary<int, Especie> especies,
+        IReadOnlyDictionary<int, MedidaFornecedor> medidas, int idEmpresa)
     {
         if (item.Quantidade <= 0)
             throw new RegraDeNegocioException("A quantidade de cada item precisa ser maior que zero.");
@@ -211,14 +218,27 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
             // A classe vem do pedido: qualquer uma das espécies pode ser de 1ª ou de 2ª (Victor, 2026-10-16).
             _ = especies.GetValueOrDefault(idEspecie) ?? throw new RegraDeNegocioException("Espécie não encontrada.");
         }
+        // O padrão de medida tem de ser deste fornecedor, ativo, e da espécie do item (ou de todas).
+        if (!medidas.TryGetValue(item.IdMedida, out var medida) || medida.IdEmpresa != idEmpresa)
+            throw new RegraDeNegocioException("Escolha um padrão de medida deste fornecedor em cada item.");
+        if (!medida.Ativo)
+            throw new RegraDeNegocioException($"O padrão de medida {MedidasDoPedido.Rotulo(medida)} está desativado.");
+        if (medida.IdEspecie is int daMedida && daMedida != item.IdEspecie)
+            throw new RegraDeNegocioException($"O padrão de medida {MedidasDoPedido.Rotulo(medida)} é de outra espécie.");
     }
 
     private async Task<IReadOnlyDictionary<int, TamanhoDormente>> TamanhosAtivos()
         => (await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho);
 
-    private static List<ItemParaLimite> ParaLimite(IEnumerable<NovoPedidoItemDto> itens, IReadOnlyDictionary<int, TamanhoDormente> tamanhos)
+    private async Task<IReadOnlyDictionary<int, MedidaFornecedor>> Medidas()
+        => (await catalogo.ListarMedidas()).ToDictionary(m => m.IdMedida);
+
+    private static List<ItemParaLimite> ParaLimite(IEnumerable<NovoPedidoItemDto> itens, IReadOnlyDictionary<int, TamanhoDormente> tamanhos,
+        IReadOnlyDictionary<int, MedidaFornecedor> medidas)
         => itens.Select(i => new ItemParaLimite(i.Classe, i.Quantidade,
-                tamanhos.TryGetValue(i.IdTamanho, out var t) ? M3(t) : throw new RegraDeNegocioException("Tamanho de dormente não encontrado.")))
+                !tamanhos.TryGetValue(i.IdTamanho, out var t) ? throw new RegraDeNegocioException("Comprimento de dormente não encontrado.")
+                : !medidas.TryGetValue(i.IdMedida, out var m) ? throw new RegraDeNegocioException("Escolha um padrão de medida deste fornecedor em cada item.")
+                : VolumeHelper.M3(t.ComprimentoM, m)))
             .ToList();
 
     /// <summary>A unidade e o limite que valem hoje, lidos de PARAMETRO ("20" vira 0,20; "m3" ou "pecas").</summary>
@@ -236,8 +256,6 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
         };
     }
 
-    private static decimal M3(TamanhoDormente t) => VolumeHelper.M3(t.ComprimentoM, t.LarguraM, t.AlturaM);
-
     private static LimiteDto ParaDto(ResultadoLimite r)
         => new(r.Valido, Math.Round(r.Percentual * 100, 1), r.Unidade == UnidadeLimite.Pecas ? "pecas" : "m3", r.Limite * 100, r.Mensagem);
 
@@ -249,6 +267,6 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
         => JsonSerializer.Serialize(new
         {
             p.Codigo, p.IdEmpresa, p.IdContrato, p.DataCompra, p.Quantidade, Status = p.Status.ToString(),
-            Itens = itens.Select(i => new { i.IdTamanho, i.Classe, i.IdEspecie, i.Quantidade })
+            Itens = itens.Select(i => new { i.IdTamanho, i.Classe, i.IdEspecie, i.Quantidade, i.IdMedida })
         });
 }

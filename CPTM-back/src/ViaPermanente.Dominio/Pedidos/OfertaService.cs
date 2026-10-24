@@ -60,13 +60,15 @@ public class OfertaService(IOfertaRepository ofertas, IPedidoRepository pedidos,
         var vigentes = Vigentes(await ofertas.Listar(idEmpresa));
         var especies = (await catalogo.ListarEspecies()).ToDictionary(e => e.IdEspecie);
         var tamanhos = (await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho);
+        var medidas = (await catalogo.ListarMedidas()).ToDictionary(m => m.IdMedida);
         var avisos = new List<AvisoOfertaDto>();
 
         foreach (var grupo in itens.GroupBy(i => (i.IdTamanho, i.Classe, i.IdEspecie)))
         {
             if (!tamanhos.TryGetValue(grupo.Key.IdTamanho, out var tamanho))
                 continue; // tamanho inválido é recusado pela regra do pedido
-            var pedidoM3 = grupo.Sum(i => i.Quantidade) * VolumeHelper.M3(tamanho.ComprimentoM, tamanho.LarguraM, tamanho.AlturaM);
+            // O m³ de cada item vem do padrão de medida dele (item sem padrão válido é recusado pela regra do pedido).
+            var pedidoM3 = grupo.Sum(i => medidas.TryGetValue(i.IdMedida, out var m) ? i.Quantidade * VolumeHelper.M3(tamanho.ComprimentoM, m) : 0m);
             // A oferta é por espécie e tamanho; a classe vem do pedido, então qualquer espécie serve à 1ª ou à 2ª.
             var candidatas = vigentes.Where(o => o.IdTamanho == tamanho.IdTamanho && (grupo.Key.IdEspecie is not int idEspecie || o.IdEspecie == idEspecie)).ToList();
             var oQue = grupo.Key.IdEspecie is int id && especies.TryGetValue(id, out var especie)

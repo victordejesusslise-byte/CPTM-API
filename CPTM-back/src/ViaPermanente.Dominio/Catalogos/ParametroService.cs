@@ -6,8 +6,14 @@ namespace ViaPermanente.Dominio.Catalogos;
 /// <summary>Os parâmetros do sistema. Só muda o que já existe; chave nova é decisão de projeto.</summary>
 public class ParametroService(IParametroRepository parametros)
 {
+    /// <summary>Os códigos de material do ERP ficam em PARAMETRO com esta chave + comprimento + classe; são cadastrados na tela de Integração.</summary>
+    public const string PrefixoCodigoErp = "erp_codigo_material_";
+
+    public static string ChaveCodigoErp(int idTamanho, byte classe) => $"{PrefixoCodigoErp}{idTamanho}_{classe}";
+
+    /// <summary>Os parâmetros da tela de Parâmetros (os códigos do ERP ficam na tela de Integração).</summary>
     public async Task<IReadOnlyList<ParametroDto>> Listar()
-        => (await parametros.Listar()).Select(p => new ParametroDto(p.Chave, p.Valor, p.AlteradoEm)).ToList();
+        => (await parametros.Listar()).Where(p => !p.Chave.StartsWith(PrefixoCodigoErp)).Select(p => new ParametroDto(p.Chave, p.Valor, p.AlteradoEm)).ToList();
 
     /// <summary>Devolve nulo se a chave não existe.</summary>
     public async Task<ParametroDto?> Alterar(string chave, string valor, int idUsuario)

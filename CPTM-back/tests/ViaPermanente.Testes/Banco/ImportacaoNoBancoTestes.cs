@@ -46,9 +46,10 @@ public class ImportacaoNoBancoTestes : IAsyncLifetime
         var fornecedor = new Empresa { Nome = "TG–Três Guri", Papel = PapelEmpresa.Fornecedor, Ativo = true };
         db.Add(fornecedor);
         await db.SaveChangesAsync();
+        var padrao = await BancoDeTeste.Padrao(db, fornecedor.IdEmpresa);
         var ofertas = new OfertaService(new OfertaRepository(db), new PedidoRepository(db), new CatalogoRepository(db));
         await new PedidoService(new PedidoRepository(db), new CatalogoRepository(db), new ParametroRepository(db), ofertas)
-            .Criar(new NovoPedidoDto { Codigo = "PED-PL", IdEmpresa = fornecedor.IdEmpresa, Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 28 }] }, idUsuario);
+            .Criar(new NovoPedidoDto { Codigo = "PED-PL", IdEmpresa = fornecedor.IdEmpresa, Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 28, IdMedida = padrao }] }, idUsuario);
         var notas = new NotaFiscalService(new NotaFiscalRepository(db), new PedidoRepository(db), new CatalogoRepository(db), new ParametroRepository(db));
         var importacao = new ImportacaoNotaService(new PlanilhaNotaRepository(), new IntegracaoLogRepository(db), new PedidoRepository(db), new CatalogoRepository(db), notas);
 

@@ -82,7 +82,7 @@ export class CadastrarPedido {
     const dataOk = this.form.controls.dataCompra.value && this.form.controls.dataCompra.value <= this.hoje;
     if (this.form.invalid || !dataOk || !itensValidos(this.itens).length) {
       this.form.markAllAsTouched();
-      this.erro.set(!dataOk ? 'Informe a data da compra — não pode ser futura.' : 'Escolha o fornecedor e pelo menos um item com tamanho e peças.');
+      this.erro.set(!dataOk ? 'Informe a data da compra — não pode ser futura.' : 'Escolha o fornecedor e pelo menos um item com comprimento, padrão de medida e peças.');
       return;
     }
     if (this.verificacao()?.segundaClasse.valido === false) {
@@ -90,7 +90,7 @@ export class CadastrarPedido {
       return;
     }
     this.erro.set(null);
-    this.revisao.set(paraTabela(itensValidos(this.itens), this.tamanhos(), this.especies()));
+    this.revisao.set(paraTabela(itensValidos(this.itens), this.tamanhos(), this.especies(), this.fornecedor()?.medidas ?? []));
     this.passo.set('revisar');
   }
 

@@ -53,7 +53,7 @@ public class NotaFiscalService(INotaFiscalRepository notas, IPedidoRepository pe
             IdEspecie = i.IdEspecie, IdTamanho = i.IdTamanho, Classe = i.Classe, Quantidade = i.Quantidade, VolumeM3 = i.VolumeM3
         }).ToList();
         var anteriores = await notas.Itens((await notas.Notas(idPedido)).Select(n => n.IdNota).ToList());
-        var resultado = ConferenciaNota.Conferir(await pedidos.Itens([idPedido]), anteriores, itens, tamanhos, especies, await Tolerancia());
+        var resultado = ConferenciaNota.Conferir(await pedidos.Itens([idPedido]), anteriores, itens, tamanhos, especies, await Medidas(), await Tolerancia());
 
         var nota = new NotaFiscal
         {
@@ -81,6 +81,7 @@ public class NotaFiscalService(INotaFiscalRepository notas, IPedidoRepository pe
         var itens = (await notas.Itens(lista.Select(n => n.IdNota).ToList())).ToLookup(i => i.IdNota);
         var pedidoItens = await pedidos.Itens([idPedido]);
         var (tamanhos, especies) = await Catalogo();
+        var medidas = await Medidas();
         var tolerancia = await Tolerancia();
         var anteriores = new List<NotaFiscalItem>();
         var resposta = new List<NotaDto>();
@@ -88,20 +89,24 @@ public class NotaFiscalService(INotaFiscalRepository notas, IPedidoRepository pe
         foreach (var nota in lista)
         {
             var dela = itens[nota.IdNota].ToList();
-            var conferencia = ConferenciaNota.Conferir(pedidoItens, anteriores, dela, tamanhos, especies, tolerancia);
+            var conferencia = ConferenciaNota.Conferir(pedidoItens, anteriores, dela, tamanhos, especies, medidas, tolerancia);
             resposta.Add(new NotaDto(nota.IdNota, nota.IdPedido, nota.Numero, nota.DataEmissao, nota.Valor, nota.Arquivo,
                 nota.Origem.ToString(), nota.StatusConferencia.ToString(), nota.IdUsuarioConferiu, nota.DataConferencia,
                 dela.Select(i =>
                 {
                     var t = tamanhos[i.IdTamanho];
+                    var medida = MedidasDoPedido.Do(pedidoItens, medidas, i.IdTamanho, i.Classe, i.IdEspecie);
                     return new NotaItemDto(i.IdNotaItem, i.IdEspecie, especies[i.IdEspecie].NomeCientifico, i.IdTamanho, t.ComprimentoM,
-                        i.Classe, i.Quantidade, i.VolumeM3, i.Quantidade * VolumeHelper.M3(t.ComprimentoM, t.LarguraM, t.AlturaM));
+                        i.Classe, i.Quantidade, i.VolumeM3, medida is null ? 0m : i.Quantidade * VolumeHelper.M3(t.ComprimentoM, medida));
                 }).ToList(),
                 conferencia.Divergencias, conferencia.Avisos));
             anteriores.AddRange(dela);
         }
         return resposta;
     }
+
+    private async Task<IReadOnlyDictionary<int, MedidaFornecedor>> Medidas()
+        => (await catalogo.ListarMedidas()).ToDictionary(m => m.IdMedida);
 
     private async Task<(Dictionary<int, TamanhoDormente>, Dictionary<int, Especie>)> Catalogo()
         => ((await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho), (await catalogo.ListarEspecies()).ToDictionary(e => e.IdEspecie));

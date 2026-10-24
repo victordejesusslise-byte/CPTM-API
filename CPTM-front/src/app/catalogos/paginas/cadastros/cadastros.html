@@ -17,6 +17,21 @@
         <mat-form-field appearance="outline"><mat-label>Papel</mat-label>
           <mat-select [(ngModel)]="empresa.papel">@for (p of papeis; track p) { <mat-option [value]="p">{{ p }}</mat-option> }</mat-select></mat-form-field>
       </div>
+      @if (empresa.papel === 'Fornecedor') {
+        <div class="padroes">
+          <p class="lbl">Padrões de medida · largura × altura da peça (o fornecedor pode ter mais de um; o pedido escolhe em cada item)</p>
+          @for (m of empresa.medidas; track $index; let i = $index) {
+            <div class="campos--padrao">
+              <mat-form-field appearance="outline"><mat-label>Largura (m)</mat-label><input matInput class="mono" type="number" step="0.01" min="0.05" max="1" placeholder="0,24" [(ngModel)]="m.larguraM" /></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Altura (m)</mat-label><input matInput class="mono" type="number" step="0.01" min="0.05" max="1" placeholder="0,17" [(ngModel)]="m.alturaM" /></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Espécie</mat-label>
+                <mat-select [(ngModel)]="m.idEspecie"><mat-option [value]="null">Todas as espécies</mat-option>@for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }</mat-select></mat-form-field>
+              <button type="button" class="tirar" (click)="tirarPadrao(i)" [disabled]="empresa.medidas.length === 1" [attr.aria-label]="'Tirar o padrão ' + (i + 1)">×</button>
+            </div>
+          }
+          <div><button mat-stroked-button type="button" (click)="adicionarPadrao()">Adicionar padrão</button></div>
+        </div>
+      }
       <div class="acoes"><button mat-flat-button type="button" (click)="salvarEmpresa()" [disabled]="enviando()" [appCarregando]="enviando()">Cadastrar empresa</button></div>
     </section>
     <section class="cartao">
@@ -24,7 +39,26 @@
         <thead><tr><th>Nome</th><th>Papel</th><th class="so-computador">CNPJ</th><th>Situação</th><th></th></tr></thead>
         <tbody>@if (empresas.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (e of empresas.value() ?? []; track e.id) {
           <tr><td>{{ e.nome }}</td><td>{{ e.papel }}</td><td class="mono so-computador">{{ e.cnpj ?? '—' }}</td><td [class.vermelho]="!e.ativo">{{ e.ativo ? 'Ativa' : 'Inativa' }}</td>
-            <td style="text-align:right"><button mat-button type="button" (click)="ativar(e.id, !e.ativo)">{{ e.ativo ? 'Desativar' : 'Ativar' }}</button></td></tr>
+            <td style="text-align:right">
+              @if (e.papel === 'Fornecedor') { <button mat-button type="button" (click)="abrirPadroes(e.id)" [attr.aria-expanded]="padroesDe() === e.id">Padrões ({{ ativos(e) }})</button> }
+              <button mat-button type="button" (click)="ativar(e.id, !e.ativo)">{{ e.ativo ? 'Desativar' : 'Ativar' }}</button></td></tr>
+          @if (padroesDe() === e.id) {
+            <tr class="detalhe-padroes"><td colspan="5">
+              <ul class="padroes-lista">
+                @for (m of e.medidas; track m.id) {
+                  <li [class.inativo]="!m.ativo"><span class="mono">{{ m.rotulo }}</span><span>{{ m.especie ?? 'todas as espécies' }}@if (!m.ativo) { · desativado }</span>
+                    <button mat-button type="button" (click)="ativarPadrao(m.id, !m.ativo)">{{ m.ativo ? 'Desativar' : 'Ativar' }}</button></li>
+                } @empty { <li>Nenhum padrão ainda: cadastre um para poder fazer pedido deste fornecedor.</li> }
+              </ul>
+              <div class="campos--padrao">
+                <mat-form-field appearance="outline"><mat-label>Largura (m)</mat-label><input matInput class="mono" type="number" step="0.01" min="0.05" max="1" placeholder="0,24" [(ngModel)]="padrao.larguraM" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Altura (m)</mat-label><input matInput class="mono" type="number" step="0.01" min="0.05" max="1" placeholder="0,17" [(ngModel)]="padrao.alturaM" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Espécie</mat-label>
+                  <mat-select [(ngModel)]="padrao.idEspecie"><mat-option [value]="null">Todas as espécies</mat-option>@for (s of especies(); track s.id) { <mat-option [value]="s.id">{{ s.nomePopular ?? s.nomeCientifico }}</mat-option> }</mat-select></mat-form-field>
+                <button mat-flat-button type="button" (click)="salvarPadrao(e.id)" [disabled]="enviando()" [appCarregando]="enviando()">Adicionar padrão</button>
+              </div>
+            </td></tr>
+          }
         }</tbody>
       </table></div>
     </section>

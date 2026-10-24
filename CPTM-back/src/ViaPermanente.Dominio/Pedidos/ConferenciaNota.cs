@@ -8,8 +8,8 @@ namespace ViaPermanente.Dominio.Pedidos;
 /// Confere a nota fiscal com o pedido (decisões do Victor, 2026-10-11):
 /// o pedido pode vir em mais de uma nota, então a nota parcial confere; diverge se trouxer tamanho ou classe
 /// que não foi pedido, espécie que não foi pedida, classe diferente da espécie ou mais peças do que falta.
-/// O volume declarado é comparado com o do catálogo: enquanto a medida do tamanho é provisória, qualquer diferença
-/// só avisa; com a medida real, diverge acima da tolerância de PARAMETRO (nota_tolerancia_volume_pct).
+/// O volume declarado é comparado com o calculado pelo padrão de medida do fornecedor que o item do pedido escolheu
+/// (desde 2026-10-23): diverge acima da tolerância de PARAMETRO (nota_tolerancia_volume_pct).
 /// </summary>
 public static class ConferenciaNota
 {
@@ -19,6 +19,7 @@ public static class ConferenciaNota
         IReadOnlyList<NotaFiscalItem> nota,
         IReadOnlyDictionary<int, TamanhoDormente> tamanhos,
         IReadOnlyDictionary<int, Especie> especies,
+        IReadOnlyDictionary<int, MedidaFornecedor> medidas,
         decimal toleranciaVolume)
     {
         var divergencias = new List<string>();
@@ -36,18 +37,14 @@ public static class ConferenciaNota
             else if (pedidos.All(p => p.IdEspecie is not null && p.IdEspecie != item.IdEspecie))
                 divergencias.Add($"{especie.NomeCientifico} não foi pedida em {rotulo}.");
 
-            var calculado = item.Quantidade * VolumeHelper.M3(tamanho.ComprimentoM, tamanho.LarguraM, tamanho.AlturaM);
+            if (MedidasDoPedido.Do(pedido, medidas, item.IdTamanho, item.Classe, item.IdEspecie) is not { } medida)
+                continue;
+            var calculado = item.Quantidade * VolumeHelper.M3(tamanho.ComprimentoM, medida);
             var diferenca = Math.Abs(item.VolumeM3 - calculado);
-            if (calculado > 0 && Math.Round(diferenca, 3) > 0)
-            {
-                var texto = $"{rotulo}, {especie.NomeCientifico}: a nota declara {FormatoHelper.MetrosCubicos(item.VolumeM3)} " +
-                            $"e o catálogo calcula {FormatoHelper.MetrosCubicos(calculado)} " +
-                            $"({FormatoHelper.Porcento(diferenca / calculado)} de diferença).";
-                if (tamanho.MedidaProvisoria)
-                    avisos.Add($"{texto} A medida do catálogo ainda é provisória.");
-                else if (diferenca / calculado > toleranciaVolume)
-                    divergencias.Add(texto);
-            }
+            if (calculado > 0 && Math.Round(diferenca, 3) > 0 && diferenca / calculado > toleranciaVolume)
+                divergencias.Add($"{rotulo}, {especie.NomeCientifico}: a nota declara {FormatoHelper.MetrosCubicos(item.VolumeM3)} " +
+                                 $"e o padrão do fornecedor ({MedidasDoPedido.Rotulo(medida)}) dá {FormatoHelper.MetrosCubicos(calculado)} " +
+                                 $"({FormatoHelper.Porcento(diferenca / calculado)} de diferença).");
         }
 
         foreach (var grupo in nota.GroupBy(i => (i.IdTamanho, i.Classe)))

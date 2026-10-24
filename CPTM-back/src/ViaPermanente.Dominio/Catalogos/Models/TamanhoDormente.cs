@@ -1,17 +1,23 @@
 namespace ViaPermanente.Dominio.Catalogos.Models;
 
-/// <summary>TAMANHO_DORMENTE: o m³ é calculado (comprimento × largura × altura), não guardado.</summary>
+/// <summary>
+/// Os comprimentos de dormente, fixos no código (Victor, 2026-10-23: saiu a tabela TAMANHO_DORMENTE). O número é o que vai no banco
+/// (id_tamanho do feixe, do pedido, da nota, da oferta e da pilha) e na API. Comprimento novo: acrescentar em <see cref="Todos"/> e gerar a
+/// migração, que atualiza a regra do banco. A largura e a altura são do fornecedor (MEDIDA_FORNECEDOR), não do comprimento.
+/// </summary>
 public class TamanhoDormente
 {
-    public int IdTamanho { get; set; }
-    public decimal ComprimentoM { get; set; }
-    public decimal LarguraM { get; set; }
-    public decimal AlturaM { get; set; }
-    public bool MedidaProvisoria { get; set; }
-    /// <summary>O código de material do ERP para este tamanho na 1ª e na 2ª classe (era a tabela CODIGO_MATERIAL, até 2026-10-23).</summary>
-    public string? CodigoErpClasse1 { get; set; }
-    public string? CodigoErpClasse2 { get; set; }
+    public int IdTamanho { get; init; }
+    public decimal ComprimentoM { get; init; }
 
-    /// <summary>O código do ERP da classe (1 ou 2); nulo se ainda não cadastrado.</summary>
-    public string? CodigoErp(byte classe) => classe == 1 ? CodigoErpClasse1 : classe == 2 ? CodigoErpClasse2 : null;
+    public static readonly IReadOnlyList<TamanhoDormente> Todos =
+    [
+        new() { IdTamanho = 1, ComprimentoM = 2.80m },
+        new() { IdTamanho = 2, ComprimentoM = 3.00m },
+        new() { IdTamanho = 3, ComprimentoM = 4.00m },
+        new() { IdTamanho = 4, ComprimentoM = 4.80m },
+    ];
+
+    /// <summary>O comprimento do número (0 se o número não está na lista).</summary>
+    public static decimal Comprimento(int idTamanho) => Todos.FirstOrDefault(t => t.IdTamanho == idTamanho)?.ComprimentoM ?? 0m;
 }

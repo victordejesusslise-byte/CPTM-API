@@ -2,7 +2,8 @@ using ViaPermanente.Dominio.Pedidos.Models;
 
 namespace ViaPermanente.Dominio.Catalogos.Dtos;
 
-public record EmpresaDto(int Id, string Nome, string? Cnpj, string Papel, bool Ativo);
+/// <summary>A empresa; o fornecedor traz os padrões de medida dele.</summary>
+public record EmpresaDto(int Id, string Nome, string? Cnpj, string Papel, bool Ativo, IReadOnlyList<MedidaDto> Medidas);
 public record ContratoDto(int Id, int IdEmpresa, string Empresa, string NumeroAta, string NumeroContrato, DateOnly? VigenciaInicio, DateOnly? VigenciaFim);
 public record EstacaoDto(int Id, string Nome, string Linha, decimal Km, int Ordem);
 public record TrechoDto(int Id, int IdEstacaoInicio, string EstacaoInicio, int IdEstacaoFim, string EstacaoFim, byte ClasseExigida);
@@ -14,6 +15,8 @@ public class NovaEmpresaDto
     public string? Endereco { get; init; }
     public string? Telefone { get; init; }
     public PapelEmpresa Papel { get; init; }
+    /// <summary>Os padrões de medida do fornecedor (pelo menos um, se for fornecedor).</summary>
+    public IReadOnlyList<NovaMedidaDto> Medidas { get; init; } = [];
 }
 
 public class NovoContratoDto

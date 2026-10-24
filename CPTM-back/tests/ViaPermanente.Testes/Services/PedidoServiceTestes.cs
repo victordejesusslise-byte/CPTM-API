@@ -17,7 +17,7 @@ public class PedidoServiceTestes
     private static NovoPedidoDto OitoMaisDois(string codigo = "PED-1") => new()
     {
         Codigo = codigo, IdEmpresa = 1, IdContrato = 1,
-        Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 8 }, new() { IdTamanho = 4, Classe = 2, Quantidade = 2 }]
+        Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 8, IdMedida = 1 }, new() { IdTamanho = 4, Classe = 2, Quantidade = 2, IdMedida = 1 }]
     };
 
     [Fact]
@@ -44,7 +44,7 @@ public class PedidoServiceTestes
     public async Task Qualquer_especie_pode_ser_pedida_de_1a_ou_de_2a()
     {
         // A classe vem do pedido (Victor, 2026-10-16): o eucalipto (antes de 2ª) pode ser pedido de 1ª.
-        var novo = new NovoPedidoDto { Codigo = "PED-2", IdEmpresa = 1, Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 14, Quantidade = 5 }] };
+        var novo = new NovoPedidoDto { Codigo = "PED-2", IdEmpresa = 1, Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 14, Quantidade = 5, IdMedida = 1 }] };
         Assert.Null(await Record.ExceptionAsync(() => Service().Criar(novo, 1)));
     }
 
@@ -53,12 +53,12 @@ public class PedidoServiceTestes
     {
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Service("pecas").Criar(new NovoPedidoDto
         {
-            Codigo = "PED-3", IdEmpresa = 2, Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 5 }]
+            Codigo = "PED-3", IdEmpresa = 2, Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 5, IdMedida = 1 }]
         }, 1));
         repo.Empresas.Add(new() { IdEmpresa = 3, Nome = "Outro", Papel = Dominio.Pedidos.Models.PapelEmpresa.Fornecedor, Ativo = true });
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Service("pecas").Criar(new NovoPedidoDto
         {
-            Codigo = "PED-4", IdEmpresa = 3, IdContrato = 1, Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 5 }]
+            Codigo = "PED-4", IdEmpresa = 3, IdContrato = 1, Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 5, IdMedida = 1 }]
         }, 1));
     }
 
@@ -112,7 +112,7 @@ public class PedidoServiceTestes
 
         var corrigido = await Service("pecas").Corrigir(criado.Id, new CorrigirPedidoDto
         {
-            Motivo = "Fornecedor tem mais peças de 1ª", Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 40 }, new() { IdTamanho = 4, Classe = 2, Quantidade = 2 }]
+            Motivo = "Fornecedor tem mais peças de 1ª", Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 40, IdMedida = 1 }, new() { IdTamanho = 4, Classe = 2, Quantidade = 2, IdMedida = 1 }]
         }, 1);
 
         Assert.Equal(42, corrigido!.Quantidade);
@@ -127,12 +127,36 @@ public class PedidoServiceTestes
     public async Task Correcao_exige_motivo_respeita_a_segunda_classe_e_trava_na_chegada()
     {
         var criado = await Service("pecas").Criar(OitoMaisDois(), 1);
-        var acimaDoLimite = new CorrigirPedidoDto { Motivo = "x", Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 5 }, new() { IdTamanho = 1, Classe = 2, Quantidade = 5 }] };
+        var acimaDoLimite = new CorrigirPedidoDto { Motivo = "x", Itens = [new() { IdTamanho = 1, Classe = 1, Quantidade = 5, IdMedida = 1 }, new() { IdTamanho = 1, Classe = 2, Quantidade = 5, IdMedida = 1 }] };
 
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Service("pecas").Corrigir(criado.Id, new CorrigirPedidoDto { Itens = OitoMaisDois().Itens }, 1));
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Service("pecas").Corrigir(criado.Id, acimaDoLimite, 1));
         repo.Recebidas[criado.Id] = 2;
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Service("pecas").Corrigir(criado.Id, new CorrigirPedidoDto { Motivo = "tarde", Itens = OitoMaisDois().Itens }, 1));
         Assert.Null(await Service("pecas").Corrigir(999, new CorrigirPedidoDto { Motivo = "x", Itens = OitoMaisDois().Itens }, 1));
+    }
+
+    [Theory]
+    [InlineData(3, "Escolha um padrão de medida deste fornecedor")] // padrão de outra empresa
+    [InlineData(99, "Escolha um padrão de medida deste fornecedor")] // padrão que não existe
+    [InlineData(4, "está desativado")]
+    [InlineData(2, "é de outra espécie")] // o padrão 2 é só do Eucalyptus; o item é de Ocotea
+    public async Task Padrao_de_medida_errado_nao_registra(int idMedida, string mensagem)
+    {
+        var novo = new NovoPedidoDto { Codigo = "PED-PADRAO", IdEmpresa = 1, Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 5, IdMedida = idMedida }] };
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(() => Service().Criar(novo, 1));
+        Assert.Contains(mensagem, erro.Message);
+        Assert.Empty(repo.Pedidos);
+    }
+
+    [Fact]
+    public async Task O_m3_do_item_vem_do_padrao_escolhido()
+    {
+        // 10 peças de 2,80 m de Eucalyptus no padrão dele (0,22 × 0,16): 10 × 2,80 × 0,22 × 0,16 = 0,9856 m³.
+        var novo = new NovoPedidoDto { Codigo = "PED-EUC", IdEmpresa = 1, Itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 14, Quantidade = 10, IdMedida = 2 }] };
+        var pedido = await Service().Criar(novo, 1);
+        var item = Assert.Single(pedido.Itens);
+        Assert.Equal(0.9856m, item.VolumeM3);
+        Assert.Equal("0,22 × 0,16 m", item.Medida);
     }
 }

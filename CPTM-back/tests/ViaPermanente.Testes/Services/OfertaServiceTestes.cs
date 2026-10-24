@@ -31,7 +31,7 @@ public class OfertaServiceTestes
     public async Task Pedido_acima_do_ofertado_avisa()
     {
         Ofertar(1, 6m, dia: 5);
-        var avisos = await Service().Avisos(1, [new NovoPedidoItemDto { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 88 }]); // 10,05 m³
+        var avisos = await Service().Avisos(1, [new NovoPedidoItemDto { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 88, IdMedida = 1 }]); // 10,05 m³
 
         var aviso = Assert.Single(avisos);
         Assert.Equal(6m, aviso.VolumeM3Ofertado);
@@ -41,14 +41,14 @@ public class OfertaServiceTestes
     [Fact]
     public async Task Sem_oferta_do_item_avisa()
         => Assert.Contains("não tem oferta de Ocotea neesiana de 2,80 m",
-            Assert.Single(await Service().Avisos(1, [new NovoPedidoItemDto { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 5 }])).Mensagem);
+            Assert.Single(await Service().Avisos(1, [new NovoPedidoItemDto { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 5, IdMedida = 1 }])).Mensagem);
 
     [Fact]
     public async Task Item_sem_especie_soma_a_oferta_da_classe()
     {
         Ofertar(1, 1m, dia: 5);
         Ofertar(14, 50m, dia: 5); // 2ª classe: não conta para item de 1ª
-        var avisos = await Service().Avisos(1, [new NovoPedidoItemDto { IdTamanho = 1, Classe = 1, Quantidade = 5 }]); // 0,5712 m³
+        var avisos = await Service().Avisos(1, [new NovoPedidoItemDto { IdTamanho = 1, Classe = 1, Quantidade = 5, IdMedida = 1 }]); // 0,5712 m³
 
         Assert.Empty(avisos);
     }

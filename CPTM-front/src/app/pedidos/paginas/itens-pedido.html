@@ -1,10 +1,10 @@
-<p class="lbl">Itens · por tamanho e classe</p>
+<p class="lbl">Itens · comprimento, classe e o padrão de medida do fornecedor</p>
 @for (item of itens().controls; track item; let i = $index) {
   <div class="linha-item" [formGroup]="item">
     <mat-form-field appearance="outline">
-      <mat-label>Tamanho</mat-label>
+      <mat-label>Comprimento</mat-label>
       <mat-select formControlName="idTamanho">
-        @for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }} · {{ m3(t.volumeM3) }}</mat-option> }
+        @for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline">
@@ -20,6 +20,14 @@
         <mat-option [value]="null">Qualquer da classe</mat-option>
         @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }
       </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Padrão (largura × altura)</mat-label>
+      <mat-select formControlName="idMedida">
+        @for (m of padroes(item); track m.id) { <mat-option [value]="m.id">{{ rotulo(m) }}@if (!m.ativo) { · desativado }</mat-option> }
+      </mat-select>
+      @if (!idEmpresa()) { <mat-hint>Escolha o fornecedor</mat-hint> }
+      @else if (!padroes(item).length) { <mat-hint>Sem padrão para esta espécie: cadastre em Cadastros › Empresas</mat-hint> }
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Peças</mat-label>

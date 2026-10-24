@@ -32,12 +32,13 @@ public class NotaEOfertaNoBancoTestes : IAsyncLifetime
         var fornecedor = new Empresa { Nome = "TG–Três Guri", Papel = PapelEmpresa.Fornecedor, Ativo = true };
         db.Add(fornecedor);
         await db.SaveChangesAsync();
+        var padrao = await BancoDeTeste.Padrao(db, fornecedor.IdEmpresa);
         var ofertas = new OfertaService(new OfertaRepository(db), new PedidoRepository(db), new CatalogoRepository(db));
         var pedidos = new PedidoService(new PedidoRepository(db), new CatalogoRepository(db), new ParametroRepository(db), ofertas);
         var notas = new NotaFiscalService(new NotaFiscalRepository(db), new PedidoRepository(db), new CatalogoRepository(db), new ParametroRepository(db));
 
         await ofertas.Registrar(new NovaOfertaDto { IdEmpresa = fornecedor.IdEmpresa, IdEspecie = 1, IdTamanho = 1, VolumeM3Disponivel = 2m });
-        List<NovoPedidoItemDto> itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 28 }]; // 3,19872 m³
+        List<NovoPedidoItemDto> itens = [new() { IdTamanho = 1, Classe = 1, IdEspecie = 1, Quantidade = 28, IdMedida = padrao }]; // 3,19872 m³
         var verificacao = await pedidos.Verificar(new VerificarPedidoDto { IdEmpresa = fornecedor.IdEmpresa, Itens = itens });
         var pedido = await pedidos.Criar(new NovoPedidoDto { Codigo = "PED-NF-1", IdEmpresa = fornecedor.IdEmpresa, Itens = itens }, idUsuario);
 

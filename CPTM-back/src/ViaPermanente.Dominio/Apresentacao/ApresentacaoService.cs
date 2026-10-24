@@ -62,8 +62,7 @@ public class ApresentacaoService(IApresentacaoRepository repo)
         await repo.EmTransacao(async () =>
         {
             // Catálogo: o que o exemplo precisa já estar no banco.
-            var tamanho = await repo.Primeiro<TamanhoDormente>(t => t.ComprimentoM == 2.80m)
-                ?? throw new RegraDeNegocioException("Falta o tamanho de 2,80 m no catálogo.");
+            var tamanho = TamanhoDormente.Todos.First(t => t.ComprimentoM == 2.80m);
             var especies = new List<Especie>();
             foreach (var nome in EspeciesDoExemplo)
                 especies.Add(await repo.Primeiro<Especie>(e => e.NomeCientifico == nome)
@@ -79,6 +78,7 @@ public class ApresentacaoService(IApresentacaoRepository repo)
             var inspetora = await EmpresaDoExemplo("UFV", PapelEmpresa.Inspetora);
             var contrato = await repo.Primeiro<Contrato>(c => c.NumeroContrato == NumeroContrato)
                 ?? await repo.Adicionar(new Contrato { IdEmpresa = fornecedor.IdEmpresa, NumeroAta = "AR00224", NumeroContrato = NumeroContrato });
+            var padrao = await PadraoDoFornecedor(fornecedor);
 
             // 1. Pedido e nota fiscal.
             var total = PecasPorFeixe * especies.Count;
@@ -88,14 +88,14 @@ public class ApresentacaoService(IApresentacaoRepository repo)
                 Codigo = $"EX-{sufixo}", DataCompra = DateOnly.FromDateTime(agora), Quantidade = total,
                 CriadoEm = agora, Status = StatusPedido.Aberto
             });
-            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = pedido.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = total } });
+            await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = pedido.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = total, IdMedida = padrao.IdMedida } });
             var nota = await repo.Adicionar(new NotaFiscal
             {
                 IdPedido = pedido.IdPedido, Numero = $"NF-{sufixo}", DataEmissao = DateOnly.FromDateTime(agora),
                 Origem = OrigemNota.Manual, StatusConferencia = StatusConferenciaNota.Confere,
                 IdUsuarioConferiu = idUsuario, DataConferencia = agora
             });
-            var m3PorPeca = VolumeHelper.M3(tamanho.ComprimentoM, tamanho.LarguraM, tamanho.AlturaM);
+            var m3PorPeca = VolumeHelper.M3(tamanho.ComprimentoM, padrao);
             await repo.AdicionarVarios(especies.Select(e => new NotaFiscalItem
             {
                 IdNota = nota.IdNota, IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = 1,
@@ -117,7 +117,7 @@ public class ApresentacaoService(IApresentacaoRepository repo)
             var feixes = especies.Select((e, i) => new Feixe
             {
                 IdRecebimento = recebimento.IdRecebimento, NumeroFeixe = $"{i + 1:00}", Quantidade = PecasPorFeixe,
-                IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = 1, Tratamento = "CCA",
+                IdEspecie = e.IdEspecie, IdTamanho = tamanho.IdTamanho, Classe = 1, Tratamento = "CCA", IdMedida = padrao.IdMedida,
                 IdEmpresaTratamento = tratadora.IdEmpresa, IdEmpresaInspecao = inspetora.IdEmpresa, AnoInspecao = (short)agora.Year
             }).ToList();
             await repo.AdicionarVarios(feixes);
@@ -182,6 +182,11 @@ public class ApresentacaoService(IApresentacaoRepository repo)
     private async Task<Empresa> EmpresaDoExemplo(string nome, PapelEmpresa papel)
         => await repo.Primeiro<Empresa>(e => e.Nome == nome && e.Papel == papel)
             ?? await repo.Adicionar(new Empresa { Nome = nome, Papel = papel, Ativo = true });
+
+    /// <summary>O padrão de medida do fornecedor do exemplo (0,24 × 0,17 m, para todas as espécies), criado uma vez.</summary>
+    private async Task<MedidaFornecedor> PadraoDoFornecedor(Empresa fornecedor)
+        => await repo.Primeiro<MedidaFornecedor>(m => m.IdEmpresa == fornecedor.IdEmpresa && m.IdEspecie == null && m.Ativo)
+            ?? await repo.Adicionar(new MedidaFornecedor { IdEmpresa = fornecedor.IdEmpresa, LarguraM = 0.24m, AlturaM = 0.17m, Ativo = true });
 
     /// <summary>A 6ª peça tem rachadura grave e a 20ª, ataque biológico; as outras passam.</summary>
     private static VerificacaoQualidade Verificar(int idDormente, int n, int idUsuario, DateTime agora, string sufixo)

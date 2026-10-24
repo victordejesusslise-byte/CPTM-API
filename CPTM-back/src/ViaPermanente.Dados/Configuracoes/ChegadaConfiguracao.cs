@@ -15,7 +15,7 @@ internal static class ChegadaConfiguracao
         mb.Entity<Feixe>(e => e.HasKey(x => x.IdFeixe));
         mb.Fk<Feixe, Recebimento>(x => x.IdRecebimento);
         mb.Fk<Feixe, Especie>(x => x.IdEspecie);
-        mb.Fk<Feixe, TamanhoDormente>(x => x.IdTamanho);
+        mb.Fk<Feixe, MedidaFornecedor>(x => x.IdMedida);
         mb.Fk<Feixe, Empresa>(x => x.IdEmpresaTratamento);
         mb.Fk<Feixe, Empresa>(x => x.IdEmpresaInspecao);
 

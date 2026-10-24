@@ -446,14 +446,14 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasKey("IdPilha");
 
-                    b.HasIndex("IdTamanho");
-
                     b.HasIndex("IdArmazem", "Codigo")
                         .IsUnique();
 
                     b.ToTable("PILHA", t =>
                         {
                             t.HasCheckConstraint("CK_PILHA_classe", "[classe] IN (1, 2)");
+
+                            t.HasCheckConstraint("CK_PILHA_id_tamanho", "[id_tamanho] IN (1, 2, 3, 4)");
                         });
 
                     b.HasData(
@@ -1675,86 +1675,6 @@ namespace ViaPermanente.Dados.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ViaPermanente.Dominio.Catalogos.Models.TamanhoDormente", b =>
-                {
-                    b.Property<int>("IdTamanho")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id_tamanho");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdTamanho"));
-
-                    b.Property<decimal>("AlturaM")
-                        .HasPrecision(5, 3)
-                        .HasColumnType("decimal(5,3)")
-                        .HasColumnName("altura_m");
-
-                    b.Property<string>("CodigoErpClasse1")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("codigo_erp_classe1");
-
-                    b.Property<string>("CodigoErpClasse2")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("codigo_erp_classe2");
-
-                    b.Property<decimal>("ComprimentoM")
-                        .HasPrecision(5, 3)
-                        .HasColumnType("decimal(5,3)")
-                        .HasColumnName("comprimento_m");
-
-                    b.Property<decimal>("LarguraM")
-                        .HasPrecision(5, 3)
-                        .HasColumnType("decimal(5,3)")
-                        .HasColumnName("largura_m");
-
-                    b.Property<bool>("MedidaProvisoria")
-                        .HasColumnType("bit")
-                        .HasColumnName("medida_provisoria");
-
-                    b.HasKey("IdTamanho");
-
-                    b.HasIndex("ComprimentoM")
-                        .IsUnique();
-
-                    b.ToTable("TAMANHO_DORMENTE");
-
-                    b.HasData(
-                        new
-                        {
-                            IdTamanho = 1,
-                            AlturaM = 0.17m,
-                            ComprimentoM = 2.80m,
-                            LarguraM = 0.24m,
-                            MedidaProvisoria = true
-                        },
-                        new
-                        {
-                            IdTamanho = 2,
-                            AlturaM = 0.17m,
-                            ComprimentoM = 3.00m,
-                            LarguraM = 0.24m,
-                            MedidaProvisoria = true
-                        },
-                        new
-                        {
-                            IdTamanho = 3,
-                            AlturaM = 0.17m,
-                            ComprimentoM = 4.00m,
-                            LarguraM = 0.24m,
-                            MedidaProvisoria = true
-                        },
-                        new
-                        {
-                            IdTamanho = 4,
-                            AlturaM = 0.17m,
-                            ComprimentoM = 4.80m,
-                            LarguraM = 0.24m,
-                            MedidaProvisoria = true
-                        });
-                });
-
             modelBuilder.Entity("ViaPermanente.Dominio.Chegadas.Models.Feixe", b =>
                 {
                     b.Property<int>("IdFeixe")
@@ -1783,6 +1703,10 @@ namespace ViaPermanente.Dados.Migrations
                     b.Property<int>("IdEspecie")
                         .HasColumnType("int")
                         .HasColumnName("id_especie");
+
+                    b.Property<int>("IdMedida")
+                        .HasColumnType("int")
+                        .HasColumnName("id_medida");
 
                     b.Property<int>("IdRecebimento")
                         .HasColumnType("int")
@@ -1815,13 +1739,15 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasIndex("IdEspecie");
 
-                    b.HasIndex("IdRecebimento");
+                    b.HasIndex("IdMedida");
 
-                    b.HasIndex("IdTamanho");
+                    b.HasIndex("IdRecebimento");
 
                     b.ToTable("FEIXE", t =>
                         {
                             t.HasCheckConstraint("CK_FEIXE_classe", "[classe] IN (1, 2)");
+
+                            t.HasCheckConstraint("CK_FEIXE_id_tamanho", "[id_tamanho] IN (1, 2, 3, 4)");
                         });
                 });
 
@@ -2873,6 +2799,49 @@ namespace ViaPermanente.Dados.Migrations
                     b.ToTable("EMPRESA");
                 });
 
+            modelBuilder.Entity("ViaPermanente.Dominio.Pedidos.Models.MedidaFornecedor", b =>
+                {
+                    b.Property<int>("IdMedida")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id_medida");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdMedida"));
+
+                    b.Property<decimal>("AlturaM")
+                        .HasPrecision(5, 3)
+                        .HasColumnType("decimal(5,3)")
+                        .HasColumnName("altura_m");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("bit")
+                        .HasColumnName("ativo");
+
+                    b.Property<int>("IdEmpresa")
+                        .HasColumnType("int")
+                        .HasColumnName("id_empresa");
+
+                    b.Property<int?>("IdEspecie")
+                        .HasColumnType("int")
+                        .HasColumnName("id_especie");
+
+                    b.Property<decimal>("LarguraM")
+                        .HasPrecision(5, 3)
+                        .HasColumnType("decimal(5,3)")
+                        .HasColumnName("largura_m");
+
+                    b.HasKey("IdMedida");
+
+                    b.HasIndex("IdEmpresa");
+
+                    b.HasIndex("IdEspecie");
+
+                    b.ToTable("MEDIDA_FORNECEDOR", t =>
+                        {
+                            t.HasCheckConstraint("CK_MEDIDA_FORNECEDOR_medidas", "[largura_m] > 0 AND [altura_m] > 0");
+                        });
+                });
+
             modelBuilder.Entity("ViaPermanente.Dominio.Pedidos.Models.NotaFiscal", b =>
                 {
                     b.Property<int>("IdNota")
@@ -2975,11 +2944,11 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasIndex("IdNota");
 
-                    b.HasIndex("IdTamanho");
-
                     b.ToTable("NOTA_FISCAL_ITEM", t =>
                         {
                             t.HasCheckConstraint("CK_NOTA_FISCAL_ITEM_classe", "[classe] IN (1, 2)");
+
+                            t.HasCheckConstraint("CK_NOTA_FISCAL_ITEM_id_tamanho", "[id_tamanho] IN (1, 2, 3, 4)");
                         });
                 });
 
@@ -3019,9 +2988,10 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasIndex("IdEspecie");
 
-                    b.HasIndex("IdTamanho");
-
-                    b.ToTable("OFERTA_FORNECEDOR");
+                    b.ToTable("OFERTA_FORNECEDOR", t =>
+                        {
+                            t.HasCheckConstraint("CK_OFERTA_FORNECEDOR_id_tamanho", "[id_tamanho] IN (1, 2, 3, 4)");
+                        });
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pedidos.Models.Pedido", b =>
@@ -3146,6 +3116,10 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("int")
                         .HasColumnName("id_especie");
 
+                    b.Property<int>("IdMedida")
+                        .HasColumnType("int")
+                        .HasColumnName("id_medida");
+
                     b.Property<int>("IdPedido")
                         .HasColumnType("int")
                         .HasColumnName("id_pedido");
@@ -3162,13 +3136,15 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasIndex("IdEspecie");
 
-                    b.HasIndex("IdPedido");
+                    b.HasIndex("IdMedida");
 
-                    b.HasIndex("IdTamanho");
+                    b.HasIndex("IdPedido");
 
                     b.ToTable("PEDIDO_ITEM", t =>
                         {
                             t.HasCheckConstraint("CK_PEDIDO_ITEM_classe", "[classe] IN (1, 2)");
+
+                            t.HasCheckConstraint("CK_PEDIDO_ITEM_id_tamanho", "[id_tamanho] IN (1, 2, 3, 4)");
                         });
                 });
 
@@ -3763,12 +3739,6 @@ namespace ViaPermanente.Dados.Migrations
                         .HasForeignKey("IdArmazem")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("ViaPermanente.Dominio.Catalogos.Models.TamanhoDormente", null)
-                        .WithMany()
-                        .HasForeignKey("IdTamanho")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Campo.Models.Alerta", b =>
@@ -3940,15 +3910,15 @@ namespace ViaPermanente.Dados.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ViaPermanente.Dominio.Pedidos.Models.Recebimento", null)
+                    b.HasOne("ViaPermanente.Dominio.Pedidos.Models.MedidaFornecedor", null)
                         .WithMany()
-                        .HasForeignKey("IdRecebimento")
+                        .HasForeignKey("IdMedida")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ViaPermanente.Dominio.Catalogos.Models.TamanhoDormente", null)
+                    b.HasOne("ViaPermanente.Dominio.Pedidos.Models.Recebimento", null)
                         .WithMany()
-                        .HasForeignKey("IdTamanho")
+                        .HasForeignKey("IdRecebimento")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -4193,6 +4163,20 @@ namespace ViaPermanente.Dados.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ViaPermanente.Dominio.Pedidos.Models.MedidaFornecedor", b =>
+                {
+                    b.HasOne("ViaPermanente.Dominio.Pedidos.Models.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("IdEmpresa")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ViaPermanente.Dominio.Catalogos.Models.Especie", null)
+                        .WithMany()
+                        .HasForeignKey("IdEspecie")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("ViaPermanente.Dominio.Pedidos.Models.NotaFiscal", b =>
                 {
                     b.HasOne("ViaPermanente.Dominio.Pedidos.Models.Pedido", null)
@@ -4220,12 +4204,6 @@ namespace ViaPermanente.Dados.Migrations
                         .HasForeignKey("IdNota")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("ViaPermanente.Dominio.Catalogos.Models.TamanhoDormente", null)
-                        .WithMany()
-                        .HasForeignKey("IdTamanho")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pedidos.Models.OfertaFornecedor", b =>
@@ -4239,12 +4217,6 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasOne("ViaPermanente.Dominio.Catalogos.Models.Especie", null)
                         .WithMany()
                         .HasForeignKey("IdEspecie")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ViaPermanente.Dominio.Catalogos.Models.TamanhoDormente", null)
-                        .WithMany()
-                        .HasForeignKey("IdTamanho")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -4291,15 +4263,15 @@ namespace ViaPermanente.Dados.Migrations
                         .HasForeignKey("IdEspecie")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("ViaPermanente.Dominio.Pedidos.Models.Pedido", null)
+                    b.HasOne("ViaPermanente.Dominio.Pedidos.Models.MedidaFornecedor", null)
                         .WithMany()
-                        .HasForeignKey("IdPedido")
+                        .HasForeignKey("IdMedida")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ViaPermanente.Dominio.Catalogos.Models.TamanhoDormente", null)
+                    b.HasOne("ViaPermanente.Dominio.Pedidos.Models.Pedido", null)
                         .WithMany()
-                        .HasForeignKey("IdTamanho")
+                        .HasForeignKey("IdPedido")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

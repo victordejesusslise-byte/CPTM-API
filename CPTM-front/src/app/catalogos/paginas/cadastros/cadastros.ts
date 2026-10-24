@@ -1,13 +1,19 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { TIPOS_LEITOR } from '../../entidades/catalogo';
+import { EmpresaDto } from '../../entidades/cadastro';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { data, dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { PapelEmpresa } from '../../../compartilhado/entidades/enums';
 import { Cadastros as CadastrosApi } from '../../servicos/cadastros';
 import { Catalogos } from '../../servicos/catalogos';
 import { FORMULARIO } from '../../../compartilhado/ui';
+
+/** Um padrão de medida no formulário (largura e altura em metros; sem espécie, vale para todas). */
+const novoPadrao = () => ({ idEspecie: null as number | null, larguraM: null as number | null, alturaM: null as number | null });
+const padraoValido = (p: { larguraM: number | null; alturaM: number | null }) =>
+  p.larguraM !== null && p.alturaM !== null && p.larguraM >= 0.05 && p.larguraM <= 1 && p.alturaM >= 0.05 && p.alturaM <= 1;
 
 type Aba = 'empresas' | 'contratos' | 'via' | 'parametros' | 'leitores';
 const TITULOS: Record<Aba, string> = { empresas: 'Empresas', contratos: 'Contratos', via: 'Estações e trechos', parametros: 'Parâmetros', leitores: 'Leitores de tag' };
@@ -38,7 +44,12 @@ export class Cadastros {
   protected readonly papeis: PapelEmpresa[] = ['Fornecedor', 'Tratadora', 'Inspetora'];
 
   // formulários (um objeto por aba)
-  protected readonly empresa = { nome: '', cnpj: '', papel: 'Fornecedor' as PapelEmpresa };
+  protected readonly empresa = { nome: '', cnpj: '', papel: 'Fornecedor' as PapelEmpresa, medidas: [novoPadrao()] };
+  /** O fornecedor com os padrões de medida abertos na tabela. */
+  protected readonly padroesDe = signal<number | null>(null);
+  protected readonly padrao = novoPadrao();
+  protected readonly especies = toSignal(inject(Catalogos).especies(), { initialValue: [] });
+  protected readonly ativos = (e: EmpresaDto) => e.medidas.filter((m) => m.ativo).length;
   protected readonly contrato = { idEmpresa: 0, numeroAta: '', numeroContrato: '', vigenciaInicio: '', vigenciaFim: '' };
   protected readonly estacao = { nome: '', linha: '9-Esmeralda', km: null as number | null, ordem: null as number | null };
   protected readonly trecho = { idEstacaoInicio: 0, idEstacaoFim: 0, classeExigida: 1 };
@@ -50,11 +61,41 @@ export class Cadastros {
 
   protected salvarEmpresa(): void {
     if (!this.empresa.nome.trim()) return this.erro.set('Informe o nome da empresa.');
-    this.enviar(this.api.novaEmpresa({ nome: this.empresa.nome.trim(), cnpj: this.empresa.cnpj.trim() || null, papel: this.empresa.papel }), 'Empresa cadastrada.', () => {
+    const fornecedor = this.empresa.papel === 'Fornecedor';
+    if (fornecedor && !this.empresa.medidas.every(padraoValido)) return this.erro.set('Informe a largura e a altura de cada padrão de medida, de 0,05 a 1 m.');
+    const medidas = fornecedor ? this.empresa.medidas.map((m) => ({ idEspecie: m.idEspecie, larguraM: m.larguraM!, alturaM: m.alturaM! })) : [];
+    this.enviar(this.api.novaEmpresa({ nome: this.empresa.nome.trim(), cnpj: this.empresa.cnpj.trim() || null, papel: this.empresa.papel, medidas }), 'Empresa cadastrada.', () => {
       this.empresa.nome = '';
       this.empresa.cnpj = '';
+      this.empresa.medidas = [novoPadrao()];
       this.empresas.reload();
     });
+  }
+
+  protected adicionarPadrao(): void {
+    this.empresa.medidas.push(novoPadrao());
+  }
+
+  protected tirarPadrao(i: number): void {
+    if (this.empresa.medidas.length > 1) this.empresa.medidas.splice(i, 1);
+  }
+
+  protected abrirPadroes(id: number): void {
+    this.padroesDe.update((atual) => (atual === id ? null : id));
+    Object.assign(this.padrao, novoPadrao());
+  }
+
+  protected salvarPadrao(idEmpresa: number): void {
+    const p = this.padrao;
+    if (!padraoValido(p)) return this.erro.set('Informe a largura e a altura do padrão, de 0,05 a 1 m.');
+    this.enviar(this.api.novaMedida(idEmpresa, { idEspecie: p.idEspecie, larguraM: p.larguraM!, alturaM: p.alturaM! }), 'Padrão de medida cadastrado.', () => {
+      Object.assign(p, novoPadrao());
+      this.empresas.reload();
+    });
+  }
+
+  protected ativarPadrao(id: number, ativo: boolean): void {
+    this.enviar(this.api.ativarMedida(id, ativo), ativo ? 'Padrão ativado.' : 'Padrão desativado: ele some da escolha do pedido.', () => this.empresas.reload());
   }
 
   protected ativar(id: number, ativo: boolean): void {
