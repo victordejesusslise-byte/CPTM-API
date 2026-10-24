@@ -25,9 +25,9 @@ android {
             def arquivo = System.getenv("APK_CHAVE_ARQUIVO")
             if (arquivo) {
                 storeFile file(arquivo)
-                storePassword System.getenv("APK_SENHA")
-                keyAlias System.getenv("APK_ALIAS")
-                keyPassword System.getenv("APK_SENHA")
+                storePassword System.getenv("APK_SENHA")?.trim()
+                keyAlias System.getenv("APK_ALIAS")?.trim()
+                keyPassword System.getenv("APK_SENHA")?.trim()
             }
         }
     }

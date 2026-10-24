@@ -47,12 +47,34 @@ jobs:
           APK_CHAVE: ${{ secrets.APK_CHAVE }}
           APK_SENHA: ${{ secrets.APK_SENHA }}
           APK_ALIAS: ${{ secrets.APK_ALIAS }}
+          # Só para explicar o erro quando a chave não abre (não são segredos): a impressão digital do arquivo da chave do PC e os tamanhos certos.
+          CHAVE_CERTA_SHA256: ed9e0417975bf569e9f4de5947856803bb25adf24c1f80b88d2e3caaf4e11802
+          CHAVE_CERTA_TEXTO: 3464
+          SENHA_CERTA_TAMANHO: 24
+          ALIAS_CERTO_TAMANHO: 5
         run: |
           set -o pipefail
           if [ -n "$APK_CHAVE" ]; then
-            echo "$APK_CHAVE" | base64 -d > "$RUNNER_TEMP/ybyra.jks" || { echo "::error::O segredo APK_CHAVE não é um texto base64 válido: cole de novo o texto do arquivo da chave."; exit 1; }
-            # Confere a chave antes do Gradle: a senha e o apelido têm de abrir o arquivo.
-            keytool -list -keystore "$RUNNER_TEMP/ybyra.jks" -storepass "$APK_SENHA" -alias "$APK_ALIAS" > /dev/null 2>&1 || { echo "::error::A chave não abre com APK_SENHA e APK_ALIAS: confira os três segredos (APK_CHAVE, APK_SENHA, APK_ALIAS)."; exit 1; }
+            # Espaço e quebra de linha colados sem querer (no celular é comum) não contam.
+            texto="$(printf '%s' "$APK_CHAVE" | tr -d ' \r\n')"
+            senha="$(printf '%s' "$APK_SENHA" | tr -d '\r\n')"
+            apelido="$(printf '%s' "$APK_ALIAS" | tr -d ' \r\n')"
+            printf '%s' "$texto" | base64 -d > "$RUNNER_TEMP/ybyra.jks" || { echo "::error::O segredo APK_CHAVE não é um texto base64 válido: cole de novo o texto do arquivo da chave."; exit 1; }
+            # Confere a chave antes do Gradle: a senha e o apelido têm de abrir o arquivo. Se não abrem, diz qual segredo está errado.
+            if ! keytool -list -keystore "$RUNNER_TEMP/ybyra.jks" -storepass "$senha" -alias "$apelido" > /dev/null 2>&1; then
+              if [ "$(sha256sum "$RUNNER_TEMP/ybyra.jks" | cut -d' ' -f1)" = "$CHAVE_CERTA_SHA256" ]; then
+                echo "::error::APK_CHAVE está certo."
+              else
+                echo "::error::APK_CHAVE não é a chave do PC: veio com ${#texto} caracteres (o certo tem $CHAVE_CERTA_TEXTO). Cole de novo o texto do arquivo 'APK_CHAVE - colar de novo.txt'."
+              fi
+              [ "${#senha}" -eq "$SENHA_CERTA_TAMANHO" ] || echo "::error::APK_SENHA tem ${#senha} caracteres (o certo tem $SENHA_CERTA_TAMANHO)."
+              [ "${#apelido}" -eq "$ALIAS_CERTO_TAMANHO" ] || echo "::error::APK_ALIAS tem ${#apelido} caracteres (o certo tem $ALIAS_CERTO_TAMANHO)."
+              if [ "${#senha}" -eq "$SENHA_CERTA_TAMANHO" ] && [ "${#apelido}" -eq "$ALIAS_CERTO_TAMANHO" ]; then
+                echo "::error::A senha e o apelido têm o tamanho certo: confira letra por letra (maiúscula e minúscula contam)."
+              fi
+              echo "::error::A chave não abre com APK_SENHA e APK_ALIAS."
+              exit 1
+            fi
             echo "APK_CHAVE_ARQUIVO=$RUNNER_TEMP/ybyra.jks" >> "$GITHUB_ENV"
           else
             echo "::warning::Sem o segredo APK_CHAVE: o APK sai com a chave de teste (não instala por cima de outra versão)."
