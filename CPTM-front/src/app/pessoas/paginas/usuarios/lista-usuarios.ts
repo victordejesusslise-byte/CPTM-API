@@ -7,6 +7,7 @@ import { Usuarios } from '../../servicos/usuarios';
 import { Sessao } from '../../../nucleo/sessao/sessao';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 
 /**
  * Usuários → Usuários cadastrados (supervisor). Desativar derruba na hora as sessões abertas da conta (segurança, 2026-10-18);
@@ -14,7 +15,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
  */
 @Component({
   selector: 'app-lista-usuarios',
-  imports: [RouterLink, Estado, FORMULARIO],
+  imports: [CartoesNoCelular, RouterLink, Estado, FORMULARIO],
   template: `
     <p class="sobre">Supervisão</p>
     <h1>Usuários cadastrados</h1>

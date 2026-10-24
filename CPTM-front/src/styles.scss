@@ -177,6 +177,7 @@ details.cartao[open] summary { margin-bottom: 12px; }
   table.cartoes tbody td[data-titulo]:not(:first-child):not(.destaque)::before { content: attr(data-titulo); margin-right: 6px; color: var(--tinta-3); font-family: var(--fonte-texto); font-size: 13px; font-weight: 400; }
   table.cartoes tbody td[data-titulo]:has(input, select, textarea)::before { display: block; margin: 0 0 4px; }
   table.cartoes tbody td:empty { display: none; }
+  table.cartoes tbody td.mono, table.cartoes tbody td .mono { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   table.cartoes tbody tr.clicavel:active { background: var(--superficie-2); }
 }
 .pedido-aberto { margin-bottom: 20px; }

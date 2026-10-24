@@ -9,11 +9,12 @@ import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { Pecas } from '../../servicos/pecas';
 import { LeituraTag } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
 /** Consultar a peça pela tag: onde está e tudo o que aconteceu com ela. */
 @Component({
   selector: 'app-consulta-peca',
-  imports: [Esqueleto, FORMULARIO, LeituraTag, Nota],
+  imports: [LegivelPipe, Esqueleto, FORMULARIO, LeituraTag, Nota],
   template: `
     <p class="sobre">Peça</p>
     <h1>Consultar peça</h1>
@@ -24,7 +25,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
     @if (!buscando() && peca(); as p) {
       <div class="cartao">
         <h2 class="mono">{{ p.codigo }}</h2>
-        <p>{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª classe · <span class="etiqueta">{{ p.situacao }}</span> <app-nota [nota]="p.nota" /></p>
+        <p>{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª classe · <span class="etiqueta">{{ p.situacao | legivel }}</span> <app-nota [nota]="p.nota" /></p>
         <p class="rotulo">Tag {{ p.tag ?? '—' }} · feixe {{ p.numeroFeixe }} · {{ p.armazem }} · pilha {{ p.pilha ?? '—' }}
           @if (p.kmProjeto !== null) { · km {{ km(p.kmProjeto) }} }
           @if (p.posicao) { · posição <b class="mono">{{ p.posicao }}</b> }</p>
@@ -54,7 +55,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
       <h2>Histórico</h2>
       @if (historico.isLoading()) { <app-esqueleto tipo="lista" [quantidade]="3" rotulo="Carregando o histórico…" /> }
       @for (e of historico.value() ?? []; track $index) {
-        <p class="aviso"><strong>{{ dataHora(e.data) }} · {{ e.tipo }}</strong> — {{ e.descricao }}</p>
+        <p class="aviso"><strong>{{ dataHora(e.data) }} · {{ e.tipo | legivel }}</strong> — {{ e.descricao }}</p>
       }
     }
   `,

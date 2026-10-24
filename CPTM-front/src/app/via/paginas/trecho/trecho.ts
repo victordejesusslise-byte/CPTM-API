@@ -7,6 +7,7 @@ import { FaixaDoTrechoDto, Trechos } from '../../servicos/trechos';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 
 /**
  * A tela do trecho (pedido do Victor em 2026-10-12): cada barra é uma faixa de km com a nota das peças assentadas nela;
@@ -14,7 +15,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
  */
 @Component({
   selector: 'app-trecho',
-  imports: [FORMULARIO, RouterLink, Estado, Nota],
+  imports: [CartoesNoCelular, FORMULARIO, RouterLink, Estado, Nota],
   template: `
     <p class="sobre">Campo</p>
     <h1>Mapa do trecho</h1>

@@ -6,6 +6,7 @@ import { ChegadaDto, PedidoDto } from '../../../pedidos/entidades/pedido';
 import { PreviaLaudo } from '../../../laudos/componentes/previa-laudo';
 import { Pedidos } from '../../../pedidos/servicos/pedidos';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 
 type Modo = 'entregas' | 'andamento' | 'boletins';
 interface Carga { pedido: PedidoDto; chegada: ChegadaDto; }
@@ -19,7 +20,7 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
 /** As cargas que chegaram, de todos os pedidos: entregas (Chegada), andamento (Cadastro) e boletins (Qualidade). */
 @Component({
   selector: 'app-lista-chegadas',
-  imports: [Estado, PreviaLaudo],
+  imports: [CartoesNoCelular, Estado, PreviaLaudo],
   template: `
     <p class="sobre">{{ texto().sobre }}</p>
     <h1>{{ texto().titulo }}</h1>
