@@ -1,6 +1,9 @@
 import { Component, input } from '@angular/core';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 
+/** No app, quanto tempo o skeleton do login fica na tela antes do login (Victor, 2026-10-24: "uns 5 segundos"). */
+export const TEMPO_DO_ESQUELETO_DO_LOGIN_MS = 5000;
+
 /**
  * O skeleton enquanto a primeira tela carrega (Victor, 2026-10-24: "falta o skeleton no início quando aparece o login"): no lugar da tela
  * vazia, a forma do login (o cartão com o logo girando, os dois campos e o botão, no fundo com as faixas da marca) ou, para quem já está

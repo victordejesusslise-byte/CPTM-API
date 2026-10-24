@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
+import { NO_APP } from './nucleo/ao-vivo/trabalho-da-noite';
 
 @Component({ template: '<p class="tela-login">login</p>' })
 class LoginDeTeste {}
@@ -33,5 +34,28 @@ describe('App', () => {
       expect(tela.querySelector('.tela-login')).not.toBeNull();
     });
     expect(tela.querySelector('app-esqueleto-inicio')).toBeNull();
+  });
+
+  it('no app, o skeleton do login fica 5 segundos na frente do login', async () => {
+    vi.useFakeTimers();
+    try {
+      await TestBed.configureTestingModule({
+        imports: [App], providers: [provideRouter([{ path: 'login', component: LoginDeTeste }]), { provide: NO_APP, useValue: true }],
+      }).compileComponents();
+      const fixture = TestBed.createComponent(App);
+      const tela = fixture.nativeElement as HTMLElement;
+      await TestBed.inject(Router).navigateByUrl('/login');
+      fixture.detectChanges();
+      expect(tela.querySelector('.tela-login')).not.toBeNull();
+      expect(tela.querySelector('.inicio--login')).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(4900);
+      fixture.detectChanges();
+      expect(tela.querySelector('.inicio--login')).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(200);
+      fixture.detectChanges();
+      expect(tela.querySelector('app-esqueleto-inicio')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
