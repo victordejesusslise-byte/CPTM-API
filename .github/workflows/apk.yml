@@ -45,9 +45,14 @@ jobs:
       - name: Chave de assinatura
         env:
           APK_CHAVE: ${{ secrets.APK_CHAVE }}
+          APK_SENHA: ${{ secrets.APK_SENHA }}
+          APK_ALIAS: ${{ secrets.APK_ALIAS }}
         run: |
+          set -o pipefail
           if [ -n "$APK_CHAVE" ]; then
-            echo "$APK_CHAVE" | base64 -d > "$RUNNER_TEMP/ybyra.jks"
+            echo "$APK_CHAVE" | base64 -d > "$RUNNER_TEMP/ybyra.jks" || { echo "::error::O segredo APK_CHAVE não é um texto base64 válido: cole de novo o texto do arquivo da chave."; exit 1; }
+            # Confere a chave antes do Gradle: a senha e o apelido têm de abrir o arquivo.
+            keytool -list -keystore "$RUNNER_TEMP/ybyra.jks" -storepass "$APK_SENHA" -alias "$APK_ALIAS" > /dev/null 2>&1 || { echo "::error::A chave não abre com APK_SENHA e APK_ALIAS: confira os três segredos (APK_CHAVE, APK_SENHA, APK_ALIAS)."; exit 1; }
             echo "APK_CHAVE_ARQUIVO=$RUNNER_TEMP/ybyra.jks" >> "$GITHUB_ENV"
           else
             echo "::warning::Sem o segredo APK_CHAVE: o APK sai com a chave de teste (não instala por cima de outra versão)."
