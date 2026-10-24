@@ -1,10 +1,15 @@
 namespace ViaPermanente.Dominio.Pessoas.Models;
 
-/// <summary>USUARIO: entra pelo e-mail da PESSOA; cada um tem a própria senha, guardada só em hash.</summary>
+/// <summary>
+/// USUARIO: quem entra no sistema, com o nome e o e-mail (o login, único) e a própria senha, guardada só em hash.
+/// Desde 2026-10-23 a PESSOA está aqui dentro (Victor: "unir pessoa e usuário"; só o usuário usava a pessoa).
+/// </summary>
 public class Usuario
 {
     public int IdUsuario { get; set; }
-    public int IdPessoa { get; set; }
+    public string Nome { get; set; } = "";
+    public string Email { get; set; } = "";
+    public DateOnly? DataNascimento { get; set; }
     public Cargo TipoCargo { get; set; }
     public DateTime DataCadastro { get; set; }
     public string SenhaHash { get; set; } = "";

@@ -198,7 +198,7 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
 
     private ArquivoDto Arquivo(DocumentoPdf documento) => new($"{documento.Codigo}.pdf", pdf.Montar(documento));
 
-    private async Task<IReadOnlyDictionary<int, string>> Nomes() => (await usuarios.Listar()).ToDictionary(u => u.Usuario.IdUsuario, u => u.Pessoa.Nome);
+    private async Task<IReadOnlyDictionary<int, string>> Nomes() => (await usuarios.Listar()).ToDictionary(u => u.IdUsuario, u => u.Nome);
     private static string Nome(IReadOnlyDictionary<int, string> nomes, int? id) => id is int i ? nomes.GetValueOrDefault(i, $"usuário {i}") : "—";
     private static string Data(DateTime? d) => d?.ToString("dd/MM/yyyy HH:mm") ?? "—";
     private static string Km(decimal? km) => km is decimal k ? k.ToString("0.000", System.Globalization.CultureInfo.GetCultureInfo("pt-BR")) : "—";

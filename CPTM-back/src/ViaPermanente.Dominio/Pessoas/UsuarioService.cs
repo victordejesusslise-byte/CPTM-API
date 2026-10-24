@@ -25,9 +25,10 @@ public class UsuarioService(IUsuarioRepository usuarios)
             throw new RegraDeNegocioException("Já existe um usuário com este e-mail.");
 
         var criado = await usuarios.Criar(
-            new Pessoa { Nome = novo.Nome.Trim(), Email = email },
             new Usuario
             {
+                Nome = novo.Nome.Trim(),
+                Email = email,
                 TipoCargo = novo.Cargo.Value,
                 DataCadastro = DateTime.Now,
                 SenhaHash = SenhaHelper.GerarHash(novo.Senha),
@@ -75,7 +76,6 @@ public class UsuarioService(IUsuarioRepository usuarios)
         return await BuscarPorId(idUsuario);
     }
 
-    internal static UsuarioDto ParaDto(UsuarioComPessoa u)
-        => new(u.Usuario.IdUsuario, u.Pessoa.Nome, u.Pessoa.Email ?? "", u.Usuario.TipoCargo.ToString(), u.Usuario.Ativo,
-            u.Usuario.EsperarAte > DateTime.Now ? u.Usuario.EsperarAte : null);
+    internal static UsuarioDto ParaDto(Usuario u)
+        => new(u.IdUsuario, u.Nome, u.Email, u.TipoCargo.ToString(), u.Ativo, u.EsperarAte > DateTime.Now ? u.EsperarAte : null);
 }

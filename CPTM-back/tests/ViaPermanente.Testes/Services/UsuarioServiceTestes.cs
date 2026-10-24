@@ -19,7 +19,7 @@ public class UsuarioServiceTestes
 
         Assert.Equal("ana@cptm.local", criado.Email);
         Assert.Equal("Tecnico", criado.Cargo);
-        Assert.NotEqual("senha-boa-1", repo.Linhas[0].Usuario.SenhaHash);
+        Assert.NotEqual("senha-boa-1", repo.Linhas[0].SenhaHash);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class UsuarioServiceTestes
 
         Assert.True(await service.GarantirSupervisorInicial("Chefe", "chefe@cptm.local", "senha-boa-1"));
         Assert.False(await service.GarantirSupervisorInicial("Outro", "outro@cptm.local", "senha-boa-1"));
-        Assert.Equal(Cargo.Supervisor, Assert.Single(repo.Linhas).Usuario.TipoCargo);
+        Assert.Equal(Cargo.Supervisor, Assert.Single(repo.Linhas).TipoCargo);
     }
 
     [Fact]
@@ -54,8 +54,8 @@ public class UsuarioServiceTestes
         Assert.Null((await auth.Entrar(new LoginDto { Email = "ana@cptm.local", Senha = "errada-123" })).Usuario);
         Assert.Null((await auth.Entrar(new LoginDto { Email = "ninguem@cptm.local", Senha = "senha-boa-1" })).Usuario);
 
-        repo.Linhas[0].Usuario.TentativasFalhas = 0; // a senha errada acima contou uma
-        repo.Linhas[0].Usuario.Ativo = false;
+        repo.Linhas[0].TentativasFalhas = 0; // a senha errada acima contou uma
+        repo.Linhas[0].Ativo = false;
         Assert.Null((await auth.Entrar(new LoginDto { Email = "ana@cptm.local", Senha = "senha-boa-1" })).Usuario);
     }
 
@@ -77,14 +77,14 @@ public class UsuarioServiceTestes
         Assert.Equal(agora.AddSeconds(30), bloqueado.EsperarAte);
 
         await auth.Entrar(Ana("errada-123"), agora.AddSeconds(31)); // a 6ª: 1 minuto
-        Assert.Equal(agora.AddSeconds(31).AddMinutes(1), repo.Linhas[0].Usuario.EsperarAte);
+        Assert.Equal(agora.AddSeconds(31).AddMinutes(1), repo.Linhas[0].EsperarAte);
         await auth.Entrar(Ana("errada-123"), agora.AddMinutes(2)); // a 7ª: 5 minutos
-        Assert.Equal(agora.AddMinutes(7), repo.Linhas[0].Usuario.EsperarAte);
+        Assert.Equal(agora.AddMinutes(7), repo.Linhas[0].EsperarAte);
 
         var certo = await auth.Entrar(Ana(), agora.AddMinutes(8));
         Assert.NotNull(certo.Usuario);
-        Assert.Equal(0, repo.Linhas[0].Usuario.TentativasFalhas);
-        Assert.Null(repo.Linhas[0].Usuario.EsperarAte);
+        Assert.Equal(0, repo.Linhas[0].TentativasFalhas);
+        Assert.Null(repo.Linhas[0].EsperarAte);
     }
 
     /// <summary>Segurança (2026-10-18): o token vale só com a conta ativa e a versão da sessão atual; sair e desativar derrubam na hora.</summary>

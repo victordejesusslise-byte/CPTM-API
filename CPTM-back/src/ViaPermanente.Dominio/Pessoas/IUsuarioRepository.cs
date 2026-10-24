@@ -4,13 +4,13 @@ namespace ViaPermanente.Dominio.Pessoas;
 
 public interface IUsuarioRepository
 {
-    Task<UsuarioComPessoa?> BuscarPorEmail(string emailNormalizado);
-    Task<UsuarioComPessoa?> BuscarPorId(int idUsuario);
-    Task<IReadOnlyList<UsuarioComPessoa>> Listar();
+    Task<Usuario?> BuscarPorEmail(string emailNormalizado);
+    Task<Usuario?> BuscarPorId(int idUsuario);
+    Task<IReadOnlyList<Usuario>> Listar();
     Task<bool> ExisteAlgum();
     Task<bool> EmailEmUso(string emailNormalizado);
-    /// <summary>Grava a pessoa e o usuário juntos (numa transação) e devolve os dois com os ids.</summary>
-    Task<UsuarioComPessoa> Criar(Pessoa pessoa, Usuario usuario);
+    /// <summary>Grava o usuário e o devolve com o id.</summary>
+    Task<Usuario> Criar(Usuario usuario);
     /// <summary>O que a validação do token precisa a cada chamada: se a conta está ativa e a versão da sessão. Nulo se o usuário não existe.</summary>
     Task<(bool Ativo, int VersaoSessao)?> Sessao(int idUsuario);
     /// <summary>Sobe a versão da sessão: todo token já emitido para o usuário deixa de valer.</summary>

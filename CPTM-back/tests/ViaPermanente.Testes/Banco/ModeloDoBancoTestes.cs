@@ -16,7 +16,7 @@ public class ModeloDoBancoTestes
         "DETECCAO_IMAGEM", "DORMENTE", "EMPRESA", "ESPECIE", "ESTACAO", "EVENTO_POSICAO", "FEIXE", "GRAVACAO_TAG",
         "INSPECAO", "INSPECAO_CORRECAO", "INTEGRACAO_LOG", "LEITOR", "LEITURA_DORMENTE", "LEITURA_OCR", "LEITURA_VIA",
         "LOTE", "MODELO_OCR", "MODO_LEITURA", "MOVIMENTACAO", "NOTA_FISCAL", "NOTA_FISCAL_ITEM", "OCR_CAMPO",
-        "OFERTA_FORNECEDOR", "PARAMETRO", "PASSAGEM", "PEDIDO", "PEDIDO_HISTORICO", "PEDIDO_ITEM", "PESSOA", "PILHA",
+        "OFERTA_FORNECEDOR", "PARAMETRO", "PASSAGEM", "PEDIDO", "PEDIDO_HISTORICO", "PEDIDO_ITEM", "PILHA",
         "POSICAO_ATUAL", "RECEBIMENTO", "RECUSA_TROCA", "RELATORIO_AMBIENTAL", "RELATORIO_AMBIENTAL_ITEM", "RFID",
         "SENSOR", "SETOR", "TAMANHO_DORMENTE", "TIPO_LEITOR", "TRECHO", "TROCA", "USUARIO", "VERIFICACAO_QUALIDADE",
         "VISTORIA_ALERTA"
@@ -32,7 +32,7 @@ public class ModeloDoBancoTestes
     }
 
     [Fact]
-    public void Tem_as_51_tabelas_do_cerebro()
+    public void Tem_as_50_tabelas_do_cerebro()
     {
         var tabelas = Modelo().GetEntityTypes().Select(e => e.GetTableName()).OrderBy(n => n).ToArray();
         Assert.Equal(TabelasDoCerebro.OrderBy(n => n), tabelas);

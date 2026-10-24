@@ -3,24 +3,19 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Dados.Configuracoes;
 
-/// <summary>PESSOA, SETOR e USUARIO. O e-mail da pessoa é o login, então é único.</summary>
+/// <summary>SETOR e USUARIO. O e-mail do usuário é o login, então é único. (A PESSOA entrou no USUARIO em 2026-10-23.)</summary>
 internal static class PessoasConfiguracao
 {
     public static void Aplicar(ModelBuilder mb)
     {
-        mb.Entity<Pessoa>(e =>
-        {
-            e.HasKey(x => x.IdPessoa);
-            e.HasIndex(x => x.Email).IsUnique().HasFilter("[email] IS NOT NULL");
-        });
-
         mb.Entity<Setor>(e => e.HasKey(x => x.IdSetor));
 
         mb.Entity<Usuario>(e =>
         {
             e.HasKey(x => x.IdUsuario);
-            e.HasIndex(x => x.IdPessoa).IsUnique();
+            e.Property(x => x.Nome).HasMaxLength(150);
+            e.Property(x => x.Email).HasMaxLength(200);
+            e.HasIndex(x => x.Email).IsUnique();
         });
-        mb.Fk<Usuario, Pessoa>(x => x.IdPessoa);
     }
 }

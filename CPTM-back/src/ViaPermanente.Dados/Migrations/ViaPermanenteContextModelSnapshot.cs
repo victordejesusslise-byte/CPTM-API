@@ -3312,39 +3312,6 @@ namespace ViaPermanente.Dados.Migrations
                     b.ToTable("RECEBIMENTO");
                 });
 
-            modelBuilder.Entity("ViaPermanente.Dominio.Pessoas.Models.Pessoa", b =>
-                {
-                    b.Property<int>("IdPessoa")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id_pessoa");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdPessoa"));
-
-                    b.Property<DateOnly?>("DataNascimento")
-                        .HasColumnType("date")
-                        .HasColumnName("data_nascimento");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("email");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("nome");
-
-                    b.HasKey("IdPessoa");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasFilter("[email] IS NOT NULL");
-
-                    b.ToTable("PESSOA");
-                });
-
             modelBuilder.Entity("ViaPermanente.Dominio.Pessoas.Models.Setor", b =>
                 {
                     b.Property<int>("IdSetor")
@@ -3387,13 +3354,25 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("data_cadastro");
 
+                    b.Property<DateOnly?>("DataNascimento")
+                        .HasColumnType("date")
+                        .HasColumnName("data_nascimento");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("email");
+
                     b.Property<DateTime?>("EsperarAte")
                         .HasColumnType("datetime2")
                         .HasColumnName("esperar_ate");
 
-                    b.Property<int>("IdPessoa")
-                        .HasColumnType("int")
-                        .HasColumnName("id_pessoa");
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("nome");
 
                     b.Property<string>("SenhaHash")
                         .IsRequired()
@@ -3417,7 +3396,7 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasKey("IdUsuario");
 
-                    b.HasIndex("IdPessoa")
+                    b.HasIndex("Email")
                         .IsUnique();
 
                     b.ToTable("USUARIO");
@@ -4441,15 +4420,6 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
                         .WithMany()
                         .HasForeignKey("IdUsuario")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ViaPermanente.Dominio.Pessoas.Models.Usuario", b =>
-                {
-                    b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Pessoa", null)
-                        .WithMany()
-                        .HasForeignKey("IdPessoa")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

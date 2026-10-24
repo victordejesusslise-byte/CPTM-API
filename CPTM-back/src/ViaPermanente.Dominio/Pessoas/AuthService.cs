@@ -19,9 +19,9 @@ public class AuthService(IUsuarioRepository usuarios)
     {
         var instante = agora ?? DateTime.Now;
         var encontrado = await usuarios.BuscarPorEmail(EmailHelper.Normalizar(login.Email));
-        if (encontrado is null || !encontrado.Usuario.Ativo)
+        if (encontrado is null || !encontrado.Ativo)
             return new(null, 0, null);
-        var u = encontrado.Usuario;
+        var u = encontrado;
         if (u.EsperarAte > instante)
             return new(null, 0, u.EsperarAte);
 
@@ -29,7 +29,7 @@ public class AuthService(IUsuarioRepository usuarios)
         {
             if (u.TentativasFalhas > 0 || u.EsperarAte is not null)
                 await usuarios.RegistrarTentativas(u.IdUsuario, 0, null);
-            return new(UsuarioService.ParaDto(encontrado), u.VersaoSessao, null);
+            return new(UsuarioService.ParaDto(u), u.VersaoSessao, null);
         }
 
         var tentativas = u.TentativasFalhas + 1;
