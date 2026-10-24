@@ -36,7 +36,7 @@ describe('App', () => {
     expect(tela.querySelector('app-esqueleto-inicio')).toBeNull();
   });
 
-  it('no app, o skeleton do login fica 5 segundos na frente do login', async () => {
+  it('no app, o skeleton do login fica 3 segundos na frente do login', async () => {
     vi.useFakeTimers();
     try {
       await TestBed.configureTestingModule({
@@ -48,7 +48,7 @@ describe('App', () => {
       fixture.detectChanges();
       expect(tela.querySelector('.tela-login')).not.toBeNull();
       expect(tela.querySelector('.inicio--login')).not.toBeNull();
-      await vi.advanceTimersByTimeAsync(4900);
+      await vi.advanceTimersByTimeAsync(2900);
       fixture.detectChanges();
       expect(tela.querySelector('.inicio--login')).not.toBeNull();
       await vi.advanceTimersByTimeAsync(200);

@@ -48,7 +48,7 @@ export class App {
   }
 
   /**
-   * No app (Victor, 2026-10-24: "uns 5 segundos com o skeleton"): o skeleton do login fica 5 segundos na tela, contados de quando ele
+   * No app (Victor, 2026-10-24: 3 segundos com o skeleton): o skeleton do login fica alguns segundos na tela, contados de quando ele
    * aparece de verdade. Ao abrir o app, a tela do logo fica por cima dele; o tempo só começa quando ela sai.
    */
   private async esconderOLoginDepois(): Promise<void> {
