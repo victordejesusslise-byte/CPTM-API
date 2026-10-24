@@ -9,6 +9,7 @@ import { Tema } from '../tema/tema';
 import { ItemMenu, SubMenu, menuDoCargo } from '../menu/menu';
 import { nomeDoCargo } from '../../../compartilhado/utilitarios/formato';
 import { Marca } from '../../../compartilhado/componentes/marca/marca';
+import { PainelLeitor } from '../../leitor/painel-leitor';
 
 interface ItemVisivel extends ItemMenu {
   link: string;
@@ -30,7 +31,7 @@ const semConsulta = (url: string) => url.split(/[?#]/)[0];
 
 @Component({
   selector: 'app-casca',
-  imports: [Esqueleto, RouterOutlet, RouterLink, Marca],
+  imports: [Esqueleto, RouterOutlet, RouterLink, Marca, PainelLeitor],
   templateUrl: './casca.html',
   styleUrl: './casca.scss',
 })

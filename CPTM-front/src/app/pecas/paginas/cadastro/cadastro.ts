@@ -12,6 +12,7 @@ import { Pedidos } from '../../../pedidos/servicos/pedidos';
 import { LeituraTag } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { Coluna, Tabela } from '../../../compartilhado/componentes/tabela/tabela';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { LEITOR } from '../../../nucleo/leitor/leitor-simulado';
 
 /**
  * O cadastro da peça: escolhe o feixe, pega a próxima tag, grava no módulo e relê.
@@ -40,11 +41,19 @@ export class Cadastro {
 
   protected readonly tag = signal('');
   protected readonly tagRelida = signal('');
+  private readonly leitor = inject(LEITOR);
   protected readonly metodo = signal<MetodoCaptura>('ModuloUhf');
   protected readonly tagFornecedor = signal('');
   protected readonly mensagem = signal<string | null>(null);
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
+
+  /** O módulo grava o número na etiqueta à frente (sozinha no alcance) e relê; a releitura vai para a conferência. */
+  protected async gravarEReler(): Promise<void> {
+    const r = await this.leitor.gravarEReler(this.tag());
+    this.erro.set(r.ok ? null : r.motivo);
+    if (r.ok) this.tagRelida.set(r.relida);
+  }
 
   protected readonly colunas: Coluna<PecaDto>[] = [
     { titulo: 'Peça', valor: (p) => p.codigo, mono: true },

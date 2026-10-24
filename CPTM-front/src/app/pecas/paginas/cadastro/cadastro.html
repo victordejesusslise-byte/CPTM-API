@@ -37,6 +37,9 @@
     <h2>Gravar a tag · feixe <span class="mono">{{ f.numero }}</span></h2>
     <p class="rotulo">Grave no módulo o número abaixo, leia de novo e confira. Só uma tag pode estar no alcance.</p>
     <app-leitura-tag rotulo="Tag gravada (próxima)" [(tag)]="tag" [(metodo)]="metodo" />
+    @if (metodo() === 'ModuloUhf') {
+      <div class="acoes"><button mat-stroked-button type="button" (click)="gravarEReler()" [disabled]="!tag().trim()">Gravar e reler com o módulo</button></div>
+    }
     <mat-form-field appearance="outline">
       <mat-label>Tag relida</mat-label>
       <input matInput class="mono" [ngModel]="tagRelida()" (ngModelChange)="tagRelida.set($event)" (keydown.enter)="cadastrar()" autocomplete="off" />
