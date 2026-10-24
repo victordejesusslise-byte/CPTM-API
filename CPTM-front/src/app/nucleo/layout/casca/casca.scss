@@ -62,7 +62,8 @@
 }
 // Celular estreito (até 480px): a barra do alto cabe na tela. O cargo sai, os botões ficam do tamanho deles e a marca encolhe.
 @media (max-width: 480px) {
-  .topo { gap: 6px; padding: 0 8px; }
+  // O alto começa abaixo da barra do celular (hora e bateria), também na tela estreita.
+  .topo { gap: 6px; padding: var(--topo-seguro) 8px 0; }
   .topo__menu, .topo__sair, .topo__tema { padding: 0 8px; flex-shrink: 0; }
   .topo__quem { display: none; }
   .topo__marca { min-width: 0; overflow: hidden; margin-right: auto; }

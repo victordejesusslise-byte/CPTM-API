@@ -62,12 +62,16 @@ describe('Casca', () => {
     expect(tela.querySelectorAll('.menu__sub')).toHaveLength(2);
   });
 
-  it('o botão do topo troca para o modo escuro e volta', async () => {
+  it('o botão do topo passa por Sistema, Claro e Escuro', async () => {
     const tela = await abrir('Tecnico');
-    tela.querySelector<HTMLButtonElement>('.topo__tema')!.click();
-    expect(document.documentElement.dataset['theme']).toBe('dark');
-    tela.querySelector<HTMLButtonElement>('.topo__tema')!.click();
+    const botao = tela.querySelector<HTMLButtonElement>('.topo__tema')!;
+    expect(botao.getAttribute('aria-label')).toContain('Tema: Sistema');
+    botao.click();
     expect(document.documentElement.dataset['theme']).toBeUndefined();
+    botao.click();
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+    botao.click();
+    expect(localStorage.getItem('ybyra.tema')).toBe('sistema');
   });
 
   it('sair encerra a sessão no servidor e volta ao login', async () => {

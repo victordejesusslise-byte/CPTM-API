@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Sessao } from '../../../nucleo/sessao/sessao';
+import { Abertura } from '../../../nucleo/layout/abertura/abertura';
 import { mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { Marca } from '../../../compartilhado/componentes/marca/marca';
 import { FORMULARIO } from '../../../compartilhado/ui';
@@ -15,6 +16,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 })
 export class Login {
   private readonly sessao = inject(Sessao);
+  private readonly abertura = inject(Abertura);
   private readonly router = inject(Router);
   private readonly rota = inject(ActivatedRoute);
 
@@ -34,7 +36,11 @@ export class Login {
     this.enviando.set(true);
     this.erro.set(null);
     this.sessao.entrar(email.trim(), senha).subscribe({
-      next: () => this.router.navigateByUrl(this.rota.snapshot.queryParamMap.get('voltar') ?? '/painel'),
+      // No app, a tela com o logo fica alguns segundos ("Entrando…") antes de abrir o painel.
+      next: async () => {
+        await this.abertura.entrando();
+        this.router.navigateByUrl(this.rota.snapshot.queryParamMap.get('voltar') ?? '/painel');
+      },
       error: (e) => {
         this.erro.set(e?.status === 401 ? 'E-mail ou senha não conferem.' : mensagemDeErro(e));
         this.enviando.set(false);

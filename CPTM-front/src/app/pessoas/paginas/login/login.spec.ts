@@ -44,7 +44,7 @@ describe('Login', () => {
     digitar('input[type=password]', 'segredo');
     await enviar();
     http.expectOne('http://localhost:8045/api/auth/login').flush(tokenDeTeste());
-    expect(navegar).toHaveBeenCalledWith('/painel');
+    await vi.waitFor(() => expect(navegar).toHaveBeenCalledWith('/painel'));
   });
 
   it('senha errada mostra o aviso em vermelho', async () => {

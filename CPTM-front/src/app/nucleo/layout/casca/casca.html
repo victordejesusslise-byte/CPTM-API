@@ -7,10 +7,13 @@
     <span class="topo__nome">{{ usuario()?.nome }}</span>
     <span class="topo__cargo">{{ cargo() }}</span>
   </div>
-  <button type="button" class="topo__tema" (click)="tema.alternar()" [attr.aria-pressed]="tema.escuro()" [attr.aria-label]="tema.escuro() ? 'Voltar para o tema claro' : 'Trocar para o modo escuro'">
-    @if (tema.escuro()) { <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
-    @else { <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
-    <span class="topo__rotulo">{{ tema.escuro() ? 'Claro' : 'Escuro' }}</span>
+  <button type="button" class="topo__tema" (click)="tema.alternar()" [attr.aria-label]="'Tema: ' + tema.rotulo() + '. Toque para ' + tema.proximo()">
+    @switch (tema.preferencia()) {
+      @case ('claro') { <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+      @case ('escuro') { <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+      @default { <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18V3zM12 3a9 9 0 0 1 0 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+    }
+    <span class="topo__rotulo">{{ tema.rotulo() }}</span>
   </button>
   <button type="button" class="topo__sair" (click)="sair()" aria-label="Sair">
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="topo__rotulo">Sair</span>
