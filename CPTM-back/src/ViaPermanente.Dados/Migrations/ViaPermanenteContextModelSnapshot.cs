@@ -176,11 +176,6 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("ativo");
 
-                    b.Property<string>("Endereco")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("endereco");
-
                     b.Property<decimal?>("Km")
                         .HasPrecision(9, 3)
                         .HasColumnType("decimal(9,3)")
@@ -2168,11 +2163,6 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("entrada_armazem_em");
 
-                    b.Property<string>("Frente")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("frente");
-
                     b.Property<int?>("IdFeixe")
                         .HasColumnType("int")
                         .HasColumnName("id_feixe");
@@ -2772,11 +2762,6 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("cnpj");
 
-                    b.Property<string>("Endereco")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("endereco");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -2788,11 +2773,6 @@ namespace ViaPermanente.Dados.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)")
                         .HasColumnName("papel");
-
-                    b.Property<string>("Telefone")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("telefone");
 
                     b.HasKey("IdEmpresa");
 
@@ -3218,11 +3198,6 @@ namespace ViaPermanente.Dados.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdSetor"));
 
-                    b.Property<string>("Descricao")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("descricao");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -3250,10 +3225,6 @@ namespace ViaPermanente.Dados.Migrations
                     b.Property<DateTime>("DataCadastro")
                         .HasColumnType("datetime2")
                         .HasColumnName("data_cadastro");
-
-                    b.Property<DateOnly?>("DataNascimento")
-                        .HasColumnType("date")
-                        .HasColumnName("data_nascimento");
 
                     b.Property<string>("Email")
                         .IsRequired()

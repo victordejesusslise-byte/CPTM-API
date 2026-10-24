@@ -37,7 +37,7 @@ public class MigracoesNoBancoTestes : IAsyncLifetime
         var ana = await db.Set<Usuario>().AsNoTracking().SingleAsync();
         Assert.Equal("Ana Teste", ana.Nome);
         Assert.Equal("ana@teste.local", ana.Email);
-        Assert.Equal(new DateOnly(1990, 5, 1), ana.DataNascimento);
+        Assert.Equal(new DateTime(1990, 5, 1), db.Database.SqlQueryRaw<DateTime?>("SELECT CAST(data_nascimento AS datetime2) AS Value FROM USUARIO").AsEnumerable().Single());
     }
 
     [Fact]
@@ -93,5 +93,17 @@ public class MigracoesNoBancoTestes : IAsyncLifetime
         Assert.Equal("ERP-280-1", (await db.Set<Parametro>().AsNoTracking().SingleAsync(p => p.Chave == "erp_codigo_material_1_1")).Valor);
         // O banco só aceita os comprimentos da lista do código.
         await Assert.ThrowsAnyAsync<Exception>(() => db.Database.ExecuteSqlRawAsync($"UPDATE PEDIDO_ITEM SET id_tamanho = 9 WHERE id_pedido_item = {item.IdPedidoItem};"));
+    }
+
+    [Fact]
+    public async Task Os_cadastros_sem_uso_saem_do_banco()
+    {
+        // Colunas que o sistema nunca gravou nem leu (Victor, 2026-10-24); a equipe da troca fica (obrigatória).
+        await MigrarAte("20261024033206_CadastrosSemUso");
+        int Existe(string tabela, string coluna) => db.Database.SqlQueryRaw<int>(
+            $"SELECT COUNT(*) AS Value FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{tabela}' AND COLUMN_NAME = '{coluna}'").AsEnumerable().Single();
+        Assert.All(new[] { ("DORMENTE", "frente"), ("USUARIO", "data_nascimento"), ("ARMAZEM", "endereco"), ("SETOR", "descricao"), ("EMPRESA", "endereco"), ("EMPRESA", "telefone") },
+            c => Assert.Equal(0, Existe(c.Item1, c.Item2)));
+        Assert.Equal(1, Existe("TROCA", "equipe"));
     }
 }

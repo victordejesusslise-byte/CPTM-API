@@ -9,7 +9,6 @@ public class Usuario
     public int IdUsuario { get; set; }
     public string Nome { get; set; } = "";
     public string Email { get; set; } = "";
-    public DateOnly? DataNascimento { get; set; }
     public Cargo TipoCargo { get; set; }
     public DateTime DataCadastro { get; set; }
     public string SenhaHash { get; set; } = "";

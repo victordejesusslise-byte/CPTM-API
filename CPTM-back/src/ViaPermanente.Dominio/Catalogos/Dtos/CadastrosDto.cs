@@ -12,8 +12,6 @@ public class NovaEmpresaDto
 {
     public string Nome { get; init; } = "";
     public string? Cnpj { get; init; }
-    public string? Endereco { get; init; }
-    public string? Telefone { get; init; }
     public PapelEmpresa Papel { get; init; }
     /// <summary>Os padrões de medida do fornecedor (pelo menos um, se for fornecedor).</summary>
     public IReadOnlyList<NovaMedidaDto> Medidas { get; init; } = [];

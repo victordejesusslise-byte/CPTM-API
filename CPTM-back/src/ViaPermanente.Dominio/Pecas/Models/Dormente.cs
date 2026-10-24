@@ -11,7 +11,6 @@ public class Dormente
     public MetodoCaptura? TagFornecedorLeitura { get; set; }
     public decimal? KmProjeto { get; set; }
     public int? IdTrecho { get; set; }
-    public string? Frente { get; set; }
     public int? IdPilha { get; set; }
     public DateTime? EntradaArmazemEm { get; set; }
     public DateTime? RetiradaEm { get; set; }

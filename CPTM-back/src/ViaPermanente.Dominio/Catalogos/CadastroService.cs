@@ -31,7 +31,7 @@ public class CadastroService(ICadastroRepository cadastros, ICatalogoRepository 
         if (medidas.GroupBy(m => (m.IdEspecie, m.LarguraM, m.AlturaM)).Any(g => g.Count() > 1))
             throw new RegraDeNegocioException("O mesmo padrão de medida apareceu duas vezes.");
 
-        var empresa = new Empresa { Nome = nome, Cnpj = Limpo(dto.Cnpj), Endereco = Limpo(dto.Endereco), Telefone = Limpo(dto.Telefone), Papel = dto.Papel, Ativo = true };
+        var empresa = new Empresa { Nome = nome, Cnpj = Limpo(dto.Cnpj), Papel = dto.Papel, Ativo = true };
         await cadastros.Adicionar(empresa);
         foreach (var m in medidas)
             await cadastros.Adicionar(new MedidaFornecedor { IdEmpresa = empresa.IdEmpresa, IdEspecie = m.IdEspecie, LarguraM = m.LarguraM, AlturaM = m.AlturaM });

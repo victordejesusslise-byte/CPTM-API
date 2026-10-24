@@ -8,6 +8,5 @@ public class Armazem
     public string Nome { get; set; } = "";
     public string Linha { get; set; } = "";
     public decimal? Km { get; set; }
-    public string? Endereco { get; set; }
     public bool Ativo { get; set; } = true;
 }
