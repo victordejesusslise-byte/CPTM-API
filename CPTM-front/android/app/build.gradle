@@ -8,8 +8,8 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // A versão vem do GitHub (número da execução): cada APK novo instala por cima do anterior.
-        versionCode (System.getenv("APP_VERSAO_CODIGO") ?: "1") as Integer
-        versionName System.getenv("APP_VERSAO_NOME") ?: "0.1.0"
+        versionCode = (System.getenv("APP_VERSAO_CODIGO") ?: "1").toInteger()
+        versionName = System.getenv("APP_VERSAO_NOME") ?: "0.1.0"
         // http (sem criptografia) só no APK de homologação, para o servidor de teste na rede local.
         manifestPlaceholders = [usaHttp: (System.getenv("APP_AMBIENTE") ?: "homol") == "prod" ? "false" : "true"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
