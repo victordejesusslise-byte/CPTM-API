@@ -69,7 +69,13 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         troca.IdUsuarioAprovou = idUsuario;
         troca.DataAprovacao = DateTime.Now;
         if (dto.Aprovar)
+        {
             troca.Status = (await Compativeis(troca)).Count > 0 ? StatusTroca.Aprovada : StatusTroca.AguardandoPeca;
+            // O plano da noite: até o corte entra hoje; depois, na noite seguinte, salvo urgente.
+            var corte = await Corte();
+            troca.Urgente = dto.Urgente && TimeOnly.FromDateTime(troca.DataAprovacao.Value) > corte;
+            troca.NoiteDoPlano = PlanoDaNoite.NoiteDe(troca.DataAprovacao.Value, corte, dto.Urgente);
+        }
         else
         {
             troca.Status = StatusTroca.Reprovada;
@@ -200,6 +206,8 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
             throw new RegraDeNegocioException("A troca não está recusada.");
         if (dto.Decisao == DecisaoRecusa.Manter && string.IsNullOrWhiteSpace(dto.Resposta))
             throw new RegraDeNegocioException("Para manter a troca, responda à recusa.");
+        if (dto.Decisao != DecisaoRecusa.Manter && PlanoDaNoite.Travada(troca.NoiteDoPlano, DateTime.Now, await Corte()))
+            throw new RegraDeNegocioException(MensagemTravada);
         var recusa = (await trocas.Recusas([idTroca])).Last();
         recusa.Decisao = dto.Decisao;
         recusa.IdUsuarioDecisao = idUsuario;
@@ -226,6 +234,8 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         var troca = (await trocas.Listar()).FirstOrDefault(t => t.IdInspecao == idInspecao && Abertas.Contains(t.Status));
         if (troca is null)
             return null;
+        if (PlanoDaNoite.Travada(troca.NoiteDoPlano, DateTime.Now, await Corte()))
+            throw new RegraDeNegocioException(MensagemTravada);
         var mudancas = troca.IdDormenteEntrou is int idEntrou && troca.Status == StatusTroca.Separada
             ? Devolver(troca, idEntrou, idUsuario, DateTime.Now, await trocas.PilhaDaSeparacao(troca.IdTroca, idEntrou))
             : new MudancasDaTroca();
@@ -235,6 +245,11 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
     }
 
     // ---------- apoio ----------
+
+    private const string MensagemTravada = "Esta peça tem troca no plano desta noite; a correção pode ser feita amanhã.";
+
+    /// <summary>O horário de corte do plano da noite (parâmetro troca_plano_horario).</summary>
+    private async Task<TimeOnly> Corte() => PlanoDaNoite.Corte((await parametros.Buscar(PlanoDaNoite.ChaveHorario))?.Valor);
 
     private static MudancasDaTroca Devolver(Troca troca, int idEntrou, int idUsuario, DateTime agora, int? idPilha)
     {
@@ -289,7 +304,7 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
                 t.IdUsuarioSeparou, t.DataSeparacao, t.IdUsuarioFez, t.Data, t.Equipe, t.FotoArquivo, t.Cancelamento,
                 (int)((t.Data ?? agora) - t.DataPedido).TotalDays,
                 r is null ? null : new RecusaDto(r.IdRecusa, r.Data, r.IdUsuario, r.Motivo, r.Descricao, r.FotoArquivo,
-                    r.Decisao?.ToString(), r.IdUsuarioDecisao, r.DataDecisao, r.Resposta));
+                    r.Decisao?.ToString(), r.IdUsuarioDecisao, r.DataDecisao, r.Resposta), t.NoiteDoPlano, t.Urgente);
         }).ToList();
     }
 

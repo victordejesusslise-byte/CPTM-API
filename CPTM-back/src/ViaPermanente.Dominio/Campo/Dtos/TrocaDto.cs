@@ -6,4 +6,4 @@ public record TrocaDto(int Id, string Status, string Origem,
     int? IdInspecao, int? IdTrecho, decimal? Km, string? Motivo, string? Observacao,
     int IdUsuarioPediu, DateTime DataPedido, int? IdUsuarioAprovou, DateTime? DataAprovacao, string? MotivoReprovacao,
     int? IdUsuarioSeparou, DateTime? DataSeparacao, int? IdUsuarioFez, DateTime? Data, string? Equipe, string? FotoArquivo,
-    string? Cancelamento, int DiasDesdeOPedido, RecusaDto? UltimaRecusa);
+    string? Cancelamento, int DiasDesdeOPedido, RecusaDto? UltimaRecusa, DateOnly? NoiteDoPlano, bool Urgente);

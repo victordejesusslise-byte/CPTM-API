@@ -104,7 +104,7 @@ public class TrocaNoBancoTestes : IAsyncLifetime
 
         await Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = await Peca(entra), Leitura = Lida(entra) }, patio);
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Executar(pedida.Id, new ExecutarTrocaDto { LeituraSaiu = Lida(3), LeituraEntrou = Lida(entra), Equipe = "T2", FotoArquivo = "f.jpg" }, via));
-        var feita = await Executar(new TrocaDto(pedida.Id, "", "", 0, null, null, null, null, null, null, null, null, null, null, 0, default, null, null, null, null, null, null, null, null, null, null, 0, null), 2, entra);
+        var feita = await Executar(new TrocaDto(pedida.Id, "", "", 0, null, null, null, null, null, null, null, null, null, null, 0, default, null, null, null, null, null, null, null, null, null, null, 0, null, null, false), 2, entra);
 
         Assert.Equal("Feita", feita.Status);
         var (nova, velha) = (await BancoDeTeste.Pecas(db).BuscarPorId(await Peca(entra)), await BancoDeTeste.Pecas(db).BuscarPorId(await Peca(2)));
@@ -163,7 +163,7 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         Assert.Contains($"Tag: {Tag(5)}", pdf.Texto);
         Assert.True(lb.Conteudo.Length > 1000);
 
-        await Executar(new TrocaDto(troca.Id, "", "", 0, null, null, null, null, null, null, null, null, null, null, 0, default, null, null, null, null, null, null, null, null, null, null, 0, null), 2, 5);
+        await Executar(new TrocaDto(troca.Id, "", "", 0, null, null, null, null, null, null, null, null, null, null, 0, default, null, null, null, null, null, null, null, null, null, null, 0, null, null, false), 2, 5);
         db.ChangeTracker.Clear();
         var ld = (await BancoDeTeste.Laudos(db, pdf).LaudoTroca(troca.Id))!;
         Assert.Equal($"LD-{troca.Id:0000}-v4.pdf", ld.Nome); // pedida, aprovada, separada, feita

@@ -1274,6 +1274,10 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("nvarchar(1000)")
                         .HasColumnName("motivo_reprovacao");
 
+                    b.Property<DateOnly?>("NoiteDoPlano")
+                        .HasColumnType("date")
+                        .HasColumnName("noite_do_plano");
+
                     b.Property<string>("Observacao")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)")
@@ -1295,6 +1299,10 @@ namespace ViaPermanente.Dados.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("tag_entrou");
+
+                    b.Property<bool>("Urgente")
+                        .HasColumnType("bit")
+                        .HasColumnName("urgente");
 
                     b.HasKey("IdTroca");
 
@@ -1647,6 +1655,11 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             Chave = "troca_quem_aprova",
                             Valor = "supervisor"
+                        },
+                        new
+                        {
+                            Chave = "troca_plano_horario",
+                            Valor = "20:00"
                         },
                         new
                         {

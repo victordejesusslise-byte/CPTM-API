@@ -49,6 +49,8 @@ internal static class CatalogosConfiguracao
                 new Parametro { Chave = "limite_segunda_classe_unidade", Valor = "m3" },
                 new Parametro { Chave = "alerta_imagem_confianca_minima", Valor = "0.80" },
                 new Parametro { Chave = "troca_quem_aprova", Valor = "supervisor" },
+                // O plano da noite fecha neste horário (Victor, 2026-10-24): depois dele, só troca urgente entra na mesma noite.
+                new Parametro { Chave = "troca_plano_horario", Valor = "20:00" },
                 new Parametro { Chave = "ocr_confianca_minima", Valor = "97" },
                 // Diferença aceita entre o m³ declarado na nota e o do catálogo (ConferenciaNota).
                 new Parametro { Chave = "nota_tolerancia_volume_pct", Valor = "2" },

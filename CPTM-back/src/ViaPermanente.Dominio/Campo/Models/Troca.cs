@@ -29,4 +29,8 @@ public class Troca
     public decimal? Km { get; set; }
     public string? Equipe { get; set; }
     public string? Motivo { get; set; }
+    /// <summary>A noite em que a troca entra no plano (gravada na aprovação; ver PlanoDaNoite).</summary>
+    public DateOnly? NoiteDoPlano { get; set; }
+    /// <summary>Aprovada depois do corte para entrar na mesma noite.</summary>
+    public bool Urgente { get; set; }
 }
