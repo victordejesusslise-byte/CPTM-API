@@ -11,6 +11,7 @@ import { nomeDoCargo } from '../../../compartilhado/utilitarios/formato';
 import { Marca } from '../../../compartilhado/componentes/marca/marca';
 import { PainelLeitor } from '../../leitor/painel-leitor';
 import { EstadoFila } from '../../fila/estado-fila';
+import { AvisosDoApp } from '../../ao-vivo/avisos-do-app';
 
 interface ItemVisivel extends ItemMenu {
   link: string;
@@ -32,7 +33,7 @@ const semConsulta = (url: string) => url.split(/[?#]/)[0];
 
 @Component({
   selector: 'app-casca',
-  imports: [Esqueleto, RouterOutlet, RouterLink, Marca, PainelLeitor, EstadoFila],
+  imports: [Esqueleto, RouterOutlet, RouterLink, Marca, PainelLeitor, EstadoFila, AvisosDoApp],
   templateUrl: './casca.html',
   styleUrl: './casca.scss',
 })

@@ -5,5 +5,7 @@
  */
 const local = globalThis.location;
 export const ambiente = {
+  /** O site não tem versão de app (o aviso de versão nova é só do APK). */
+  versao: '',
   api: `${local?.protocol === 'https:' ? 'https:' : 'http:'}//${local?.hostname || 'localhost'}:8045/api`,
 };

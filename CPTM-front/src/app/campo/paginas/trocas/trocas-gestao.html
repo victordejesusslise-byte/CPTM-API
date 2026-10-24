@@ -17,6 +17,7 @@
 
     @if (t.status === 'Pedida' && ehSupervisor()) {
       <mat-form-field appearance="outline"><mat-label>Motivo (obrigatório para reprovar)</mat-label><input matInput [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" /></mat-form-field>
+      <mat-checkbox [checked]="urgente()" (change)="urgente.set($event.checked)">Urgente: entra no plano desta noite mesmo depois das 20:00</mat-checkbox>
       <div class="acoes">
         <button mat-flat-button type="button" (click)="decidir(t, true)" [disabled]="enviando()" [appCarregando]="enviando()">Aprovar a troca</button>
         <button mat-stroked-button type="button" (click)="decidir(t, false)" [disabled]="enviando()" [appCarregando]="enviando()">Reprovar</button>

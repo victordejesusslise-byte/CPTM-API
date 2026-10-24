@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { Fila, NovoRegistro } from '../../../nucleo/fila/fila';
+import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
 import { TrocaDto } from '../../entidades/campo';
 import { MetodoCaptura, StatusTroca } from '../../../compartilhado/entidades/enums';
 import { Trocas } from '../../servicos/trocas';
@@ -32,16 +33,25 @@ export class TrocasTrecho {
   readonly aberta = input<string>();
   private readonly api = inject(Trocas);
   private readonly fila = inject(Fila);
+  private readonly trabalho = inject(TrabalhoDaNoite);
+  protected readonly semRede = this.trabalho.usarGuardado;
   private readonly router = inject(Router);
 
   protected readonly titulo = computed(() => ABAS[this.aba()].titulo);
+  // Sem rede (no app): o plano guardado, sem as trocas que já foram feitas ou recusadas e esperam na fila.
   protected readonly lista = rxResource({
-    params: () => ABAS[this.aba()].status,
-    stream: ({ params }) => forkJoin(params.map((s) => this.api.listar(s))).pipe(map((l) => l.flat())),
+    params: () => ({ status: ABAS[this.aba()].status, guardado: this.semRede() }),
+    stream: ({ params }) =>
+      params.guardado
+        ? of(this.trabalho.trocas(params.status).filter((t) => !this.fila.itens().some((i) => (i.tipo === 'troca' || i.tipo === 'recusa') && i.alvo === t.id)))
+        : forkJoin(params.status.map((s) => this.api.listar(s))).pipe(map((l) => l.flat())),
   });
   protected readonly erroLista = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly idAberta = computed(() => (this.aberta() ? Number(this.aberta()) : null));
-  protected readonly troca = rxResource({ params: () => this.idAberta() ?? undefined, stream: ({ params }) => (params ? this.api.buscar(params) : of(null)) });
+  protected readonly troca = rxResource({
+    params: () => (this.idAberta() ? { id: this.idAberta()!, guardado: this.semRede() } : undefined),
+    stream: ({ params }) => (params.guardado ? of(this.trabalho.troca(params.id)) : this.api.buscar(params.id)),
+  });
   protected readonly rotulo = ROTULO_TROCA;
   protected readonly dataHora = dataHora;
   protected readonly km = km;

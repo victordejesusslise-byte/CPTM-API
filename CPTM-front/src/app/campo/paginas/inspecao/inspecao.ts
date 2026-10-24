@@ -3,6 +3,7 @@ import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esquelet
 import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Fila } from '../../../nucleo/fila/fila';
+import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
 import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { AtaqueBiologicoInspecao, EstadoConservacao, MetodoCaptura, RachaduraInspecao } from '../../../compartilhado/entidades/enums';
 import { PecaDto } from '../../../pecas/entidades/peca';
@@ -31,6 +32,8 @@ export class Inspecao {
   private readonly pecas = inject(Pecas);
   private readonly inspecoes = inject(Inspecoes);
   private readonly fila = inject(Fila);
+  private readonly trabalho = inject(TrabalhoDaNoite);
+  protected readonly semRede = this.trabalho.usarGuardado;
   private readonly trocas = inject(Trocas);
   /** A inspeção cujo laudo (LI) está aberto na primeira visão, sem baixar. */
   protected readonly laudoDe = signal<number | null>(null);
@@ -63,6 +66,13 @@ export class Inspecao {
     this.mensagem.set(null);
     this.resultado.set(null);
     this.trocaPedida.set(false);
+    if (this.semRede()) {
+      const p = this.trabalho.pecaPorTag(this.tag());
+      this.peca.set(p);
+      if (p) this.iniciadoEm.set(new Date().toISOString());
+      else this.erro.set('Sem rede: só abrem as peças do trabalho da noite (as das trocas e dos alertas).');
+      return;
+    }
     this.buscando.set(true);
     this.pecas.porTag(this.tag()).pipe(finalize(() => this.buscando.set(false))).subscribe({
       next: (p) => {

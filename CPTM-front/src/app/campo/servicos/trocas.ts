@@ -27,8 +27,9 @@ export class Trocas {
   pedir(idDormente: number, idInspecao: number | null, motivo: string | null, km: number | null): Observable<TrocaDto> {
     return this.http.post<TrocaDto>(this.url, { idDormente, idInspecao, motivo, km });
   }
-  decidir(id: number, aprovar: boolean, motivo: string | null): Observable<TrocaDto> {
-    return this.http.post<TrocaDto>(this.url + '/' + id + '/decisao', { aprovar, motivo });
+  /** Urgente: aprovada depois do corte (20:00), entra no plano desta noite em vez da seguinte. */
+  decidir(id: number, aprovar: boolean, motivo: string | null, urgente = false): Observable<TrocaDto> {
+    return this.http.post<TrocaDto>(this.url + '/' + id + '/decisao', urgente ? { aprovar, motivo, urgente } : { aprovar, motivo });
   }
   decidirRecusa(id: number, decisao: 'Manter' | 'Aceitar', resposta: string | null): Observable<TrocaDto> {
     return this.http.post<TrocaDto>(this.url + '/' + id + '/recusa/decisao', { decisao, resposta });

@@ -67,6 +67,7 @@ export class TrocasGestao {
   }
 
   protected readonly motivo = signal('');
+  protected readonly urgente = signal(false);
   protected readonly resposta = signal('');
   protected readonly mensagem = signal<string | null>(null);
   protected readonly erro = signal<string | null>(null);
@@ -89,7 +90,7 @@ export class TrocasGestao {
       this.erro.set('Para reprovar, escreva o motivo.');
       return;
     }
-    this.enviar(this.api.decidir(t.id, aprovar, this.motivo().trim() || null), aprovar ? 'Troca aprovada. O pátio já pode separar a peça.' : 'Troca reprovada.');
+    this.enviar(this.api.decidir(t.id, aprovar, this.motivo().trim() || null, aprovar && this.urgente()), aprovar ? 'Troca aprovada. O pátio já pode separar a peça.' : 'Troca reprovada.');
   }
 
   protected decidirRecusa(t: TrocaDto, decisao: 'Manter' | 'Aceitar'): void {

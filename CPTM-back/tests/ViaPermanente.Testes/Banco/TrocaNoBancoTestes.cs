@@ -180,11 +180,12 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         await db.Set<Troca>().Where(t => t.IdTroca == hoje.Id).ExecuteUpdateAsync(s => s.SetProperty(t => t.NoiteDoPlano, noite));
         await db.Set<Troca>().Where(t => t.IdTroca == amanha.Id).ExecuteUpdateAsync(s => s.SetProperty(t => t.NoiteDoPlano, noite.AddDays(1)));
 
-        var plano = await new PlanoCampoService(Trocas(), BancoDeTeste.Alertas(db)).Montar(meioDia);
+        var plano = await new PlanoCampoService(Trocas(), BancoDeTeste.Alertas(db), BancoDeTeste.Pecas(db)).Montar(meioDia);
         Assert.Equal(noite, plano.Noite);
         Assert.Equal([hoje.Id], plano.Trocas.Select(t => t.Id));
+        Assert.Contains(plano.Pecas, p => p.Id == hoje.IdDormenteSaiu && p.Tag == Tag(2)); // a peça da troca, para a inspeção sem rede
         // No dia seguinte, a de amanhã entra (e a de hoje, que não foi feita, continua).
-        var depois = await new PlanoCampoService(Trocas(), BancoDeTeste.Alertas(db)).Montar(meioDia.AddDays(1));
+        var depois = await new PlanoCampoService(Trocas(), BancoDeTeste.Alertas(db), BancoDeTeste.Pecas(db)).Montar(meioDia.AddDays(1));
         Assert.Equal(new[] { hoje.Id, amanha.Id }.Order(), depois.Trocas.Select(t => t.Id).Order());
     }
 

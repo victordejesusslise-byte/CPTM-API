@@ -1,5 +1,6 @@
 <p class="sobre">Campo · 10</p>
 <h1>{{ aba() === 'checklist' ? 'Fazer a inspeção' : 'Inspeções feitas' }}</h1>
+@if (semRede()) { <p class="chamada chamada--neutra">Sem rede: aparece o trabalho da noite guardado no celular.</p> }
 @if (alerta() && aba() === 'checklist') { <p class="chamada chamada--neutra">Inspeção do alerta {{ alerta() }}: o resultado decide o alerta.</p> }
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }

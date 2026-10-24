@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Sessao } from '../../../nucleo/sessao/sessao';
 import { Fila } from '../../../nucleo/fila/fila';
+import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
+import { of } from 'rxjs';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { AlertaDto, AvisoTagDto } from '../../entidades/campo';
 import { PecaDto } from '../../../pecas/entidades/peca';
@@ -36,16 +38,25 @@ export class Alertas {
   private readonly router = inject(Router);
   private readonly sessao = inject(Sessao);
   private readonly fila = inject(Fila);
+  private readonly trabalho = inject(TrabalhoDaNoite);
+  protected readonly semRede = this.trabalho.usarGuardado;
 
   protected readonly titulo = computed(() => TITULOS[this.aba()]);
   protected readonly so = signal<'abertos' | 'todos'>('abertos');
   protected readonly lista = rxResource({
-    params: () => (this.aba() === 'tags' ? undefined : { origem: this.aba() === 'imagem' ? ('Imagem' as const) : ('Sensor' as const), status: this.so() === 'abertos' ? ('Aberto' as const) : null }),
-    stream: ({ params }) => this.api.listar(params.origem, params.status),
+    params: () =>
+      this.aba() === 'tags'
+        ? undefined
+        : { origem: this.aba() === 'imagem' ? ('Imagem' as const) : ('Sensor' as const), status: this.so() === 'abertos' ? ('Aberto' as const) : null, guardado: this.semRede() },
+    // Sem rede (no app): os alertas abertos do plano guardado.
+    stream: ({ params }) => (params.guardado ? of(this.trabalho.alertas(params.origem)) : this.api.listar(params.origem, params.status)),
   });
   protected readonly erroLista = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly idAberto = computed(() => (this.aberto() ? Number(this.aberto()) : null));
-  protected readonly alerta = rxResource({ params: () => this.idAberto() ?? undefined, stream: ({ params }) => this.api.buscar(params) });
+  protected readonly alerta = rxResource({
+    params: () => (this.idAberto() ? { id: this.idAberto()!, guardado: this.semRede() } : undefined),
+    stream: ({ params }) => (params.guardado ? of(this.trabalho.alerta(params.id)!) : this.api.buscar(params.id)),
+  });
   protected readonly podeVistoriar = computed(() => this.sessao.temCargo('OperadorVia', 'Tecnico'));
   protected readonly ehTecnico = computed(() => this.sessao.temCargo('Tecnico'));
   protected readonly motivoDescarte = signal('');
