@@ -12,6 +12,7 @@ import { Pecas } from '../../../pecas/servicos/pecas';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { LeituraOcrDto, Ocr } from '../../servicos/ocr';
 import { PlacaNoFeixe, feixeDaPlaca, placaNoFeixe } from './placa-no-feixe';
+import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
 /**
  * A chegada da carga: os feixes que vieram, conferidos com o pedido e a nota. A primeira chegada cria o lote.
@@ -20,7 +21,7 @@ import { PlacaNoFeixe, feixeDaPlaca, placaNoFeixe } from './placa-no-feixe';
  */
 @Component({
   selector: 'app-chegada',
-  imports: [Esqueleto, RouterLink, FORMULARIO],
+  imports: [LegivelPipe, Esqueleto, RouterLink, FORMULARIO],
   templateUrl: './chegada.html',
   styles: `
     .placa-lida { display: grid; grid-template-columns: minmax(0, 160px) 1fr; gap: 14px; align-items: start; margin: 4px 0 10px; padding: 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); }

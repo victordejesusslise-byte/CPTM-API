@@ -59,7 +59,7 @@
       <div class="tabela"><table class="simples">
         <thead><tr><th>Quando</th><th>Sistema</th><th>Tipo</th><th>Situação</th><th class="so-computador">Mensagem</th></tr></thead>
         <tbody>@if (historico.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (l of historico.value() ?? []; track l.id) {
-          <tr><td>{{ dataHora(l.data) }}</td><td>{{ l.sistema }} · {{ l.direcao }}</td><td>{{ l.tipo }}</td><td [class.vermelho]="l.status === 'Erro'">{{ l.status }}</td><td class="so-computador">{{ l.mensagem ?? l.arquivo ?? '—' }}</td></tr>
+          <tr><td>{{ dataHora(l.data) }}</td><td>{{ l.sistema }} · {{ l.direcao }}</td><td>{{ l.tipo | legivel }}</td><td [class.vermelho]="l.status === 'Erro'">{{ l.status | legivel }}</td><td class="so-computador">{{ l.mensagem ?? l.arquivo ?? '—' }}</td></tr>
         } @empty { <tr><td colspan="5">Nenhuma integração ainda.</td></tr> }</tbody>
       </table></div>
     </section>

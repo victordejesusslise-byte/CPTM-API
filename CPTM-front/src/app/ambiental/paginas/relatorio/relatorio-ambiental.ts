@@ -7,6 +7,8 @@ import { dataHora, m3, mensagemDeErro } from '../../../compartilhado/utilitarios
 import { RelatorioDto, Relatorios } from '../../servicos/relatorios';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
 const mesAtual = () => new Date().toISOString().slice(0, 7);
 const nomeDoMes = (iso: string) => new Date(`${iso.slice(0, 7)}-15T12:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -17,7 +19,7 @@ const nomeDoMes = (iso: string) => new Date(`${iso.slice(0, 7)}-15T12:00:00`).to
  */
 @Component({
   selector: 'app-relatorio-ambiental',
-  imports: [Esqueleto, FormsModule, FORMULARIO, Estado],
+  imports: [LegivelPipe, CartoesNoCelular, Esqueleto, FormsModule, FORMULARIO, Estado],
   templateUrl: './relatorio-ambiental.html',
 })
 export class RelatorioAmbiental {

@@ -10,11 +10,12 @@ import { PecaDto } from '../../../pecas/entidades/peca';
 import { Pecas } from '../../../pecas/servicos/pecas';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
 /** A verificação de qualidade (especialista): lê a peça, marca o que viu e aprova ou reprova. */
 @Component({
   selector: 'app-qualidade',
-  imports: [Esqueleto, FORMULARIO, LeituraTag, Nota],
+  imports: [LegivelPipe, Esqueleto, FORMULARIO, LeituraTag, Nota],
   templateUrl: './qualidade.html',
 })
 export class Qualidade {

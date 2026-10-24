@@ -7,6 +7,7 @@ import { PassagemDto, Passagens } from '../../servicos/passagens';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 
 type Aba = 'noite' | 'anteriores' | 'numeros';
 const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: 'Passagens anteriores', numeros: 'Números do período' };
@@ -17,7 +18,7 @@ const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: '
  */
 @Component({
   selector: 'app-passagem',
-  imports: [Esqueleto, FORMULARIO, Estado, Nota],
+  imports: [CartoesNoCelular, Esqueleto, FORMULARIO, Estado, Nota],
   templateUrl: './passagem.html',
 })
 export class Passagem {

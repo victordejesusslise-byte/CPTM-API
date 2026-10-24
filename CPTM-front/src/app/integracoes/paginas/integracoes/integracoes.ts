@@ -10,6 +10,8 @@ import { metros } from '../../../compartilhado/utilitarios/formato';
 import { Catalogos } from '../../../catalogos/servicos/catalogos';
 import { ImportacaoNotasDto, Integracoes as IntegracoesApi } from '../../servicos/integracoes';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
 type Aba = 'notas' | 'erp' | 'historico';
 const TITULOS: Record<Aba, string> = { notas: 'Notas pela planilha', erp: 'Estoque para o ERP', historico: 'Histórico das integrações' };
@@ -17,7 +19,7 @@ const TITULOS: Record<Aba, string> = { notas: 'Notas pela planilha', erp: 'Estoq
 /** Integrações (supervisor e operador de pátio): importar as notas pela planilha do fornecedor, a planilha do ERP e o histórico. */
 @Component({
   selector: 'app-integracoes',
-  imports: [Esqueleto, FormsModule, FORMULARIO],
+  imports: [LegivelPipe, CartoesNoCelular, Esqueleto, FormsModule, FORMULARIO],
   templateUrl: './integracoes.html',
 })
 export class Integracoes {

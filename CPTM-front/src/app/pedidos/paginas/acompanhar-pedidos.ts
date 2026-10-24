@@ -9,6 +9,7 @@ import { Estado } from '../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../compartilhado/ui';
 import { PedidoAberto } from './pedido-aberto';
 import { OPCOES_SITUACAO, PERIODOS, Periodo, dentroDoPeriodo, entregaIncompleta, faltaChegar, situacao } from './situacao';
+import { CartoesNoCelular } from '../../compartilhado/componentes/tabela/cartoes';
 
 /**
  * Acompanhar pedidos (protótipo YBYRA, Pedidos → Acompanhar pedidos): totais do filtro, período, busca e situação,
@@ -16,7 +17,7 @@ import { OPCOES_SITUACAO, PERIODOS, Periodo, dentroDoPeriodo, entregaIncompleta,
  */
 @Component({
   selector: 'app-acompanhar-pedidos',
-  imports: [FormsModule, FORMULARIO, Estado, PedidoAberto],
+  imports: [CartoesNoCelular, FormsModule, FORMULARIO, Estado, PedidoAberto],
   templateUrl: './acompanhar-pedidos.html',
 })
 export class AcompanharPedidos {

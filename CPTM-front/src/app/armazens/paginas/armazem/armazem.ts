@@ -14,11 +14,13 @@ import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-
 import { Coluna, Tabela } from '../../../compartilhado/componentes/tabela/tabela';
 import { Nota, classeNota } from '../../../compartilhado/componentes/nota/nota';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
 /** O armazém: estoque, entrada na pilha, troca de pilha e conferência pilha por pilha. */
 @Component({
   selector: 'app-armazem',
-  imports: [Esqueleto, FormsModule, FORMULARIO, LeituraTag, Tabela, Nota],
+  imports: [LegivelPipe, CartoesNoCelular, Esqueleto, FormsModule, FORMULARIO, LeituraTag, Tabela, Nota],
   templateUrl: './armazem.html',
 })
 export class Armazem {
