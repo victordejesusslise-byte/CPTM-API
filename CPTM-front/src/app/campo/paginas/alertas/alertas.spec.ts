@@ -12,9 +12,9 @@ const alerta: AlertaDto = {
 };
 
 describe('Alertas', () => {
-  const abrir = async (aba: 'sensores' | 'tags', aberto?: string) => {
+  const abrir = async (aba: 'sensores' | 'tags', aberto?: string, cargo: 'OperadorVia' | 'Tecnico' = 'OperadorVia') => {
     localStorage.clear();
-    entrarComo('OperadorVia');
+    entrarComo(cargo);
     await TestBed.configureTestingModule({ imports: [Alertas], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] }).compileComponents();
     const fixture = TestBed.createComponent(Alertas);
     fixture.componentRef.setInput('aba', aba);
@@ -22,6 +22,24 @@ describe('Alertas', () => {
     fixture.detectChanges();
     return { fixture, tela: fixture.nativeElement as HTMLElement, http: TestBed.inject(HttpTestingController) };
   };
+
+  it('tag sem cadastro: o operador da via avisa o técnico; o técnico vincula direto', async () => {
+    const via = await abrir('tags');
+    expect(via.tela.textContent).toContain('Avisar o técnico');
+    TestBed.resetTestingModule();
+
+    const { fixture, tela, http } = await abrir('tags', undefined, 'Tecnico');
+    http.match(() => true).forEach((r) => r.flush([]));
+    await fixture.whenStable();
+    expect(tela.textContent).not.toContain('Avisar o técnico');
+    const campo = tela.querySelector<HTMLInputElement>('app-leitura-tag input')!;
+    campo.value = 'BR0000000790';
+    campo.dispatchEvent(new Event('input'));
+    [...tela.querySelectorAll('button')].find((b) => b.textContent?.includes('Vincular a uma peça'))!.click();
+    await fixture.whenStable();
+    expect(tela.textContent).toContain('Vincular a tag BR0000000790');
+    expect(tela.textContent).toContain('Código impresso na peça');
+  });
 
   it('lista os alertas abertos dos sensores', async () => {
     const { fixture, tela, http } = await abrir('sensores');

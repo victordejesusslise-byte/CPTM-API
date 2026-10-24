@@ -62,10 +62,13 @@ export class Alertas {
   protected readonly motivoDescarte = signal('');
   // tags sem cadastro: o técnico acha a peça pelo código e vincula a tag lida no local
   protected readonly podeVincular = computed(() => this.sessao.temCargo('Tecnico', 'Supervisor'));
+  // Quem avisa é o operador da via; o técnico e o supervisor vinculam direto (a tela não manda o técnico avisar a si mesmo).
   protected readonly podeAvisar = computed(() => this.sessao.temCargo('OperadorVia', 'Tecnico'));
   protected readonly avisos = rxResource({ params: () => (this.aba() === 'tags' && this.podeVincular() ? true : undefined), stream: () => this.api.avisos() });
   private readonly pecas = inject(Pecas);
   protected readonly avisoAberto = signal<AvisoTagDto | null>(null);
+  /** O técnico leu agora uma tag sem cadastro e vai vinculá-la (sem aviso da via). */
+  protected readonly vinculoDireto = signal(false);
   protected readonly codigoPeca = signal('');
   protected readonly pecaDoVinculo = signal<PecaDto | null>(null);
   protected readonly tagVinculo = signal('');
@@ -161,7 +164,29 @@ export class Alertas {
     });
   }
 
+  /** Técnico ou supervisor: a tag que ele mesmo leu vai direto para o vínculo. */
+  protected vincularDireto(): void {
+    if (!this.tagAviso().trim()) {
+      this.erro.set('Leia a tag que respondeu sem cadastro.');
+      return;
+    }
+    this.avisoAberto.set(null);
+    this.vinculoDireto.set(true);
+    this.tagVinculo.set(this.tagAviso().trim());
+    this.metodoVinculo.set(this.metodoAviso());
+    this.pecaDoVinculo.set(null);
+    this.codigoPeca.set('');
+    this.erro.set(null);
+    this.mensagem.set(null);
+  }
+
+  protected fecharVinculo(): void {
+    this.avisoAberto.set(null);
+    this.vinculoDireto.set(false);
+  }
+
   protected abrirAviso(a: AvisoTagDto): void {
+    this.vinculoDireto.set(false);
     this.avisoAberto.set(a);
     this.tagVinculo.set(a.tag);
     this.pecaDoVinculo.set(null);
@@ -187,6 +212,8 @@ export class Alertas {
     if (!p || !this.tagVinculo().trim()) return this.erro.set('Ache a peça e leia a tag dela no local.');
     this.enviar(this.api.vincular(p.id, leitura(this.tagVinculo(), this.metodoVinculo())), (r) => {
       this.avisoAberto.set(null);
+      this.vinculoDireto.set(false);
+      this.tagAviso.set('');
       this.pecaDoVinculo.set(null);
       this.avisos.reload();
       return `Tag ${r.tag} vinculada à peça ${r.codigo}.`;

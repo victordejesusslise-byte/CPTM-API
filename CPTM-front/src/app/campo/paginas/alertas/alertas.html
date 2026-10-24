@@ -6,10 +6,18 @@
 
 @if (aba() === 'tags') {
   @if (podeVincular()) {
-    @if (avisoAberto(); as av) {
+    <!-- O técnico e o supervisor vinculam direto a tag que leram (não faz sentido avisar o técnico sendo o técnico). -->
+    <section class="cartao pilha">
+      <header><h2>Tag respondeu sem cadastro</h2><span class="nota">leia a tag e vincule à peça certa</span></header>
+      <app-leitura-tag rotulo="Tag lida" [(tag)]="tagAviso" [(metodo)]="metodoAviso" (lida)="vincularDireto()" />
+      <div class="acoes"><button mat-flat-button type="button" (click)="vincularDireto()">Vincular a uma peça</button></div>
+    </section>
+    @if (avisoAberto() || vinculoDireto()) {
       <section class="cartao pilha">
-        <header><h2>Vincular a tag <span class="mono">{{ av.tag }}</span></h2><span class="nota"><button mat-button type="button" (click)="avisoAberto.set(null)">Fechar</button></span></header>
-        <p class="nota">Avisada em {{ dataHora(av.data) }}@if (av.km !== null) { · km {{ km(av.km) }} }@if (av.observacao) { · {{ av.observacao }} }</p>
+        <header><h2>Vincular a tag <span class="mono">{{ tagVinculo() }}</span></h2><span class="nota"><button mat-button type="button" (click)="fecharVinculo()">Fechar</button></span></header>
+        @if (avisoAberto(); as av) {
+          <p class="nota">Avisada em {{ dataHora(av.data) }}@if (av.km !== null) { · km {{ km(av.km) }} }@if (av.observacao) { · {{ av.observacao }} }</p>
+        }
         <div class="filtros">
           <mat-form-field appearance="outline" class="cresce" subscriptSizing="dynamic"><mat-label>Código impresso na peça</mat-label>
             <input matInput class="mono" placeholder="DM-E01-L02-0034" [ngModel]="codigoPeca()" (ngModelChange)="codigoPeca.set($event)" (keydown.enter)="buscarPeca()" /></mat-form-field>
@@ -37,7 +45,7 @@
       </div>
     </section>
   }
-  @if (podeAvisar()) {
+  @if (podeAvisar() && !podeVincular()) {
   <section class="cartao pilha">
     <header><h2>Tag respondeu sem cadastro</h2><span class="nota">o técnico vincula a tag à peça certa</span></header>
     <app-leitura-tag rotulo="Tag lida" [(tag)]="tagAviso" [(metodo)]="metodoAviso" />
