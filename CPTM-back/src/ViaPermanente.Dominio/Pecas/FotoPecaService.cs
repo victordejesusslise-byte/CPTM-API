@@ -34,6 +34,7 @@ public class FotoPecaService(IFotoRepository fotos, IFotoPecaRepository repo)
         return new FotosDaPecaDto(idDormente, entrada, via);
     }
 
-    /// <summary>O arquivo de uma foto que está no banco (verificação ou câmera); nulo se não está no servidor.</summary>
-    public byte[]? Arquivo(string caminho) => fotos.Ler(caminho);
+    /// <summary>O arquivo de uma foto que está no banco (verificação ou câmera); nulo se não está no servidor ou se não é foto.</summary>
+    public byte[]? Arquivo(string caminho)
+        => Extensoes.Contains(Path.GetExtension(caminho ?? "").ToLowerInvariant()) ? fotos.Ler(caminho!) : null;
 }

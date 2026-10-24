@@ -5,6 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "celular": "ng serve --host 0.0.0.0",
+    "producao": "ng build && node servidor-producao.mjs",
+    "producao-celular": "ng build && node servidor-producao.mjs --rede",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

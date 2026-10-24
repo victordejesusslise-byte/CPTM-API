@@ -38,7 +38,8 @@ using ViaPermanente.Dominio.Pessoas;
 using ViaPermanente.Dominio.Via;
 
 // Segredos (conexão do banco, chave do JWT, supervisor inicial) vêm do .env, que fica fora do git.
-Env.TraversePath().Load();
+// Variável de ambiente já definida (Docker, testes) vale mais que o .env.
+Env.NoClobber().TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -178,6 +179,7 @@ var app = builder.Build();
 
 // HTTPS de produção (Seguranca:ExigirHttps: verdadeiro no appsettings, falso no Development e no Docker local).
 app.UseHttpsDeProducao(builder.Configuration.GetValue("Seguranca:ExigirHttps", false));
+app.UseCabecalhosDeSeguranca();
 
 app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
@@ -205,3 +207,6 @@ using (var escopo = app.Services.CreateScope())
 }
 
 app.Run();
+
+/// <summary>Aberta para os testes que sobem a API inteira (WebApplicationFactory).</summary>
+public partial class Program;

@@ -109,6 +109,10 @@ Os testes do banco leem a conexão de `VIA_TESTE_CONEXAO`; sem ela, usam o SQL S
 - O token vale 8 horas (`Jwt__MinutosValidade`) e leva a versão da sessão: "Sair" (`POST /api/auth/sair`) e desativar a conta derrubam todos os tokens dela na hora.
 - Login: no máximo `Seguranca__TentativasPorMinuto` (10) por aparelho; depois de 5 senhas erradas seguidas, a conta espera 30 s, 1 min e 5 min.
 - `Seguranca__ExigirHttps`: ligado no `appsettings.json` (produção) e desligado no Development e no Docker local. Ligado, a API recusa HTTP vindo da rede (menos o `/hc`).
+- A API não confia no front: quem mexe no site pelo DevTools consegue mostrar um botão escondido, mas a API confere o token e o cargo em toda chamada. Toda rota que grava exige um cargo, e o token só vale com a assinatura HS256 da API.
+- Toda resposta leva `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` e `Content-Security-Policy`.
+- Os testes de `tests/ViaPermanente.Testes/Api` sobem a API inteira e fazem o papel de um front adulterado: cada cargo tenta o que não é dele (403), chamadas sem token (401), token com o cargo trocado (401), valores fora da lista (400). Uma rota nova que grava sem `[Authorize(Roles = ...)]` faz o teste falhar.
+- As variáveis de ambiente valem mais que o `.env` (é assim que o Docker e os testes escolhem o banco).
 - Detalhes: `src/ViaPermanente.Api/Comum/Seguranca.cs`.
 
 ## Mudou o banco

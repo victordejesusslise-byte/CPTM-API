@@ -2,11 +2,10 @@ import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { mensagemDeErro, nomeDoCargo } from '../../../compartilhado/utilitarios/formato';
-import { Cargo } from '../../entidades/usuario';
+import { CARGOS, Cargo } from '../../entidades/usuario';
 import { Usuarios } from '../../servicos/usuarios';
 import { FORMULARIO } from '../../../compartilhado/ui';
 
-export const CARGOS: Cargo[] = ['Supervisor', 'Tecnico', 'Especialista', 'OperadorPatio', 'OperadorVia'];
 
 /** Usuários → Cadastrar usuário (supervisor): nome, e-mail, cargo e a senha inicial da pessoa. */
 @Component({

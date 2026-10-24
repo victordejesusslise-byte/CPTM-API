@@ -2,7 +2,7 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { entrarComo } from '../../compartilhado/testes/sessao-de-teste';
+import { entrarComo, jwtDeTeste } from '../../compartilhado/testes/sessao-de-teste';
 import { Sessao } from '../sessao/sessao';
 import { ambiente } from '../../../environments/ambiente';
 import { ehDaApi, tokenInterceptor } from './token-interceptor';
@@ -23,7 +23,7 @@ describe('tokenInterceptor', () => {
     entrarComo();
     const { http, teste } = criar();
     http.get(API).subscribe();
-    expect(teste.expectOne(API).request.headers.get('Authorization')).toBe('Bearer abc.def.ghi');
+    expect(teste.expectOne(API).request.headers.get('Authorization')).toBe(`Bearer ${jwtDeTeste()}`);
   });
 
   it('sem sessão, vai sem cabeçalho', () => {

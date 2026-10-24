@@ -1,6 +1,8 @@
 /** Os cinco cargos do back (Cargo.cs). Viram as permissões do token. */
 export type Cargo = 'Supervisor' | 'Tecnico' | 'Especialista' | 'OperadorPatio' | 'OperadorVia';
 
+export const CARGOS: Cargo[] = ['Supervisor', 'Tecnico', 'Especialista', 'OperadorPatio', 'OperadorVia'];
+
 export interface UsuarioDto {
   id: number;
   nome: string;

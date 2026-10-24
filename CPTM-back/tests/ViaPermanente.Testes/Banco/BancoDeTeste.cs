@@ -20,9 +20,11 @@ namespace ViaPermanente.Testes.Banco;
 /// </summary>
 internal static class BancoDeTeste
 {
+    public static string Conexao => Environment.GetEnvironmentVariable("VIA_TESTE_CONEXAO")
+        ?? @"Server=localhost\SQLEXPRESS;Database=ViaPermanente_Testes;Trusted_Connection=True;TrustServerCertificate=True";
+
     public static ViaPermanenteContext Contexto() => new(new DbContextOptionsBuilder<ViaPermanenteContext>()
-        .UseSqlServer(Environment.GetEnvironmentVariable("VIA_TESTE_CONEXAO")
-            ?? @"Server=localhost\SQLEXPRESS;Database=ViaPermanente_Testes;Trusted_Connection=True;TrustServerCertificate=True")
+        .UseSqlServer(Conexao)
         .Options);
 
     public static PecaService Pecas(ViaPermanenteContext db) => new(new PecaRepository(db), new CatalogoRepository(db));

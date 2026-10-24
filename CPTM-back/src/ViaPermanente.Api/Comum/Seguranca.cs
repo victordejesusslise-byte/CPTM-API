@@ -66,6 +66,22 @@ public static class Seguranca
         });
     }
 
+    /// <summary>
+    /// Cabeçalhos de segurança em toda resposta: o navegador não adivinha o tipo do arquivo, a API não abre dentro de outra página e
+    /// o endereço não vai adiante. A API só devolve JSON e arquivos, então a política de conteúdo não libera nada (menos o Swagger
+    /// do desenvolvimento, que é uma página).
+    /// </summary>
+    public static void UseCabecalhosDeSeguranca(this WebApplication app) => app.Use(async (contexto, proximo) =>
+    {
+        var cabecalhos = contexto.Response.Headers;
+        cabecalhos.XContentTypeOptions = "nosniff";
+        cabecalhos.XFrameOptions = "DENY";
+        cabecalhos["Referrer-Policy"] = "no-referrer";
+        if (!contexto.Request.Path.StartsWithSegments("/swagger"))
+            cabecalhos.ContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'";
+        await proximo();
+    });
+
     private static async ValueTask Problema(HttpContext contexto, int status, string detalhe, CancellationToken cancelar)
     {
         contexto.Response.StatusCode = status;

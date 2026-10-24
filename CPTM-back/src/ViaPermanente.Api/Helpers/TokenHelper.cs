@@ -44,6 +44,8 @@ public static class TokenHelper
         ValidIssuer = opcoes.Emissor,
         ValidAudience = opcoes.Publico,
         IssuerSigningKey = Chave(opcoes),
+        // Só a assinatura com que o token sai: token sem assinatura ("none") ou com outro algoritmo não vale.
+        ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
         NameClaimType = ClaimNome,
         RoleClaimType = ClaimCargo,
         ClockSkew = TimeSpan.FromMinutes(1)

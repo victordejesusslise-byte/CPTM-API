@@ -16,9 +16,17 @@ Todos dentro de `CPTM-front`.
 | Instalar as dependências (a primeira vez e depois de mudar o `package.json`) | `npm install` |
 | Ligar o site no PC (abre em http://localhost:4200) | `npx ng serve` |
 | Ligar o site aberto para o celular no mesmo Wi-Fi (abre em `http://SEU-IP:4200`) | `npm run celular` |
+| Ligar o site **fechado**, na versão de produção (para apresentar; abre em http://localhost:4200) | `npm run producao` |
+| O mesmo, aberto para o celular no mesmo Wi-Fi | `npm run producao-celular` |
 | Rodar os testes uma vez (Vitest) | `npx ng test --watch=false` |
 | Rodar os testes e continuar olhando as mudanças | `npx ng test` |
 | Gerar a versão de produção (vai para `dist/`) | `npx ng build` |
+
+## Desenvolvimento e produção
+
+O `npx ng serve` e o `npm run celular` são o modo de **desenvolvimento**: mostram o código-fonte inteiro no DevTools (F12) e recarregam sozinhos quando o código muda. Para apresentar ou usar de verdade, use o `npm run producao` (ou o `producao-celular`): o código sai compactado, sem o mapa do código-fonte, com a política de segurança de conteúdo (CSP), e sem as ferramentas de depuração do Angular.
+
+Mesmo assim, quem tem o site aberto sempre consegue mexer no que o navegador recebeu, por exemplo mostrar um botão escondido. Por isso quem decide o que cada cargo pode fazer é a API, que confere o token e o cargo em toda chamada. O front só esconde o que não é do cargo. O cargo vem de dentro do token, que é assinado pela API, e é conferido com a API toda vez que o sistema abre. Quem troca o cargo guardado no navegador é desconectado na hora.
 
 ## Entrar
 
