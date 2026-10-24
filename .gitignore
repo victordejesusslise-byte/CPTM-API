@@ -3,6 +3,7 @@
 # Os segredos (.env) e o que é gerado (bin, obj, node_modules, dist) saem pelos .gitignore de cada pasta.
 /*
 !/.gitignore
+!/.github/
 !/CPTM-back/
 !/CPTM-front/
 !/README.md

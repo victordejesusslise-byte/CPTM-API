@@ -1,0 +1,73 @@
+# Gera o APK do YBYRA (homologação) a cada envio na branch APP e publica numa Release de teste para baixar no celular.
+# Segredos (Settings > Secrets and variables > Actions): APK_CHAVE (a chave .jks em base64), APK_SENHA e APK_ALIAS.
+# Variável: HOMOL_API_URL (o servidor de teste). Sem os segredos, o APK sai com a chave de teste do Android.
+name: APK
+
+on:
+  push:
+    branches: [APP]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CPTM-front
+    env:
+      APP_AMBIENTE: homol
+      APP_VERSAO_CODIGO: ${{ github.run_number }}
+      APP_VERSAO_NOME: 0.1.${{ github.run_number }}
+      HOMOL_API_URL: ${{ vars.HOMOL_API_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: CPTM-front/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Dependências
+        run: npm ci
+
+      - name: Site e Android (build + sync)
+        run: npm run app:homol
+
+      - name: Chave de assinatura
+        env:
+          APK_CHAVE: ${{ secrets.APK_CHAVE }}
+        run: |
+          if [ -n "$APK_CHAVE" ]; then
+            echo "$APK_CHAVE" | base64 -d > "$RUNNER_TEMP/ybyra.jks"
+            echo "APK_CHAVE_ARQUIVO=$RUNNER_TEMP/ybyra.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sem o segredo APK_CHAVE: o APK sai com a chave de teste (não instala por cima de outra versão)."
+          fi
+
+      - name: APK
+        working-directory: CPTM-front/android
+        env:
+          APK_SENHA: ${{ secrets.APK_SENHA }}
+          APK_ALIAS: ${{ secrets.APK_ALIAS }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/ybyra-homol-$APP_VERSAO_NOME.apk"
+
+      - name: Release de teste
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "app-homol-$APP_VERSAO_NOME" "$RUNNER_TEMP/ybyra-homol-$APP_VERSAO_NOME.apk" \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "YBYRA homologação $APP_VERSAO_NOME" \
+            --notes "APK de homologação gerado a partir de $GITHUB_SHA. Instale no celular (autorize \"instalar apps desconhecidos\")."

@@ -42,3 +42,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# A chave de assinatura do APK e as senhas (nunca vão para o git)
+.chaves/

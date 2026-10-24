@@ -1,0 +1,70 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "br.cptm.ybyra"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "br.cptm.ybyra"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // A versão vem do GitHub (número da execução): cada APK novo instala por cima do anterior.
+        versionCode (System.getenv("APP_VERSAO_CODIGO") ?: "1") as Integer
+        versionName System.getenv("APP_VERSAO_NOME") ?: "0.1.0"
+        // http (sem criptografia) só no APK de homologação, para o servidor de teste na rede local.
+        manifestPlaceholders = [usaHttp: (System.getenv("APP_AMBIENTE") ?: "homol") == "prod" ? "false" : "true"]
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // A chave de assinatura (o "lacre" do APK) vem dos segredos do GitHub; sem ela, o APK sai com a chave de teste do Android.
+    signingConfigs {
+        ybyra {
+            def arquivo = System.getenv("APK_CHAVE_ARQUIVO")
+            if (arquivo) {
+                storeFile file(arquivo)
+                storePassword System.getenv("APK_SENHA")
+                keyAlias System.getenv("APK_ALIAS")
+                keyPassword System.getenv("APK_SENHA")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig System.getenv("APK_CHAVE_ARQUIVO") ? signingConfigs.ybyra : signingConfigs.debug
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

@@ -59,6 +59,52 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "app-homol": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/ambiente.ts",
+                  "with": "src/environments/ambiente.homol.ts"
+                }
+              ]
+            },
+            "app-prod": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/ambiente.ts",
+                  "with": "src/environments/ambiente.prod.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

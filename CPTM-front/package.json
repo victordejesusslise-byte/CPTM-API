@@ -9,7 +9,9 @@
     "producao-celular": "ng build && node servidor-producao.mjs --rede",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "app:homol": "node scripts/ambiente-app.mjs homol && ng build --configuration app-homol && cap sync android",
+    "app:prod": "node scripts/ambiente-app.mjs prod && ng build --configuration app-prod && cap sync android"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -22,6 +24,8 @@
     "@angular/material": "^22.2.2",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -29,6 +33,7 @@
     "@angular/build": "^22.2.2",
     "@angular/cli": "^22.2.2",
     "@angular/compiler-cli": "^22.2.0",
+    "@capacitor/cli": "^8.5.3",
     "jsdom": "^30.0.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
