@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { CampoOcrDto, LeituraOcrDto, Ocr } from '../../servicos/ocr';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 
 export const NOMES_PLACA: Record<string, string> = {
   Fornecedor: 'Fornecedor', Ata: 'Ata', Contrato: 'Contrato', EspecieClasse: 'Espécie e classe', Comprimento: 'Comprimento',
@@ -24,7 +25,7 @@ export interface PlacaConfirmada {
  */
 @Component({
   selector: 'app-ler-placa',
-  imports: [FormsModule, DecimalPipe, FORMULARIO],
+  imports: [CartoesNoCelular, FormsModule, DecimalPipe, FORMULARIO],
   templateUrl: './ler-placa.html',
 })
 export class LerPlaca {

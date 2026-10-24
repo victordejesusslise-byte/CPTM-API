@@ -14,6 +14,7 @@ import { Pecas } from '../../../pecas/servicos/pecas';
 import { Trocas } from '../../servicos/trocas';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
 /**
  * Inspeção (protótipo YBYRA, etapa 10; técnico): lê a peça, preenche o checklist com foto e, se reprovar, pede a troca.
@@ -21,7 +22,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
  */
 @Component({
   selector: 'app-inspecao',
-  imports: [Esqueleto, FormsModule, FORMULARIO, LeituraTag, Nota, PreviaLaudo],
+  imports: [LegivelPipe, Esqueleto, FormsModule, FORMULARIO, LeituraTag, Nota, PreviaLaudo],
   templateUrl: './inspecao.html',
 })
 export class Inspecao {

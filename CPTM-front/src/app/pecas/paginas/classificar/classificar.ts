@@ -12,6 +12,7 @@ import { Pecas } from '../../servicos/pecas';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 
 const METODOS: { valor: MetodoClassificacao; rotulo: string }[] = [
   { valor: 'Nir', rotulo: 'Pistola NIR' }, { valor: 'Comparacao', rotulo: 'Comparação com a amostra' }, { valor: 'Visual', rotulo: 'Visual' },
@@ -25,7 +26,7 @@ const NOME_METODO: Record<string, string> = { PlacaFornecedor: 'Placa do fornece
  */
 @Component({
   selector: 'app-classificar',
-  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag],
+  imports: [CartoesNoCelular, Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag],
   templateUrl: './classificar.html',
   styles: `
     .passos { margin: 0 0 16px; padding-left: 20px; color: var(--tinta-2); li { margin: 2px 0; } }

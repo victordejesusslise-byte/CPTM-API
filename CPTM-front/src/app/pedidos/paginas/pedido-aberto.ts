@@ -13,13 +13,14 @@ import { FORMULARIO } from '../../compartilhado/ui';
 import { FormItem, ItensPedido, itensValidos, novoItemPedido, paraTabela } from './itens-pedido';
 import { editavel, faltaChegar, hojeIso, situacao } from './situacao';
 import { ItemParaTabela, TabelaItens } from './tabela-itens';
+import { CartoesNoCelular } from '../../compartilhado/componentes/tabela/cartoes';
 
 interface Evento { data: string; titulo: string; texto?: string; motivo?: string; tipo?: 'trava' | 'cancela'; }
 
 /** O pedido aberto em Acompanhar pedidos: revisão, correção (até a carga chegar), cancelamento e "O que teve". */
 @Component({
   selector: 'app-pedido-aberto',
-  imports: [Esqueleto, FORMULARIO, ItensPedido, TabelaItens, PreviaLaudo],
+  imports: [CartoesNoCelular, Esqueleto, FORMULARIO, ItensPedido, TabelaItens, PreviaLaudo],
   templateUrl: './pedido-aberto.html',
 })
 export class PedidoAberto {

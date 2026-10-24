@@ -13,6 +13,7 @@ import { FORMULARIO } from '../../compartilhado/ui';
 import { FormItem, ItensPedido, itensValidos, novoItemPedido, paraTabela } from './itens-pedido';
 import { hojeIso } from './situacao';
 import { TabelaItens } from './tabela-itens';
+import { CartoesNoCelular } from '../../compartilhado/componentes/tabela/cartoes';
 
 const codigoNovo = () => {
   const d = new Date();
@@ -26,7 +27,7 @@ const codigoNovo = () => {
  */
 @Component({
   selector: 'app-cadastrar-pedido',
-  imports: [Esqueleto, RouterLink, FORMULARIO, ItensPedido, TabelaItens],
+  imports: [CartoesNoCelular, Esqueleto, RouterLink, FORMULARIO, ItensPedido, TabelaItens],
   templateUrl: './cadastrar-pedido.html',
 })
 export class CadastrarPedido {

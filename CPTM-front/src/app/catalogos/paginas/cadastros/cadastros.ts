@@ -9,6 +9,8 @@ import { PapelEmpresa } from '../../../compartilhado/entidades/enums';
 import { Cadastros as CadastrosApi } from '../../servicos/cadastros';
 import { Catalogos } from '../../servicos/catalogos';
 import { FORMULARIO } from '../../../compartilhado/ui';
+import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
 /** Um padrão de medida no formulário (largura e altura em metros; sem espécie, vale para todas). */
 const novoPadrao = () => ({ idEspecie: null as number | null, larguraM: null as number | null, alturaM: null as number | null });
@@ -21,7 +23,7 @@ const TITULOS: Record<Aba, string> = { empresas: 'Empresas', contratos: 'Contrat
 /** Cadastros de apoio (supervisor): empresas, contratos, estações e trechos, parâmetros do sistema. */
 @Component({
   selector: 'app-cadastros',
-  imports: [Esqueleto, FormsModule, FORMULARIO],
+  imports: [LegivelPipe, CartoesNoCelular, Esqueleto, FormsModule, FORMULARIO],
   templateUrl: './cadastros.html',
 })
 export class Cadastros {

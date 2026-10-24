@@ -159,6 +159,26 @@ details.cartao[open] summary { margin-bottom: 12px; }
 .tabela table.simples th.num { text-align: right; }
 .tabela tr.selecionada td { background: var(--superficie-3); }
 .tabela tr.selecionada td:first-child { box-shadow: inset 3px 0 0 var(--marcador); }
+
+/*
+ * No celular, as tabelas viram cartões (Victor, 2026-10-24: opção A). Cada linha é um cartão: a 1ª coluna no alto, inteira numa linha,
+ * a situação como etiqueta no canto e as outras colunas embaixo, cada uma com o nome dela (data-titulo, da diretiva CartoesNoCelular).
+ */
+@media (max-width: 600px) {
+  .tabela:has(> table.cartoes) { overflow: visible; border: 0; border-radius: 0; background: transparent; }
+  table.cartoes, table.cartoes tbody { display: block; width: 100%; }
+  table.cartoes thead { display: none; }
+  table.cartoes tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; height: auto !important;
+    padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--linha); border-radius: 12px; background: var(--superficie); }
+  table.cartoes tbody td { display: block; grid-column: 1 / -1; min-width: 0; padding: 0 !important; border: 0 !important; background: transparent !important; font-size: 14px; }
+  table.cartoes tbody td:first-child { grid-column: 1; font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  table.cartoes tbody td.destaque { grid-column: 2; grid-row: 1; justify-self: end; white-space: nowrap; font-size: 12.5px; font-weight: 600; }
+  table.cartoes tbody td.destaque:not(:has(span)) { padding: 3px 10px !important; border-radius: 999px; background: var(--superficie-3) !important; }
+  table.cartoes tbody td[data-titulo]:not(:first-child):not(.destaque)::before { content: attr(data-titulo); margin-right: 6px; color: var(--tinta-3); font-family: var(--fonte-texto); font-size: 13px; font-weight: 400; }
+  table.cartoes tbody td[data-titulo]:has(input, select, textarea)::before { display: block; margin: 0 0 4px; }
+  table.cartoes tbody td:empty { display: none; }
+  table.cartoes tbody tr.clicavel:active { background: var(--superficie-2); }
+}
 .pedido-aberto { margin-bottom: 20px; }
 button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-button-filled-label-text-color: var(--vermelho-tinta); }
 @media (max-width: 820px) { .so-computador { display: none; } }

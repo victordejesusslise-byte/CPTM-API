@@ -22,7 +22,7 @@
     <mat-label>Pedido</mat-label>
     <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value)">
       @for (p of abertos(); track p.id) {
-        <mat-option [value]="p.id">{{ p.codigo }} · {{ p.empresa }} · {{ p.situacao }}</mat-option>
+        <mat-option [value]="p.id">{{ p.codigo }} · {{ p.empresa }} · {{ p.situacao | legivel }}</mat-option>
       }
     </mat-select>
   </mat-form-field>

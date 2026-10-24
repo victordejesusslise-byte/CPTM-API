@@ -20,7 +20,7 @@
   } @else if (relatorio(); as r) {
     <div class="kv">
       <div><span class="lbl">Mês</span><b>{{ nomeDoMes(r.mesReferencia) }}</b></div>
-      <div><span class="lbl">Situação</span><b><span class="pilula" [class.pilula--solida]="r.status === 'Enviado'" [class.pilula--quieta]="r.status === 'Rascunho'">{{ r.status }}</span></b></div>
+      <div><span class="lbl">Situação</span><b><span class="pilula" [class.pilula--solida]="r.status === 'Enviado'" [class.pilula--quieta]="r.status === 'Rascunho'">{{ r.status | legivel }}</span></b></div>
       <div><span class="lbl">Gerado em</span><b>{{ dataHora(r.geradoEm) }}</b></div>
       <div><span class="lbl">Estoque</span><b class="mono">{{ m3(r.volumeM3Estoque) }}</b></div>
     </div>
@@ -81,7 +81,7 @@
           <tbody>
             @for (r of relatorios.value(); track r.id) {
               <tr class="clicavel" tabindex="0" [class.selecionada]="relatorio()?.id === r.id" (click)="abrir(r)" (keydown.enter)="abrir(r)">
-                <td>{{ nomeDoMes(r.mesReferencia) }}</td><td>{{ r.status }}</td><td class="num">{{ m3(r.volumeM3Estoque) }}</td><td>{{ dataHora(r.geradoEm) }}</td>
+                <td>{{ nomeDoMes(r.mesReferencia) }}</td><td>{{ r.status | legivel }}</td><td class="num">{{ m3(r.volumeM3Estoque) }}</td><td>{{ dataHora(r.geradoEm) }}</td>
               </tr>
             }
           </tbody>
