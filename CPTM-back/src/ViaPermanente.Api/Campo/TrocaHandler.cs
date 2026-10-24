@@ -5,6 +5,7 @@ using ViaPermanente.Api.Helpers;
 using ViaPermanente.Dominio.Campo;
 using ViaPermanente.Dominio.Campo.Dtos;
 using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Pecas;
 using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Campo;
@@ -61,6 +62,19 @@ public class TrocaHandler(TrocaService trocas) : ControllerBase
     {
         var troca = await trocas.Executar(id, dto, TokenHelper.IdUsuario(User));
         return troca is null ? NotFound() : troca;
+    }
+
+    /// <summary>A foto da troca (peça nova no lugar, ou a da recusa): devolve o caminho, que vai no fotoArquivo da execução ou da recusa.</summary>
+    [HttpPost("{id:int}/foto")]
+    [Authorize(Roles = nameof(Cargo.OperadorVia))]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FotoPecaService.TamanhoMaximo + 100_000)]
+    public async Task<ActionResult<object>> EnviarFoto(int id, IFormFile foto, [FromServices] FotoTrocaService fotos)
+    {
+        using var memoria = new MemoryStream();
+        await foto.CopyToAsync(memoria);
+        var arquivo = await fotos.Salvar(id, memoria.ToArray(), Path.GetExtension(foto.FileName));
+        return arquivo is null ? NotFound() : StatusCode(StatusCodes.Status201Created, new { arquivo });
     }
 
     [HttpPost("{id:int}/recusa")]

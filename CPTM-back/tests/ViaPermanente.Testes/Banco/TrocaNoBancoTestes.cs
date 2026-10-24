@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ViaPermanente.Dados;
 using ViaPermanente.Dados.Apresentacao;
+using ViaPermanente.Dados.Campo;
+using ViaPermanente.Dados.Laudos;
 using ViaPermanente.Dados.Pessoas;
 using ViaPermanente.Dominio.Apresentacao;
 using ViaPermanente.Dominio.Armazens.Models;
@@ -112,6 +114,55 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         Assert.Equal("Retirada", velha.Situacao);
         Assert.Equal(["Separada", "Devolvida", "Separada", "Saida"],
             await db.Set<Movimentacao>().AsNoTracking().Where(m => m.IdTroca == pedida.Id).OrderBy(m => m.IdMovimentacao).Select(m => m.Tipo.ToString()).ToListAsync());
+    }
+
+    [Fact]
+    public async Task Troca_feita_sem_rede_entra_uma_vez_com_a_hora_do_campo_e_a_foto()
+    {
+        var pedida = await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(3), Motivo = "Dormente podre" }, tecnico);
+        await Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Supervisor, 1);
+        var pasta = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "ybyra-fotos-" + Guid.NewGuid())).FullName;
+        var fotos = new FotoTrocaService(new FotoRepository(pasta), new TrocaRepository(db));
+        try
+        {
+            // A foto é tirada com a peça separada; a troca que não existe devolve nulo (404 na API).
+            await Assert.ThrowsAsync<RegraDeNegocioException>(() => fotos.Salvar(pedida.Id, [1, 2, 3], ".jpg"));
+            Assert.Null(await fotos.Salvar(999999, [1, 2, 3], ".jpg"));
+
+            // Primeira volta: a via recusa sem rede e o celular manda a recusa duas vezes. Entra uma.
+            await Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = await Peca(5), Leitura = Lida(5) }, patio);
+            var recusa = new RecusarTrocaDto { Motivo = "Trilho sem fixação", FotoArquivo = "fotos/r.jpg", IdCliente = Guid.NewGuid(), RegistradoEm = DateTime.Now.AddHours(-2) };
+            await Trocas().Recusar(pedida.Id, recusa, via);
+            Assert.Equal("Recusada", (await Trocas().Recusar(pedida.Id, recusa, via))!.Status);
+            Assert.Single(await db.Set<RecusaTroca>().AsNoTracking().Where(r => r.IdTroca == pedida.Id).ToListAsync());
+            await Trocas().DecidirRecusa(pedida.Id, new DecidirRecusaDto { Decisao = DecisaoRecusa.Manter, Resposta = "Fixação refeita" }, tecnico);
+
+            // Segunda volta: a troca feita de madrugada chega horas depois, também duas vezes. Entra uma, com a hora do campo.
+            await Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = await Peca(5), Leitura = Lida(5) }, patio);
+            var foto = await fotos.Salvar(pedida.Id, [1, 2, 3], ".JPG");
+            Assert.StartsWith($"trocas/{pedida.Id}/", foto);
+            var noCampo = DateTime.Now.AddHours(-4);
+            var feita = new ExecutarTrocaDto
+            {
+                LeituraSaiu = Lida(3), LeituraEntrou = Lida(5), Equipe = "Turma de Via 2", FotoArquivo = foto!, IdCliente = Guid.NewGuid(), RegistradoEm = noCampo
+            };
+            Assert.Equal("Feita", (await Trocas().Executar(pedida.Id, feita, via))!.Status);
+            Assert.Equal("Feita", (await Trocas().Executar(pedida.Id, feita, via))!.Status);
+            Assert.Single(await db.Set<Movimentacao>().AsNoTracking().Where(m => m.IdTroca == pedida.Id && m.Tipo == TipoMovimentacao.Saida).ToListAsync());
+            var gravada = await db.Set<Troca>().AsNoTracking().SingleAsync(t => t.IdTroca == pedida.Id);
+            Assert.Equal(noCampo, gravada.Data!.Value, TimeSpan.FromSeconds(1));
+            Assert.True(gravada.RecebidoEm > gravada.Data);
+            Assert.Equal(feita.IdCliente, gravada.IdCliente);
+            // Outro envio, com outro ID, para a troca já feita: não é o mesmo registro, então é recusado.
+            await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Executar(pedida.Id, new ExecutarTrocaDto
+            {
+                LeituraSaiu = Lida(3), LeituraEntrou = Lida(5), Equipe = "Turma de Via 2", FotoArquivo = foto!, IdCliente = Guid.NewGuid()
+            }, via));
+        }
+        finally
+        {
+            Directory.Delete(pasta, true);
+        }
     }
 
     [Fact]

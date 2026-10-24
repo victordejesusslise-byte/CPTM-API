@@ -51,6 +51,8 @@ internal static class CampoConfiguracao
             e.HasIndex(x => x.IdDormenteSaiu).IsUnique()
                 .HasFilter("[status] IN ('Pedida', 'Aprovada', 'AguardandoPeca', 'Separada', 'Recusada')")
                 .HasDatabaseName("UX_TROCA_uma_aberta_por_peca");
+            // A execução enviada duas vezes pelo celular entra uma vez.
+            e.HasIndex(x => x.IdCliente).IsUnique().HasFilter("[id_cliente] IS NOT NULL").HasDatabaseName("UX_TROCA_id_cliente");
         });
         mb.Fk<Troca, Dormente>(x => x.IdDormenteSaiu);
         mb.Fk<Troca, Dormente>(x => x.IdDormenteEntrou);

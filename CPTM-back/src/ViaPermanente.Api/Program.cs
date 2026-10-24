@@ -116,6 +116,7 @@ builder.Services.AddScoped<VarreduraService>();
 builder.Services.AddScoped<AlertaService>();
 builder.Services.AddScoped<InspecaoService>();
 builder.Services.AddScoped<TrocaService>();
+builder.Services.AddScoped<FotoTrocaService>();
 builder.Services.AddScoped<RelatorioAmbientalService>();
 builder.Services.AddScoped<ManutencaoLeituraViaService>();
 builder.Services.AddScoped<ConferenciaService>();

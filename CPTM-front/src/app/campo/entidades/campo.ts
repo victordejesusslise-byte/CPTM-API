@@ -22,5 +22,5 @@ export interface TrocaDto {
   cancelamento: string | null; diasDesdeOPedido: number; ultimaRecusa: RecusaDto | null;
 }
 export interface CompativelDto { peca: PecaDto; distanciaKm: number | null; idadeDias: number; sugerida: boolean; }
-export interface ExecutarTrocaDto { leituraSaiu?: LeituraDto | null; tagSaiuNaoResponde: boolean; leituraEntrou: LeituraDto; equipe: string; fotoArquivo: string; km?: number | null; }
-export interface RecusarTrocaDto { motivo: string; descricao?: string | null; fotoArquivo: string; }
+export interface ExecutarTrocaDto { leituraSaiu?: LeituraDto | null; tagSaiuNaoResponde: boolean; leituraEntrou: LeituraDto; equipe: string; fotoArquivo: string; km?: number | null; idCliente?: string; registradoEm?: string; }
+export interface RecusarTrocaDto { motivo: string; descricao?: string | null; fotoArquivo: string; idCliente?: string; registradoEm?: string; }

@@ -122,35 +122,41 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         var troca = await Buscar(idTroca);
         if (troca is null)
             return null;
+        // O celular mandou de novo (a rede caiu antes da resposta): devolve o estado atual, sem fazer duas vezes.
+        if (dto.IdCliente is Guid idCliente && troca.IdCliente == idCliente)
+            return await BuscarPorId(idTroca);
         if (troca.Status != StatusTroca.Separada || troca.IdDormenteEntrou is not int idEntrou)
             throw new RegraDeNegocioException("Só a troca com a peça separada é feita.");
         if (string.IsNullOrWhiteSpace(dto.Equipe) || string.IsNullOrWhiteSpace(dto.FotoArquivo))
             throw new RegraDeNegocioException("Registrar a troca exige a equipe e a foto da peça nova no lugar.");
         var mudancas = new MudancasDaTroca { TrocaAlterada = troca };
         var agora = DateTime.Now;
+        var noCampo = HoraDoCampo.De(dto.RegistradoEm, agora);
 
         // A peça que sai: é a do pedido, não a vizinha. Se a tag não responde, vai pelo km e pela foto.
         if (dto.TagSaiuNaoResponde)
             mudancas.Leituras.Add(new LeituraDormente
             {
                 IdDormente = troca.IdDormenteSaiu, IdUsuario = idUsuario, MetodoCaptura = MetodoCaptura.ModuloUhf, Leitura = false,
-                DataLeitura = agora, RegistradoEm = agora, RecebidoEm = agora, Observacao = "Tag da peça que sai não respondeu na troca"
+                DataLeitura = noCampo, RegistradoEm = noCampo, RecebidoEm = agora, Observacao = "Tag da peça que sai não respondeu na troca"
             });
         else
         {
             if (dto.LeituraSaiu is null)
                 throw new RegraDeNegocioException("Leia a tag da peça que sai, ou marque que ela não responde.");
             var tagSaiu = await pecas.TagAtiva(troca.IdDormenteSaiu) ?? throw new RegraDeNegocioException("A peça que sai não tem tag ativa: marque que ela não responde.");
-            mudancas.Leituras.Add(await leituras.ConferirPeca(troca.IdDormenteSaiu, tagSaiu, dto.LeituraSaiu, idUsuario));
+            mudancas.Leituras.Add(NoCampo(await leituras.ConferirPeca(troca.IdDormenteSaiu, tagSaiu, dto.LeituraSaiu, idUsuario), noCampo));
         }
         // A peça que entra: é a que o pátio separou. A leitura dela fica na movimentação de saída.
         var tagEntrou = await pecas.TagAtiva(idEntrou) ?? throw new RegraDeNegocioException("A peça que entra não tem tag ativa.");
-        var leituraEntrou = await leituras.ConferirPeca(idEntrou, tagEntrou, dto.LeituraEntrou, idUsuario);
+        var leituraEntrou = NoCampo(await leituras.ConferirPeca(idEntrou, tagEntrou, dto.LeituraEntrou, idUsuario), noCampo);
 
         var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
         troca.Status = StatusTroca.Feita;
         troca.IdUsuarioFez = idUsuario;
-        troca.Data = agora;
+        troca.Data = noCampo;
+        troca.IdCliente = dto.IdCliente;
+        troca.RecebidoEm = agora;
         troca.Equipe = dto.Equipe.Trim();
         troca.FotoArquivo = dto.FotoArquivo.Trim();
         troca.TagEntrou = tagEntrou.TagRfid;
@@ -158,14 +164,14 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         mudancas.Movimentacoes.Add((new Movimentacao
         {
             IdDormente = idEntrou, Tipo = TipoMovimentacao.Saida, IdPilhaOrigem = await trocas.PilhaDaSeparacao(idTroca, idEntrou),
-            IdTroca = idTroca, IdUsuario = idUsuario, IdLeitor = dto.LeituraEntrou.IdLeitor, Data = agora, RegistradoEm = agora, RecebidoEm = agora
+            IdTroca = idTroca, IdUsuario = idUsuario, IdLeitor = dto.LeituraEntrou.IdLeitor, Data = noCampo, RegistradoEm = noCampo, RecebidoEm = agora
         }, leituraEntrou));
         // A nova herda o km e o trecho; a velha ganha retirada_em.
         mudancas.Pecas.Add((idEntrou, d => { d.IdTrecho = saiu.IdTrecho ?? troca.IdTrecho; d.KmProjeto = troca.Km ?? saiu.KmProjeto; d.IdPilha = null; }));
-        mudancas.Pecas.Add((troca.IdDormenteSaiu, d => d.RetiradaEm = agora));
+        mudancas.Pecas.Add((troca.IdDormenteSaiu, d => d.RetiradaEm = noCampo));
         await trocas.Gravar(new MudancasDaTroca
         {
-            TrocaAlterada = mudancas.TrocaAlterada, FecharAlertas = (troca.IdDormenteSaiu, idUsuario, agora)
+            TrocaAlterada = mudancas.TrocaAlterada, FecharAlertas = (troca.IdDormenteSaiu, idUsuario, noCampo)
         }.Com(mudancas));
         return await BuscarPorId(idTroca);
     }
@@ -176,12 +182,15 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         var troca = await Buscar(idTroca);
         if (troca is null)
             return null;
+        if (dto.IdCliente is Guid idCliente && (await trocas.Recusas([idTroca])).Any(r => r.IdCliente == idCliente))
+            return await BuscarPorId(idTroca);
         if (troca.Status != StatusTroca.Separada || troca.IdDormenteEntrou is not int idEntrou)
             throw new RegraDeNegocioException("Só a troca com a peça separada é recusada.");
         if (string.IsNullOrWhiteSpace(dto.Motivo) || string.IsNullOrWhiteSpace(dto.FotoArquivo))
             throw new RegraDeNegocioException("A recusa exige motivo e foto.");
 
         var agora = DateTime.Now;
+        var noCampo = HoraDoCampo.De(dto.RegistradoEm, agora);
         var mudancas = Devolver(troca, idEntrou, idUsuario, agora, await trocas.PilhaDaSeparacao(idTroca, idEntrou));
         troca.Status = StatusTroca.Recusada;
         await trocas.Gravar(new MudancasDaTroca
@@ -189,8 +198,8 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
             TrocaAlterada = troca,
             RecusaNova = new RecusaTroca
             {
-                IdTroca = idTroca, IdUsuario = idUsuario, Data = agora, Motivo = dto.Motivo.Trim(), Descricao = Limpo(dto.Descricao),
-                FotoArquivo = dto.FotoArquivo.Trim(), RegistradoEm = agora, RecebidoEm = agora
+                IdTroca = idTroca, IdUsuario = idUsuario, Data = noCampo, Motivo = dto.Motivo.Trim(), Descricao = Limpo(dto.Descricao),
+                FotoArquivo = dto.FotoArquivo.Trim(), IdCliente = dto.IdCliente, RegistradoEm = noCampo, RecebidoEm = agora
             }
         }.Com(mudancas));
         return await BuscarPorId(idTroca);
@@ -262,6 +271,12 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         mudancas.Pecas.Add((idEntrou, d => d.IdPilha = idPilha));
         troca.IdDormenteEntrou = null;
         return mudancas;
+    }
+
+    private static LeituraDormente NoCampo(LeituraDormente leitura, DateTime noCampo)
+    {
+        (leitura.DataLeitura, leitura.RegistradoEm) = (noCampo, noCampo);
+        return leitura;
     }
 
     private async Task<Troca?> Buscar(int idTroca) => (await trocas.Listar(idTroca: idTroca)).FirstOrDefault();

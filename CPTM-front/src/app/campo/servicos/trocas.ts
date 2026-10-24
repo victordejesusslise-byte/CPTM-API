@@ -36,6 +36,12 @@ export class Trocas {
   decidirRecusa(id: number, decisao: 'Manter' | 'Aceitar', resposta: string | null): Observable<TrocaDto> {
     return this.http.post<TrocaDto>(this.url + '/' + id + '/recusa/decisao', { decisao, resposta });
   }
+  /** A foto da troca (peça nova no lugar, ou a da recusa): o servidor guarda e devolve o caminho, que vai no fotoArquivo. */
+  enviarFoto(id: number, foto: Blob): Observable<{ arquivo: string }> {
+    const corpo = new FormData();
+    corpo.append('foto', foto, foto instanceof File ? foto.name : 'foto.jpg');
+    return this.http.post<{ arquivo: string }>(`${this.url}/${id}/foto`, corpo);
+  }
   recusar(id: number, dto: RecusarTrocaDto): Observable<TrocaDto> {
     return this.http.post<TrocaDto>(`${this.url}/${id}/recusa`, dto);
   }

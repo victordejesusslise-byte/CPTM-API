@@ -67,7 +67,7 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
         {
             IdAlerta = idAlerta, IdUsuario = idUsuario, Data = agora, Viu = dto.Viu, TagLida = tagLida,
             FotoArquivo = dto.FotoArquivo.Trim(), Observacao = string.IsNullOrWhiteSpace(dto.Observacao) ? null : dto.Observacao.Trim(),
-            IdCliente = dto.IdCliente, RegistradoEm = dto.RegistradoEm ?? agora, RecebidoEm = agora
+            IdCliente = dto.IdCliente, RegistradoEm = HoraDoCampo.De(dto.RegistradoEm, agora), RecebidoEm = agora
         }, leitura, pecaIdentificada);
         return await BuscarPorId(idAlerta);
     }

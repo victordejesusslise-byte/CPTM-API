@@ -15,4 +15,8 @@ public class ExecutarTrocaDto
     public string Equipe { get; init; } = "";
     public string FotoArquivo { get; init; } = "";
     public decimal? Km { get; init; }
+    /// <summary>Gerado no celular: a troca enviada de novo devolve o estado atual, sem duplicar.</summary>
+    public Guid? IdCliente { get; init; }
+    /// <summary>A hora do campo (feita sem rede, chega depois). Nula: a hora do servidor.</summary>
+    public DateTime? RegistradoEm { get; init; }
 }

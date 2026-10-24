@@ -3,8 +3,8 @@ import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esquelet
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin, map, of } from 'rxjs';
-import { nomeDaFoto } from '../../../compartilhado/utilitarios/foto';
+import { forkJoin, map, of, switchMap } from 'rxjs';
+import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { TrocaDto } from '../../entidades/campo';
 import { MetodoCaptura, StatusTroca } from '../../../compartilhado/entidades/enums';
@@ -80,15 +80,18 @@ export class TrocasTrecho {
       this.erro.set('Leia a tag da peça que sai (ou marque que não responde), a da peça que entra, informe a equipe e tire a foto.');
       return;
     }
+    // A foto sobe primeiro; o registro leva o caminho dela, o ID do celular (não duplica se for mandado de novo) e a hora do campo.
+    const registro = {
+      leituraSaiu: this.saiNaoResponde() ? null : leitura(this.tagSai(), this.metodoSai()),
+      tagSaiuNaoResponde: this.saiNaoResponde(),
+      leituraEntrou: leitura(this.tagEntra(), this.metodoEntra()),
+      equipe: this.equipe().trim(),
+      km: this.kmFeito() ?? t.km,
+      idCliente: novoIdCliente(),
+      registradoEm: new Date().toISOString(),
+    };
     this.enviar(
-      this.api.executar(t.id, {
-        leituraSaiu: this.saiNaoResponde() ? null : leitura(this.tagSai(), this.metodoSai()),
-        tagSaiuNaoResponde: this.saiNaoResponde(),
-        leituraEntrou: leitura(this.tagEntra(), this.metodoEntra()),
-        equipe: this.equipe().trim(),
-        fotoArquivo: nomeDaFoto(this.foto(), `troca-${t.id}`),
-        km: this.kmFeito() ?? t.km,
-      }),
+      this.api.enviarFoto(t.id, this.foto()!).pipe(switchMap((f) => this.api.executar(t.id, { ...registro, fotoArquivo: f.arquivo }))),
       'Troca feita. A peça nova passa a ser lida na passagem.',
     );
   }
@@ -99,7 +102,17 @@ export class TrocasTrecho {
       return;
     }
     this.enviar(
-      this.api.recusar(t.id, { motivo: this.motivo().trim(), descricao: this.descricao().trim() || null, fotoArquivo: nomeDaFoto(this.foto(), `recusa-${t.id}`) }),
+      this.api.enviarFoto(t.id, this.foto()!).pipe(
+        switchMap((f) =>
+          this.api.recusar(t.id, {
+            motivo: this.motivo().trim(),
+            descricao: this.descricao().trim() || null,
+            fotoArquivo: f.arquivo,
+            idCliente: novoIdCliente(),
+            registradoEm: new Date().toISOString(),
+          }),
+        ),
+      ),
       'Recusa enviada ao técnico.',
     );
   }

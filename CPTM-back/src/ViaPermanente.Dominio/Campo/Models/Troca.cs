@@ -33,4 +33,8 @@ public class Troca
     public DateOnly? NoiteDoPlano { get; set; }
     /// <summary>Aprovada depois do corte para entrar na mesma noite.</summary>
     public bool Urgente { get; set; }
+    /// <summary>O ID que o celular gerou para a execução: a mesma troca enviada duas vezes (sem rede, depois com rede) entra uma vez.</summary>
+    public Guid? IdCliente { get; set; }
+    /// <summary>Quando a execução chegou ao servidor. A hora do campo fica em Data.</summary>
+    public DateTime? RecebidoEm { get; set; }
 }

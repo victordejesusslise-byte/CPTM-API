@@ -93,7 +93,7 @@ public class InspecaoService(IInspecaoRepository inspecoes, IAlertaRepository al
             AtaqueBiologico = dto.AtaqueBiologico, UmidadePct = dto.UmidadePct, VidaUtilMeses = dto.VidaUtilMeses,
             TipoMadeiraConfere = dto.TipoMadeiraConfere, Resultado = resultado,
             Observacao = string.IsNullOrWhiteSpace(dto.Observacao) ? null : dto.Observacao.Trim(), FotoArquivo = dto.FotoArquivo.Trim(),
-            IdCliente = dto.IdCliente, RegistradoEm = dto.RegistradoEm ?? agora, RecebidoEm = agora
+            IdCliente = dto.IdCliente, RegistradoEm = HoraDoCampo.De(dto.RegistradoEm, agora), RecebidoEm = agora
         };
         await inspecoes.Registrar(inspecao, leitura,
             resultado == ResultadoInspecao.Reprovada ? StatusAlerta.Confirmado : StatusAlerta.Descartado,

@@ -17,11 +17,17 @@ public class FotoPecaService(IFotoRepository fotos, IFotoPecaRepository repo)
     public async Task<string> SalvarEntrada(int idDormente, byte[] conteudo, string extensao)
     {
         if (!await repo.PecaExiste(idDormente)) throw new RegraDeNegocioException("Peça não encontrada.");
+        return fotos.Salvar(conteudo, $"pecas/{idDormente}/entrada", ExtensaoDaFoto(conteudo, extensao));
+    }
+
+    /// <summary>Confere a foto (não vazia, até 15 MB, JPG, PNG ou WEBP) e devolve a extensão em minúsculas. Vale também para a foto da troca.</summary>
+    public static string ExtensaoDaFoto(byte[] conteudo, string extensao)
+    {
         if (conteudo.Length == 0) throw new RegraDeNegocioException("A foto veio vazia.");
         if (conteudo.Length > TamanhoMaximo) throw new RegraDeNegocioException("A foto passa de 15 MB.");
         var ext = (extensao ?? "").ToLowerInvariant();
         if (!Extensoes.Contains(ext)) throw new RegraDeNegocioException("Mande a foto em JPG, PNG ou WEBP.");
-        return fotos.Salvar(conteudo, $"pecas/{idDormente}/entrada", ext);
+        return ext;
     }
 
     public async Task<FotosDaPecaDto?> DaPeca(int idDormente)

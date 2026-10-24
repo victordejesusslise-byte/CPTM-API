@@ -101,6 +101,7 @@ public class SegurancaDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
             ["POST api/trocas"] = ["Tecnico"],
             ["POST api/trocas/{id:int}/separacao"] = ["OperadorPatio"],
             ["POST api/trocas/{id:int}/execucao"] = ["OperadorVia"],
+            ["POST api/trocas/{id:int}/foto"] = ["OperadorVia"],
             ["POST api/pedidos"] = ["OperadorPatio", "Supervisor"],
             ["POST api/dormentes/{id:int}/verificacao"] = ["Especialista", "Supervisor"]
         };
