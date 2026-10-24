@@ -8,6 +8,8 @@ namespace ViaPermanente.Dados.Campo;
 
 public class AlertaRepository(ViaPermanenteContext db) : IAlertaRepository
 {
+    public Task<bool> VistoriaExiste(Guid idCliente) => db.Set<VistoriaAlerta>().AnyAsync(v => v.IdCliente == idCliente);
+
     public async Task<IReadOnlyList<Alerta>> Listar(OrigemAlerta? origem, StatusAlerta? status, int? idAlerta = null)
         => await db.Set<Alerta>().AsNoTracking()
             .Where(a => (origem == null || a.Origem == origem) && (status == null || a.Status == status) && (idAlerta == null || a.IdAlerta == idAlerta))

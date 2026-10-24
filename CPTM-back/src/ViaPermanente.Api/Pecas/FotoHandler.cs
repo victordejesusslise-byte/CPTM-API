@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ViaPermanente.Dominio.Campo;
 using ViaPermanente.Dominio.Pecas;
 using ViaPermanente.Dominio.Pecas.Dtos;
 using ViaPermanente.Dominio.Pessoas.Models;
@@ -21,6 +22,19 @@ public class FotoHandler(FotoPecaService fotos) : ControllerBase
         using var memoria = new MemoryStream();
         await foto.CopyToAsync(memoria);
         return StatusCode(StatusCodes.Status201Created, new { arquivo = await fotos.SalvarEntrada(id, memoria.ToArray(), Path.GetExtension(foto.FileName)) });
+    }
+
+    /// <summary>A foto da peça na inspeção (técnico): devolve o caminho, que vai no fotoArquivo da inspeção.</summary>
+    [HttpPost("dormentes/{id:int}/fotos/inspecao")]
+    [Authorize(Roles = nameof(Cargo.Tecnico))]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FotoPecaService.TamanhoMaximo + 100_000)]
+    public async Task<ActionResult<object>> EnviarDaInspecao(int id, IFormFile foto, [FromServices] FotoCampoService campo)
+    {
+        using var memoria = new MemoryStream();
+        await foto.CopyToAsync(memoria);
+        var arquivo = await campo.DaInspecao(id, memoria.ToArray(), Path.GetExtension(foto.FileName));
+        return arquivo is null ? NotFound() : StatusCode(StatusCodes.Status201Created, new { arquivo });
     }
 
     [HttpGet("dormentes/{id:int}/fotos")]

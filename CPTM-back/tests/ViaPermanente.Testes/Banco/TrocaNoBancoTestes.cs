@@ -3,6 +3,7 @@ using ViaPermanente.Dados;
 using ViaPermanente.Dados.Apresentacao;
 using ViaPermanente.Dados.Campo;
 using ViaPermanente.Dados.Laudos;
+using ViaPermanente.Dados.Pecas;
 using ViaPermanente.Dados.Pessoas;
 using ViaPermanente.Dominio.Apresentacao;
 using ViaPermanente.Dominio.Armazens.Models;
@@ -122,12 +123,14 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         var pedida = await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(3), Motivo = "Dormente podre" }, tecnico);
         await Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Supervisor, 1);
         var pasta = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "ybyra-fotos-" + Guid.NewGuid())).FullName;
-        var fotos = new FotoTrocaService(new FotoRepository(pasta), new TrocaRepository(db));
+        var fotos = new FotoCampoService(new FotoRepository(pasta), new TrocaRepository(db), new AlertaRepository(db), new PecaRepository(db));
         try
         {
             // A foto é tirada com a peça separada; a troca que não existe devolve nulo (404 na API).
-            await Assert.ThrowsAsync<RegraDeNegocioException>(() => fotos.Salvar(pedida.Id, [1, 2, 3], ".jpg"));
-            Assert.Null(await fotos.Salvar(999999, [1, 2, 3], ".jpg"));
+            await Assert.ThrowsAsync<RegraDeNegocioException>(() => fotos.DaTroca(pedida.Id, [1, 2, 3], ".jpg"));
+            Assert.Null(await fotos.DaTroca(999999, [1, 2, 3], ".jpg"));
+            Assert.StartsWith($"pecas/{await Peca(3)}/inspecao/", await fotos.DaInspecao(await Peca(3), [1, 2, 3], ".jpg"));
+            Assert.Null(await fotos.DaVistoria(999999, [1, 2, 3], ".jpg"));
 
             // Primeira volta: a via recusa sem rede e o celular manda a recusa duas vezes. Entra uma.
             await Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = await Peca(5), Leitura = Lida(5) }, patio);
@@ -139,7 +142,7 @@ public class TrocaNoBancoTestes : IAsyncLifetime
 
             // Segunda volta: a troca feita de madrugada chega horas depois, também duas vezes. Entra uma, com a hora do campo.
             await Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = await Peca(5), Leitura = Lida(5) }, patio);
-            var foto = await fotos.Salvar(pedida.Id, [1, 2, 3], ".JPG");
+            var foto = await fotos.DaTroca(pedida.Id, [1, 2, 3], ".JPG");
             Assert.StartsWith($"trocas/{pedida.Id}/", foto);
             var noCampo = DateTime.Now.AddHours(-4);
             var feita = new ExecutarTrocaDto

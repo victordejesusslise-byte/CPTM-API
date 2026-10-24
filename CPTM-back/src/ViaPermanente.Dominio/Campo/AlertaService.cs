@@ -22,6 +22,9 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
         var alerta = (await alertas.Listar(null, null, idAlerta)).FirstOrDefault();
         if (alerta is null)
             return null;
+        // O celular mandou de novo (a rede caiu antes da resposta): devolve o alerta como está.
+        if (dto.IdCliente is Guid idCliente && await alertas.VistoriaExiste(idCliente))
+            return await BuscarPorId(idAlerta);
         if (alerta.Status != StatusAlerta.Aberto)
             throw new RegraDeNegocioException("O alerta já foi decidido pelo técnico.");
         if (string.IsNullOrWhiteSpace(dto.FotoArquivo))

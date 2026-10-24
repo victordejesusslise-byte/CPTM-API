@@ -7,6 +7,9 @@ namespace ViaPermanente.Dados.Campo;
 
 public class InspecaoRepository(ViaPermanenteContext db) : IInspecaoRepository
 {
+    public async Task<int?> IdPorCliente(Guid idCliente)
+        => await db.Set<Inspecao>().Where(i => i.IdCliente == idCliente).Select(i => (int?)i.IdInspecao).FirstOrDefaultAsync();
+
     public async Task<IReadOnlyList<Inspecao>> Listar(int? idDormente = null, int? idInspecao = null)
         => await db.Set<Inspecao>().AsNoTracking()
             .Where(i => (idDormente == null || i.IdDormente == idDormente) && (idInspecao == null || i.IdInspecao == idInspecao))

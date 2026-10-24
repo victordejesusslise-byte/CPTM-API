@@ -60,6 +60,9 @@ public class InspecaoService(IInspecaoRepository inspecoes, IAlertaRepository al
 
     public async Task<InspecaoDto> Registrar(NovaInspecaoDto dto, int idUsuario)
     {
+        // O celular mandou de novo (a rede caiu antes da resposta): devolve a que já entrou.
+        if (dto.IdCliente is Guid idCliente && await inspecoes.IdPorCliente(idCliente) is int ja)
+            return (await BuscarPorId(ja))!;
         if (await pecas.Buscar(dto.IdDormente) is null)
             throw new RegraDeNegocioException("Peça não encontrada.");
         if (string.IsNullOrWhiteSpace(dto.FotoArquivo))

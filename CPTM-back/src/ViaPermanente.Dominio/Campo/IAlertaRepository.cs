@@ -13,5 +13,7 @@ public interface IAlertaRepository
     Task<IReadOnlyDictionary<int, int>> ContarVistorias(IReadOnlyCollection<int> idsAlerta);
     /// <summary>Grava a vistoria e a leitura; com idDormente, dá a peça ao alerta que não tinha.</summary>
     Task Vistoriar(VistoriaAlerta vistoria, LeituraDormente? leitura, int? idDormenteDoAlerta);
+    /// <summary>A vistoria que o celular já mandou com este ID (o reenvio depois de a rede cair).</summary>
+    Task<bool> VistoriaExiste(Guid idCliente);
     Task Descartar(int idAlerta, int idUsuario, DateTime data, string motivo);
 }

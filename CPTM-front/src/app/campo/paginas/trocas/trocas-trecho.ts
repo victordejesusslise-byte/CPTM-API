@@ -3,9 +3,9 @@ import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esquelet
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin, map, of, switchMap } from 'rxjs';
-import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
+import { forkJoin, map, of } from 'rxjs';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
+import { Fila, NovoRegistro } from '../../../nucleo/fila/fila';
 import { TrocaDto } from '../../entidades/campo';
 import { MetodoCaptura, StatusTroca } from '../../../compartilhado/entidades/enums';
 import { Trocas } from '../../servicos/trocas';
@@ -31,6 +31,7 @@ export class TrocasTrecho {
   readonly aba = input<Aba>('trocar');
   readonly aberta = input<string>();
   private readonly api = inject(Trocas);
+  private readonly fila = inject(Fila);
   private readonly router = inject(Router);
 
   protected readonly titulo = computed(() => ABAS[this.aba()].titulo);
@@ -80,19 +81,19 @@ export class TrocasTrecho {
       this.erro.set('Leia a tag da peça que sai (ou marque que não responde), a da peça que entra, informe a equipe e tire a foto.');
       return;
     }
-    // A foto sobe primeiro; o registro leva o caminho dela, o ID do celular (não duplica se for mandado de novo) e a hora do campo.
-    const registro = {
-      leituraSaiu: this.saiNaoResponde() ? null : leitura(this.tagSai(), this.metodoSai()),
-      tagSaiuNaoResponde: this.saiNaoResponde(),
-      leituraEntrou: leitura(this.tagEntra(), this.metodoEntra()),
-      equipe: this.equipe().trim(),
-      km: this.kmFeito() ?? t.km,
-      idCliente: novoIdCliente(),
-      registradoEm: new Date().toISOString(),
-    };
-    this.enviar(
-      this.api.enviarFoto(t.id, this.foto()!).pipe(switchMap((f) => this.api.executar(t.id, { ...registro, fotoArquivo: f.arquivo }))),
+    void this.registrar(
+      {
+        tipo: 'troca', alvo: t.id, rotulo: `Troca da peça ${t.codigoSaiu ?? t.idDormenteSaiu}`,
+        corpo: {
+          leituraSaiu: this.saiNaoResponde() ? null : leitura(this.tagSai(), this.metodoSai()),
+          tagSaiuNaoResponde: this.saiNaoResponde(),
+          leituraEntrou: leitura(this.tagEntra(), this.metodoEntra()),
+          equipe: this.equipe().trim(),
+          km: this.kmFeito() ?? t.km,
+        },
+      },
       'Troca feita. A peça nova passa a ser lida na passagem.',
+      'Sem rede: a troca ficou guardada no celular e sobe sozinha quando a rede voltar.',
     );
   }
 
@@ -101,37 +102,29 @@ export class TrocasTrecho {
       this.erro.set('Escreva o motivo e tire a foto.');
       return;
     }
-    this.enviar(
-      this.api.enviarFoto(t.id, this.foto()!).pipe(
-        switchMap((f) =>
-          this.api.recusar(t.id, {
-            motivo: this.motivo().trim(),
-            descricao: this.descricao().trim() || null,
-            fotoArquivo: f.arquivo,
-            idCliente: novoIdCliente(),
-            registradoEm: new Date().toISOString(),
-          }),
-        ),
-      ),
+    void this.registrar(
+      {
+        tipo: 'recusa', alvo: t.id, rotulo: `Recusa da troca da peça ${t.codigoSaiu ?? t.idDormenteSaiu}`,
+        corpo: { motivo: this.motivo().trim(), descricao: this.descricao().trim() || null },
+      },
       'Recusa enviada ao técnico.',
+      'Sem rede: a recusa ficou guardada no celular e sobe sozinha quando a rede voltar.',
     );
   }
 
-  private enviar(acao: import('rxjs').Observable<unknown>, ok: string): void {
+  /** Pela fila: com rede, sobe na hora; sem rede, fica guardada no celular. O que o servidor recusa na hora aparece aqui. */
+  private async registrar(registro: NovoRegistro, ok: string, semRede: string): Promise<void> {
     this.enviando.set(true);
     this.erro.set(null);
-    acao.subscribe({
-      next: () => {
-        this.enviando.set(false);
-        this.acao.set(null);
-        this.mensagem.set(ok);
-        this.troca.reload();
-        this.lista.reload();
-      },
-      error: (e) => {
-        this.enviando.set(false);
-        this.erro.set(mensagemDeErro(e));
-      },
-    });
+    const r = await this.fila.registrar(registro, this.foto()!);
+    this.enviando.set(false);
+    if (r.estado === 'recusado') {
+      this.erro.set(r.motivo);
+      return;
+    }
+    this.acao.set(null);
+    this.mensagem.set(r.estado === 'enviado' ? ok : semRede);
+    this.troca.reload();
+    this.lista.reload();
   }
 }

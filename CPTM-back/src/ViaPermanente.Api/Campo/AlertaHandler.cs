@@ -4,6 +4,7 @@ using ViaPermanente.Api.Helpers;
 using ViaPermanente.Dominio.Campo;
 using ViaPermanente.Dominio.Campo.Dtos;
 using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Pecas;
 using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Campo;
@@ -32,6 +33,19 @@ public class AlertaHandler(AlertaService alertas, AvisoAoVivo aoVivo) : Controll
     {
         var alerta = await alertas.Vistoriar(id, dto, TokenHelper.IdUsuario(User));
         return alerta is null ? NotFound() : alerta;
+    }
+
+    /// <summary>A foto da vistoria: devolve o caminho, que vai no fotoArquivo da vistoria.</summary>
+    [HttpPost("{id:int}/foto")]
+    [Authorize(Roles = $"{nameof(Cargo.Tecnico)},{nameof(Cargo.OperadorVia)}")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FotoPecaService.TamanhoMaximo + 100_000)]
+    public async Task<ActionResult<object>> EnviarFoto(int id, IFormFile foto, [FromServices] FotoCampoService fotos)
+    {
+        using var memoria = new MemoryStream();
+        await foto.CopyToAsync(memoria);
+        var arquivo = await fotos.DaVistoria(id, memoria.ToArray(), Path.GetExtension(foto.FileName));
+        return arquivo is null ? NotFound() : StatusCode(StatusCodes.Status201Created, new { arquivo });
     }
 
     /// <summary>"Não confere": descarta, com motivo. "Confere" é abrir a inspeção (POST /api/inspecoes com o alerta).</summary>

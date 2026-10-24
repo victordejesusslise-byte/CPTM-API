@@ -4,8 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Sessao } from '../../../nucleo/sessao/sessao';
-import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
-import { nomeDaFoto } from '../../../compartilhado/utilitarios/foto';
+import { Fila } from '../../../nucleo/fila/fila';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { AlertaDto, AvisoTagDto } from '../../entidades/campo';
 import { PecaDto } from '../../../pecas/entidades/peca';
@@ -36,6 +35,7 @@ export class Alertas {
   private readonly api = inject(AlertasApi);
   private readonly router = inject(Router);
   private readonly sessao = inject(Sessao);
+  private readonly fila = inject(Fila);
 
   protected readonly titulo = computed(() => TITULOS[this.aba()]);
   protected readonly so = signal<'abertos' | 'todos'>('abertos');
@@ -107,21 +107,34 @@ export class Alertas {
       this.erro.set('Tire a foto da peça.');
       return;
     }
-    this.enviar(
-      this.api.vistoriar(a.id, {
-        viu: this.viu(),
-        leitura: this.viu() && !this.tagNaoResponde() ? leitura(this.tag(), this.metodo()) : null,
-        tagNaoResponde: this.viu() && this.tagNaoResponde(),
-        fotoArquivo: nomeDaFoto(this.foto(), `vistoria-${a.id}`),
-        observacao: this.observacao().trim() || null,
-        idCliente: novoIdCliente(),
-      }),
-      () => {
-        this.alerta.reload();
-        this.lista.reload();
-        return 'Vistoria registrada. O técnico decide o alerta.';
+    void this.vistoriarPelaFila(a);
+  }
+
+  /** Pela fila: com rede, sobe na hora; sem rede, fica guardada no celular e sobe quando a rede voltar. */
+  private async vistoriarPelaFila(a: AlertaDto): Promise<void> {
+    this.enviando.set(true);
+    this.erro.set(null);
+    this.mensagem.set(null);
+    const r = await this.fila.registrar(
+      {
+        tipo: 'vistoria', alvo: a.id, rotulo: `Vistoria do alerta ${a.id}`,
+        corpo: {
+          viu: this.viu(),
+          leitura: this.viu() && !this.tagNaoResponde() ? leitura(this.tag(), this.metodo()) : null,
+          tagNaoResponde: this.viu() && this.tagNaoResponde(),
+          observacao: this.observacao().trim() || null,
+        },
       },
+      this.foto()!,
     );
+    this.enviando.set(false);
+    if (r.estado === 'recusado') {
+      this.erro.set(r.motivo);
+      return;
+    }
+    this.mensagem.set(r.estado === 'enviado' ? 'Vistoria registrada. O técnico decide o alerta.' : 'Sem rede: a vistoria ficou guardada no celular e sobe sozinha quando a rede voltar.');
+    this.alerta.reload();
+    this.lista.reload();
   }
 
   /** Técnico: descarta o alerta com motivo (quem confirma é a inspeção reprovada). */

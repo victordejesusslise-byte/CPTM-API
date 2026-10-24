@@ -22,9 +22,6 @@ export class Inspecoes {
   private readonly http = inject(HttpClient);
   private readonly url = `${ambiente.api}/inspecoes`;
 
-  registrar(dto: NovaInspecaoDto): Observable<InspecaoDto> {
-    return this.http.post<InspecaoDto>(this.url, dto);
-  }
   daPeca(idDormente: number): Observable<InspecaoDto[]> {
     return this.http.get<InspecaoDto[]>(this.url, { params: consulta({ idDormente }) });
   }

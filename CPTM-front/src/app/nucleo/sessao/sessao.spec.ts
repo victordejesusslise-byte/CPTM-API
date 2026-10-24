@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Rede } from '../fila/rede';
 import { entrarComo, jwtDeTeste, tokenDeTeste, usuarioDeTeste } from '../../compartilhado/testes/sessao-de-teste';
 import { Sessao, usuarioDoToken } from './sessao';
 
@@ -11,6 +13,26 @@ describe('Sessao', () => {
   };
 
   beforeEach(() => localStorage.clear());
+
+  it('com o login vencido e sem rede, continua; com rede, pede a senha (app Android)', () => {
+    const online = signal(false);
+    entrarComo('OperadorVia', -5);
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Rede, useValue: { online } }] });
+    const sessao = TestBed.inject(Sessao);
+    expect(sessao.logado()).toBe(true);
+    online.set(true);
+    expect(sessao.logado()).toBe(false);
+  });
+
+  it('abrir sem rede não derruba a sessão (a conferência fica para quando a rede voltar)', () => {
+    entrarComo('Tecnico');
+    const { sessao, http } = criar();
+    let confirmou: boolean | undefined;
+    sessao.confirmar().subscribe((c) => (confirmou = c));
+    http.expectOne('http://localhost:8045/api/auth/eu').error(new ProgressEvent('error'), { status: 0 });
+    expect(confirmou).toBe(true);
+    expect(sessao.logado()).toBe(true);
+  });
 
   it('entra pelo e-mail e senha e guarda só o token', () => {
     const { sessao, http } = criar();

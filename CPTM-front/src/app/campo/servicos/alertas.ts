@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
 import { consulta } from '../../compartilhado/utilitarios/consulta';
-import { AlertaDto, AvisoTagDto, NovaVistoriaDto, NovoAvisoTagDto } from '../entidades/campo';
+import { AlertaDto, AvisoTagDto, NovoAvisoTagDto } from '../entidades/campo';
 import { LeituraDto } from '../../compartilhado/entidades/enums';
 import { PecaDto } from '../../pecas/entidades/peca';
 import { OrigemAlerta, StatusAlerta } from '../../compartilhado/entidades/enums';
@@ -19,9 +19,6 @@ export class Alertas {
   }
   buscar(id: number): Observable<AlertaDto> {
     return this.http.get<AlertaDto>(`${this.url}/${id}`);
-  }
-  vistoriar(id: number, vistoria: NovaVistoriaDto): Observable<AlertaDto> {
-    return this.http.post<AlertaDto>(`${this.url}/${id}/vistoria`, vistoria);
   }
   descartar(id: number, motivo: string): Observable<AlertaDto> {
     return this.http.post<AlertaDto>(this.url + '/' + id + '/descarte', { motivo });

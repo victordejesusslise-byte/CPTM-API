@@ -117,7 +117,7 @@ builder.Services.AddScoped<VarreduraService>();
 builder.Services.AddScoped<AlertaService>();
 builder.Services.AddScoped<InspecaoService>();
 builder.Services.AddScoped<TrocaService>();
-builder.Services.AddScoped<FotoTrocaService>();
+builder.Services.AddScoped<FotoCampoService>();
 builder.Services.AddScoped<PlanoCampoService>();
 // O ao vivo do campo: o celular logado recebe os avisos do trabalho da noite (CampoHub em /hub/campo).
 builder.Services.AddSignalR();

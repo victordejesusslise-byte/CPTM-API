@@ -72,11 +72,11 @@ public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerB
     [Authorize(Roles = nameof(Cargo.OperadorVia))]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FotoPecaService.TamanhoMaximo + 100_000)]
-    public async Task<ActionResult<object>> EnviarFoto(int id, IFormFile foto, [FromServices] FotoTrocaService fotos)
+    public async Task<ActionResult<object>> EnviarFoto(int id, IFormFile foto, [FromServices] FotoCampoService fotos)
     {
         using var memoria = new MemoryStream();
         await foto.CopyToAsync(memoria);
-        var arquivo = await fotos.Salvar(id, memoria.ToArray(), Path.GetExtension(foto.FileName));
+        var arquivo = await fotos.DaTroca(id, memoria.ToArray(), Path.GetExtension(foto.FileName));
         return arquivo is null ? NotFound() : StatusCode(StatusCodes.Status201Created, new { arquivo });
     }
 

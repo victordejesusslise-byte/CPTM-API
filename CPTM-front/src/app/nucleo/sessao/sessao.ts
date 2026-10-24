@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
 import { CARGOS, Cargo, TokenDto, UsuarioDto } from '../../pessoas/entidades/usuario';
+import { Rede } from '../fila/rede';
 
 const CHAVE = 'via-permanente.sessao';
 
@@ -39,6 +40,7 @@ export const usuarioDoToken = (token: string | null): UsuarioDto | null => {
 @Injectable({ providedIn: 'root' })
 export class Sessao {
   private readonly http = inject(HttpClient);
+  private readonly rede = inject(Rede);
   private readonly atual = signal<SessaoGuardada | null>(Sessao.ler());
   /** Quem a API confirmou (login ou /auth/eu). Fica só na memória. */
   private readonly confirmado = signal<UsuarioDto | null>(null);
@@ -46,9 +48,10 @@ export class Sessao {
 
   readonly token = computed(() => this.atual()?.token ?? null);
   readonly usuario = computed<UsuarioDto | null>(() => (this.atual() ? (this.confirmado() ?? usuarioDoToken(this.token())) : null));
+  /** Com o login vencido e sem rede, continua (app Android): o servidor pede a senha quando a rede voltar, antes de a fila enviar. */
   readonly logado = computed(() => {
     const s = this.atual();
-    return !!s && !!usuarioDoToken(s.token) && new Date(s.expiraEm).getTime() > Date.now();
+    return !!s && !!usuarioDoToken(s.token) && (new Date(s.expiraEm).getTime() > Date.now() || !this.rede.online());
   });
 
   entrar(email: string, senha: string): Observable<TokenDto> {
@@ -72,7 +75,9 @@ export class Sessao {
         this.confirmado.set(u);
         return true;
       }),
-      catchError(() => {
+      catchError((erro: unknown) => {
+        // Sem rede: vale o token guardado; o servidor confere quando a rede voltar.
+        if (erro instanceof HttpErrorResponse && erro.status === 0) return of(true);
         this.sair();
         return of(false);
       }),

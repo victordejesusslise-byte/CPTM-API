@@ -2,8 +2,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
-import { nomeDaFoto } from '../../../compartilhado/utilitarios/foto';
+import { Fila } from '../../../nucleo/fila/fila';
 import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { AtaqueBiologicoInspecao, EstadoConservacao, MetodoCaptura, RachaduraInspecao } from '../../../compartilhado/entidades/enums';
 import { PecaDto } from '../../../pecas/entidades/peca';
@@ -31,6 +30,7 @@ export class Inspecao {
   readonly alerta = input<string>();
   private readonly pecas = inject(Pecas);
   private readonly inspecoes = inject(Inspecoes);
+  private readonly fila = inject(Fila);
   private readonly trocas = inject(Trocas);
   /** A inspeção cujo laudo (LI) está aberto na primeira visão, sem baixar. */
   protected readonly laudoDe = signal<number | null>(null);
@@ -81,32 +81,39 @@ export class Inspecao {
     this.foto.set((e.target as HTMLInputElement).files?.[0] ?? null);
   }
 
-  protected registrar(p: PecaDto): void {
+  /** Pela fila: com rede, sobe na hora e mostra o resultado; sem rede, fica guardada e o resultado sai quando ela subir. */
+  protected async registrar(p: PecaDto): Promise<void> {
     if (!this.foto()) {
       this.erro.set('Tire a foto da peça.');
       return;
     }
     this.enviando.set(true);
     this.erro.set(null);
-    this.inspecoes
-      .registrar({
-        idDormente: p.id, idAlerta: this.alerta() ? Number(this.alerta()) : null, leitura: leitura(this.tag(), this.metodo()),
-        iniciadoEm: this.iniciadoEm() ?? new Date().toISOString(), finalizadoEm: new Date().toISOString(),
-        estadoConservacao: this.estado(), rachadura: this.rachadura(), ataqueBiologico: this.ataque(),
-        umidadePct: this.umidade(), vidaUtilMeses: this.vidaUtil(), tipoMadeiraConfere: this.madeiraConfere(),
-        observacao: this.observacao().trim() || null, fotoArquivo: nomeDaFoto(this.foto(), `inspecao-${p.id}`), idCliente: novoIdCliente(),
-      })
-      .subscribe({
-        next: (i) => {
-          this.enviando.set(false);
-          this.resultado.set(i);
-          this.mensagem.set(i.resultado === 'Aprovada' ? 'Peça aprovada na inspeção.' : 'Peça reprovada: peça a troca abaixo.');
+    const r = await this.fila.registrar(
+      {
+        tipo: 'inspecao', alvo: p.id, rotulo: `Inspeção da peça ${p.codigo}`,
+        corpo: {
+          idDormente: p.id, idAlerta: this.alerta() ? Number(this.alerta()) : null, leitura: leitura(this.tag(), this.metodo()),
+          iniciadoEm: this.iniciadoEm() ?? new Date().toISOString(), finalizadoEm: new Date().toISOString(),
+          estadoConservacao: this.estado(), rachadura: this.rachadura(), ataqueBiologico: this.ataque(),
+          umidadePct: this.umidade(), vidaUtilMeses: this.vidaUtil(), tipoMadeiraConfere: this.madeiraConfere(),
+          observacao: this.observacao().trim() || null,
         },
-        error: (e) => {
-          this.enviando.set(false);
-          this.erro.set(mensagemDeErro(e));
-        },
-      });
+      },
+      this.foto()!,
+    );
+    this.enviando.set(false);
+    if (r.estado === 'recusado') {
+      this.erro.set(r.motivo);
+      return;
+    }
+    if (r.estado === 'guardado') {
+      this.mensagem.set('Sem rede: a inspeção ficou guardada no celular. O resultado aparece quando ela subir.');
+      return;
+    }
+    const i = r.resposta as InspecaoDto;
+    this.resultado.set(i);
+    this.mensagem.set(i.resultado === 'Aprovada' ? 'Peça aprovada na inspeção.' : 'Peça reprovada: peça a troca abaixo.');
   }
 
   protected pedirTroca(p: PecaDto, i: InspecaoDto): void {

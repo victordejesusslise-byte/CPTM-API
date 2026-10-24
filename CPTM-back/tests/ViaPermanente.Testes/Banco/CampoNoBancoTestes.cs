@@ -63,8 +63,9 @@ public class CampoNoBancoTestes : IAsyncLifetime
         });
     }
 
-    private NovaInspecaoDto Checklist(int idDormente, int n, int? idAlerta, RachaduraInspecao rachadura) => new()
+    private NovaInspecaoDto Checklist(int idDormente, int n, int? idAlerta, RachaduraInspecao rachadura, Guid? idCliente = null) => new()
     {
+        IdCliente = idCliente,
         IdDormente = idDormente, IdAlerta = idAlerta, Leitura = Lida(n), IniciadoEm = new DateTime(2026, 10, 11, 9, 0, 0),
         FinalizadoEm = new DateTime(2026, 10, 11, 9, 12, 0), EstadoConservacao = EstadoConservacao.Regular, Rachadura = rachadura,
         AtaqueBiologico = AtaqueBiologicoInspecao.Nenhum, VidaUtilMeses = 24, FotoArquivo = "fotos/inspecao.jpg"
@@ -127,7 +128,10 @@ public class CampoNoBancoTestes : IAsyncLifetime
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Inspecoes().Registrar(Checklist(peca9, 9, semPeca.Id, RachaduraInspecao.Nenhuma), idTecnico));
 
         // a vistoria do alerta sem peça lê a tag e dá a peça ao alerta
-        var identificado = await Alertas().Vistoriar(semPeca.Id, new NovaVistoriaDto { Viu = true, Leitura = Lida(9), FotoArquivo = "f.jpg" }, idTecnico);
+        // mandada duas vezes pelo celular (a rede caiu antes da resposta): entra uma
+        var vistoria = new NovaVistoriaDto { Viu = true, Leitura = Lida(9), FotoArquivo = "f.jpg", IdCliente = Guid.NewGuid() };
+        await Alertas().Vistoriar(semPeca.Id, vistoria, idTecnico);
+        var identificado = await Alertas().Vistoriar(semPeca.Id, vistoria, idTecnico);
         Assert.Equal(await Peca(9), identificado!.IdDormente);
         Assert.Equal(1, identificado.Vistorias);
         Assert.Equal("Aberto", identificado.Status);
@@ -136,7 +140,9 @@ public class CampoNoBancoTestes : IAsyncLifetime
         Assert.Equal("Descartado", descartado!.Status);
 
         var reprovou = await Inspecoes().Registrar(Checklist(await Peca(1), 1, posicao.Id, RachaduraInspecao.Grave), idTecnico);
-        var aprovou = await Inspecoes().Registrar(Checklist(await Peca(9), 9, semPeca.Id, RachaduraInspecao.Leve), idTecnico);
+        var checklist = Checklist(await Peca(9), 9, semPeca.Id, RachaduraInspecao.Leve, Guid.NewGuid());
+        var aprovou = await Inspecoes().Registrar(checklist, idTecnico);
+        Assert.Equal(aprovou.Id, (await Inspecoes().Registrar(checklist, idTecnico)).Id);
 
         Assert.Equal("Reprovada", reprovou.Resultado);
         Assert.Contains("rachadura grave", reprovou.MotivosDeReprovacao);
