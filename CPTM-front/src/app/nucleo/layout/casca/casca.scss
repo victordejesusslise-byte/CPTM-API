@@ -3,7 +3,7 @@
 .topo {
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; gap: 16px;
-  min-height: 56px; padding: 0 16px;
+  min-height: calc(56px + var(--topo-seguro)); padding: var(--topo-seguro) 16px 0;
   background: var(--bloco); color: var(--sobre-escuro);
 }
 .topo__marca {
@@ -15,10 +15,12 @@
 .topo__nome { font-weight: 600; }
 .topo__cargo { font-size: 12px; color: var(--sobre-escuro-2); }
 .topo__menu, .topo__sair, .topo__tema {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-height: 44px; padding: 0 14px; border: 1px solid var(--sobre-escuro-3); border-radius: 8px;
   background: transparent; color: inherit; font: inherit; cursor: pointer;
 }
 .topo__menu { display: none; }
+.menu__quem { display: none; }
 
 .corpo { display: grid; grid-template-columns: 232px 1fr; min-height: calc(100vh - 56px); }
 .menu {
@@ -47,9 +49,16 @@
   .topo__menu { display: inline-flex; align-items: center; }
   .topo__marca span, .topo__nome { display: none; }
   .corpo { grid-template-columns: 1fr; }
-  .menu { display: none; position: fixed; inset: 56px 0 0 0; height: auto; z-index: 9; overflow: auto; border-right: 0; }
+  .menu { display: none; position: fixed; inset: calc(56px + var(--topo-seguro)) 0 0 0; height: auto; z-index: 9; overflow: auto; border-right: 0;
+    padding-bottom: calc(16px + var(--fundo-seguro)); }
+  .menu__quem { display: flex; flex-direction: column; gap: 2px; padding: 4px 12px 14px; margin-bottom: 8px; border-bottom: 1px solid var(--linha);
+    strong { font-size: 16px; } span { font-size: 13px; color: var(--tinta-3); } }
+  // No celular os botões do alto ficam só com o ícone (o nome vai para o leitor de tela pelo aria-label).
+  .topo__rotulo { display: none; }
+  .topo__menu, .topo__sair, .topo__tema { width: 44px; padding: 0; }
+  .topo__quem { display: none; }
   .menu--aberto { display: flex; }
-  .conteudo { padding: 16px; }
+  .conteudo { padding: 16px 16px calc(16px + var(--fundo-seguro)); }
 }
 // Celular estreito (até 480px): a barra do alto cabe na tela. O cargo sai, os botões ficam do tamanho deles e a marca encolhe.
 @media (max-width: 480px) {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- O logo YBYRA (os anéis da tora com o corte em cruz), em areia sobre o verde-mata do fundo do ícone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M29.5,54 a24.5,24.5 0 1,0 49,0 a24.5,24.5 0 1,0 -49,0" android:strokeColor="#D5C4A1" android:strokeWidth="4.375" android:strokeLineCap="round" android:fillColor="#00000000"/>
+    <path android:pathData="M48.75,54 a5.25,5.25 0 1,0 10.5,0 a5.25,5.25 0 1,0 -10.5,0" android:strokeColor="#D5C4A1" android:strokeWidth="1.225" android:strokeLineCap="round" android:fillColor="#00000000"/>
+    <path android:pathData="M45.25,54 a8.75,8.75 0 1,0 17.5,0 a8.75,8.75 0 1,0 -17.5,0" android:strokeColor="#D5C4A1" android:strokeWidth="1.225" android:strokeLineCap="round" android:fillColor="#00000000"/>
+    <path android:pathData="M41.75,54 a12.25,12.25 0 1,0 24.5,0 a12.25,12.25 0 1,0 -24.5,0" android:strokeColor="#D5C4A1" android:strokeWidth="1.225" android:strokeLineCap="round" android:fillColor="#00000000"/>
+    <path android:pathData="M38.25,54 a15.75,15.75 0 1,0 31.5,0 a15.75,15.75 0 1,0 -31.5,0" android:strokeColor="#D5C4A1" android:strokeWidth="1.225" android:strokeLineCap="round" android:fillColor="#00000000"/>
+    <path android:pathData="M34.75,54 a19.25,19.25 0 1,0 38.5,0 a19.25,19.25 0 1,0 -38.5,0" android:strokeColor="#D5C4A1" android:strokeWidth="1.225" android:strokeLineCap="round" android:fillColor="#00000000"/>
+    <path android:pathData="M38.25,38.25 L69.75,69.75 M69.75,38.25 L38.25,69.75" android:strokeColor="#D5C4A1" android:strokeWidth="1.4" android:strokeLineCap="round" android:fillColor="#00000000"/>
+    <path android:pathData="M54,29.5 L54,78.5" android:strokeColor="#D5C4A1" android:strokeWidth="1.05" android:strokeLineCap="round" android:fillColor="#00000000"/>
+</vector>

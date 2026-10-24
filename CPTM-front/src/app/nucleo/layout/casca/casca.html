@@ -1,6 +1,6 @@
 <header class="topo">
-  <button type="button" class="topo__menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-controls="menu-lateral">
-    Menu
+  <button type="button" class="topo__menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-controls="menu-lateral" aria-label="Menu">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="topo__rotulo">Menu</span>
   </button>
   <a class="topo__marca" routerLink="/painel" aria-label="YBYRA, ir ao painel"><app-marca [tamanho]="30" /> <span>Dormentes · CPTM</span></a>
   <div class="topo__quem">
@@ -8,13 +8,18 @@
     <span class="topo__cargo">{{ cargo() }}</span>
   </div>
   <button type="button" class="topo__tema" (click)="tema.alternar()" [attr.aria-pressed]="tema.escuro()" [attr.aria-label]="tema.escuro() ? 'Voltar para o tema claro' : 'Trocar para o modo escuro'">
-    {{ tema.escuro() ? 'Claro' : 'Escuro' }}
+    @if (tema.escuro()) { <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+    @else { <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+    <span class="topo__rotulo">{{ tema.escuro() ? 'Claro' : 'Escuro' }}</span>
   </button>
-  <button type="button" class="topo__sair" (click)="sair()">Sair</button>
+  <button type="button" class="topo__sair" (click)="sair()" aria-label="Sair">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="topo__rotulo">Sair</span>
+  </button>
 </header>
 
 <div class="corpo">
   <nav id="menu-lateral" class="menu" [class.menu--aberto]="menuAberto()" aria-label="Menu do cargo">
+    <div class="menu__quem"><strong>{{ usuario()?.nome }}</strong><span>{{ cargo() }}</span></div>
     @for (grupo of grupos(); track grupo.nome) {
       <p class="menu__grupo">{{ grupo.nome }}</p>
       @for (item of grupo.itens; track item.rota) {

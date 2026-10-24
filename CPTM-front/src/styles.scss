@@ -11,6 +11,8 @@
  * Sempre o tema claro (creme), mesmo com o Windows no modo escuro; o escuro (mata) só com data-theme="dark".
  */
 :root {
+  --topo-seguro: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --fundo-seguro: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
   --madeira: #563624; --areia: #D5C4A1; --verde: #64786E; --mata: #1E2A20; --vinho: #512027;
   --plano: #F1E9E0; --superficie: #FBF7F2; --superficie-2: #F6F0E8; --superficie-3: #EAE1D4;
   --tinta: #1E2A20; --tinta-2: #46524A; --tinta-3: #55625A; --marcador: #563624;
