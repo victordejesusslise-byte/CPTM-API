@@ -23,15 +23,15 @@ jobs:
       APP_VERSAO_NOME: 0.1.${{ github.run_number }}
       HOMOL_API_URL: ${{ vars.HOMOL_API_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: CPTM-front/package-lock.json
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -60,13 +60,19 @@ jobs:
           APK_ALIAS: ${{ secrets.APK_ALIAS }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          # Se falhar, as últimas linhas viram avisos na página da execução (aparecem mesmo sem entrar no GitHub).
+          set +e
+          ./gradlew assembleRelease --no-daemon > "$RUNNER_TEMP/gradle.log" 2>&1
+          status=$?
+          set -e
+          if [ $status -ne 0 ]; then grep -E "error|FAIL|What went wrong|>" "$RUNNER_TEMP/gradle.log" | tail -n 15 | while IFS= read -r l; do echo "::error::$l"; done; exit $status; fi
           cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/ybyra-homol-$APP_VERSAO_NOME.apk"
 
       - name: Release de teste
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -o pipefail
           gh release create "app-homol-$APP_VERSAO_NOME" "$RUNNER_TEMP/ybyra-homol-$APP_VERSAO_NOME.apk" \
             --target "$GITHUB_SHA" --prerelease \
             --title "YBYRA homologação $APP_VERSAO_NOME" \
