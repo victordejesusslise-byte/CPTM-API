@@ -1,11 +1,13 @@
 import { Component, computed, input } from '@angular/core';
 import { m3, metros } from '../../compartilhado/utilitarios/formato';
+import { CartoesNoCelular } from '../../compartilhado/componentes/tabela/cartoes';
 
 export interface ItemParaTabela { comprimentoM: number; classe: number; especie: string | null; medida: string | null; quantidade: number; volumeM3: number; }
 
 /** Os itens do pedido com o total e a parte de 2ª classe (em m³), como na revisão do protótipo. */
 @Component({
   selector: 'app-tabela-itens',
+  imports: [CartoesNoCelular],
   template: `
     <div class="tabela">
       <table class="simples">
