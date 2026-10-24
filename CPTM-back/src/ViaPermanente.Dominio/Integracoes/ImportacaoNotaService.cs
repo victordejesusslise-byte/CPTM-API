@@ -27,7 +27,7 @@ public class ImportacaoNotaService(IPlanilhaNotaRepository planilha, IIntegracao
         }
 
         var especies = (await catalogo.ListarEspecies()).Where(e => e.Ativo).ToDictionary(e => e.NomeCientifico.Trim().ToLowerInvariant());
-        var tamanhos = (await catalogo.ListarTamanhos()).Where(t => t.Ativo).ToDictionary(t => t.ComprimentoM);
+        var tamanhos = (await catalogo.ListarTamanhos()).ToDictionary(t => t.ComprimentoM);
         var importadas = new List<NotaImportadaDto>();
         var erros = new List<string>();
 

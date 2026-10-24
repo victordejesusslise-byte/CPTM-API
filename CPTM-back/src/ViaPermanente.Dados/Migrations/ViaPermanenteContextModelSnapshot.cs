@@ -1391,40 +1391,6 @@ namespace ViaPermanente.Dados.Migrations
                     b.ToTable("VISTORIA_ALERTA");
                 });
 
-            modelBuilder.Entity("ViaPermanente.Dominio.Catalogos.Models.CodigoMaterial", b =>
-                {
-                    b.Property<int>("IdCodigo")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id_codigo");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdCodigo"));
-
-                    b.Property<byte>("Classe")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("classe");
-
-                    b.Property<string>("CodigoErp")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("codigo_erp");
-
-                    b.Property<int>("IdTamanho")
-                        .HasColumnType("int")
-                        .HasColumnName("id_tamanho");
-
-                    b.HasKey("IdCodigo");
-
-                    b.HasIndex("IdTamanho", "Classe")
-                        .IsUnique();
-
-                    b.ToTable("CODIGO_MATERIAL", t =>
-                        {
-                            t.HasCheckConstraint("CK_CODIGO_MATERIAL_classe", "[classe] IN (1, 2)");
-                        });
-                });
-
             modelBuilder.Entity("ViaPermanente.Dominio.Catalogos.Models.Especie", b =>
                 {
                     b.Property<int>("IdEspecie")
@@ -1723,9 +1689,15 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("decimal(5,3)")
                         .HasColumnName("altura_m");
 
-                    b.Property<bool>("Ativo")
-                        .HasColumnType("bit")
-                        .HasColumnName("ativo");
+                    b.Property<string>("CodigoErpClasse1")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("codigo_erp_classe1");
+
+                    b.Property<string>("CodigoErpClasse2")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("codigo_erp_classe2");
 
                     b.Property<decimal>("ComprimentoM")
                         .HasPrecision(5, 3)
@@ -1753,7 +1725,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdTamanho = 1,
                             AlturaM = 0.17m,
-                            Ativo = true,
                             ComprimentoM = 2.80m,
                             LarguraM = 0.24m,
                             MedidaProvisoria = true
@@ -1762,7 +1733,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdTamanho = 2,
                             AlturaM = 0.17m,
-                            Ativo = true,
                             ComprimentoM = 3.00m,
                             LarguraM = 0.24m,
                             MedidaProvisoria = true
@@ -1771,7 +1741,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdTamanho = 3,
                             AlturaM = 0.17m,
-                            Ativo = true,
                             ComprimentoM = 4.00m,
                             LarguraM = 0.24m,
                             MedidaProvisoria = true
@@ -1780,7 +1749,6 @@ namespace ViaPermanente.Dados.Migrations
                         {
                             IdTamanho = 4,
                             AlturaM = 0.17m,
-                            Ativo = true,
                             ComprimentoM = 4.80m,
                             LarguraM = 0.24m,
                             MedidaProvisoria = true
@@ -3989,15 +3957,6 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
                         .WithMany()
                         .HasForeignKey("IdUsuario")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ViaPermanente.Dominio.Catalogos.Models.CodigoMaterial", b =>
-                {
-                    b.HasOne("ViaPermanente.Dominio.Catalogos.Models.TamanhoDormente", null)
-                        .WithMany()
-                        .HasForeignKey("IdTamanho")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

@@ -16,6 +16,6 @@ public interface ICatalogoRepository
     Task<IReadOnlyList<TipoLeitor>> ListarTiposLeitor();
     Task<IReadOnlyList<ModoLeitura>> ListarModos();
     Task AdicionarLeitor(Leitor leitor);
-    Task<IReadOnlyList<CodigoMaterial>> ListarCodigosMaterial();
-    Task AdicionarCodigoMaterial(CodigoMaterial codigo);
+    /// <summary>Grava o código do ERP de um tamanho numa classe (1 ou 2).</summary>
+    Task DefinirCodigoErp(int idTamanho, byte classe, string codigoErp);
 }

@@ -9,13 +9,6 @@ internal static class CatalogosConfiguracao
 {
     public static void Aplicar(ModelBuilder mb)
     {
-        mb.Entity<CodigoMaterial>(e =>
-        {
-            e.HasKey(x => x.IdCodigo);
-            e.HasIndex(x => new { x.IdTamanho, x.Classe }).IsUnique();
-        });
-        mb.Fk<CodigoMaterial, TamanhoDormente>(x => x.IdTamanho);
-
         // LISTA DE EXEMPLO, a mesma do protótipo, até chegar a oficial (Lista oficial das 22 espécies).
         mb.Entity<Especie>(e =>
         {
@@ -71,10 +64,10 @@ internal static class CatalogosConfiguracao
             e.HasKey(x => x.IdTamanho);
             e.HasIndex(x => x.ComprimentoM).IsUnique();
             e.HasData(
-                new TamanhoDormente { IdTamanho = 1, ComprimentoM = 2.80m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true, Ativo = true },
-                new TamanhoDormente { IdTamanho = 2, ComprimentoM = 3.00m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true, Ativo = true },
-                new TamanhoDormente { IdTamanho = 3, ComprimentoM = 4.00m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true, Ativo = true },
-                new TamanhoDormente { IdTamanho = 4, ComprimentoM = 4.80m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true, Ativo = true });
+                new TamanhoDormente { IdTamanho = 1, ComprimentoM = 2.80m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true },
+                new TamanhoDormente { IdTamanho = 2, ComprimentoM = 3.00m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true },
+                new TamanhoDormente { IdTamanho = 3, ComprimentoM = 4.00m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true },
+                new TamanhoDormente { IdTamanho = 4, ComprimentoM = 4.80m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true });
         });
     }
 

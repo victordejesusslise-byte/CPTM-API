@@ -10,7 +10,6 @@ public class CatalogoService(ICatalogoRepository catalogo)
 {
     public async Task<IReadOnlyList<TamanhoDto>> ListarTamanhos()
         => (await catalogo.ListarTamanhos())
-            .Where(t => t.Ativo)
             .Select(t => new TamanhoDto(t.IdTamanho, t.ComprimentoM, t.LarguraM, t.AlturaM,
                 VolumeHelper.M3(t.ComprimentoM, t.LarguraM, t.AlturaM), t.MedidaProvisoria))
             .ToList();

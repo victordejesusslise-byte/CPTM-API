@@ -81,8 +81,8 @@ internal class CatalogoRepositoryFalso : ICatalogoRepository
 {
     public Task<IReadOnlyList<TamanhoDormente>> ListarTamanhos() => Task.FromResult<IReadOnlyList<TamanhoDormente>>(
     [
-        new() { IdTamanho = 1, ComprimentoM = 2.80m, LarguraM = 0.24m, AlturaM = 0.17m, Ativo = true },
-        new() { IdTamanho = 4, ComprimentoM = 4.80m, LarguraM = 0.24m, AlturaM = 0.17m, Ativo = true }
+        new() { IdTamanho = 1, ComprimentoM = 2.80m, LarguraM = 0.24m, AlturaM = 0.17m },
+        new() { IdTamanho = 4, ComprimentoM = 4.80m, LarguraM = 0.24m, AlturaM = 0.17m }
     ]);
     public Task<IReadOnlyList<Especie>> ListarEspecies() => Task.FromResult<IReadOnlyList<Especie>>(
     [
@@ -96,8 +96,7 @@ internal class CatalogoRepositoryFalso : ICatalogoRepository
     public Task<IReadOnlyList<TipoLeitor>> ListarTiposLeitor() => throw new NotImplementedException();
     public Task<IReadOnlyList<ModoLeitura>> ListarModos() => throw new NotImplementedException();
     public Task AdicionarLeitor(Leitor leitor) => throw new NotImplementedException();
-    public Task<IReadOnlyList<CodigoMaterial>> ListarCodigosMaterial() => throw new NotImplementedException();
-    public Task AdicionarCodigoMaterial(CodigoMaterial codigo) => throw new NotImplementedException();
+    public Task DefinirCodigoErp(int idTamanho, byte classe, string codigoErp) => throw new NotImplementedException();
 }
 
 internal class ParametroRepositoryFalso(string unidade = "m3", string pct = "20") : IParametroRepository

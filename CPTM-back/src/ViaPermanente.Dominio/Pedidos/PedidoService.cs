@@ -214,7 +214,7 @@ public class PedidoService(IPedidoRepository pedidos, ICatalogoRepository catalo
     }
 
     private async Task<IReadOnlyDictionary<int, TamanhoDormente>> TamanhosAtivos()
-        => (await catalogo.ListarTamanhos()).Where(t => t.Ativo).ToDictionary(t => t.IdTamanho);
+        => (await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho);
 
     private static List<ItemParaLimite> ParaLimite(IEnumerable<NovoPedidoItemDto> itens, IReadOnlyDictionary<int, TamanhoDormente> tamanhos)
         => itens.Select(i => new ItemParaLimite(i.Classe, i.Quantidade,

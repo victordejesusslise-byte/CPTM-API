@@ -33,7 +33,7 @@ public class ChegadaService(IChegadaRepository chegadas, IPedidoRepository pedid
         if (nova.IdNota is int idNota && (await notas.Notas(idPedido)).All(n => n.IdNota != idNota))
             throw new RegraDeNegocioException("A nota não é deste pedido.");
 
-        var tamanhos = (await catalogo.ListarTamanhos()).Where(t => t.Ativo).ToDictionary(t => t.IdTamanho);
+        var tamanhos = (await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho);
         var especies = (await catalogo.ListarEspecies()).Where(e => e.Ativo).ToDictionary(e => e.IdEspecie);
         var numerosJaRegistrados = (await chegadas.Feixes((await chegadas.Listar(idPedido)).Select(r => r.IdRecebimento).ToList()))
             .Select(f => f.NumeroFeixe).ToHashSet(StringComparer.OrdinalIgnoreCase);

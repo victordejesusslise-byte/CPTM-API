@@ -36,7 +36,7 @@ public class OfertaService(IOfertaRepository ofertas, IPedidoRepository pedidos,
             throw new RegraDeNegocioException($"{empresa.Nome} não é um fornecedor ativo.");
         if ((await catalogo.ListarEspecies()).All(e => e.IdEspecie != nova.IdEspecie || !e.Ativo))
             throw new RegraDeNegocioException("Espécie não encontrada.");
-        if ((await catalogo.ListarTamanhos()).All(t => t.IdTamanho != nova.IdTamanho || !t.Ativo))
+        if ((await catalogo.ListarTamanhos()).All(t => t.IdTamanho != nova.IdTamanho))
             throw new RegraDeNegocioException("Tamanho de dormente não encontrado.");
         if (nova.VolumeM3Disponivel < 0)
             throw new RegraDeNegocioException("O volume disponível não pode ser negativo.");

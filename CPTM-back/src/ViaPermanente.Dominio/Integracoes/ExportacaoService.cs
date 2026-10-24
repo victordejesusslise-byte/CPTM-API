@@ -34,7 +34,7 @@ public class ExportacaoService(IPlanilhaExportacaoRepository planilha, IIntegrac
     /// <summary>O estoque peça a peça, com o código de material do ERP (tamanho e classe). Peça sem código cadastrado sai com o código vazio.</summary>
     public async Task<ArquivoDto> Erp()
     {
-        var codigos = (await catalogo.ListarCodigosMaterial()).ToDictionary(c => (c.IdTamanho, c.Classe), c => c.CodigoErp);
+        var codigos = (await CodigosMaterial()).ToDictionary(c => (c.IdTamanho, c.Classe), c => c.CodigoErp);
         var estoque = await pecas.Estoque();
         var arquivo = new ArquivoDto($"erp-estoque-{DateTime.Now:yyyy-MM-dd}.xlsx", planilha.Montar("Estoque",
             ["Código ERP", "Peça", "Tag", "Comprimento (m)", "Classe", "Espécie", "Armazém", "Pilha", "Entrada no armazém"],
@@ -46,27 +46,27 @@ public class ExportacaoService(IPlanilhaExportacaoRepository planilha, IIntegrac
         return arquivo;
     }
 
+    /// <summary>Os códigos do ERP cadastrados, um por tamanho e classe (guardados no próprio tamanho; o id é tamanho × 10 + classe).</summary>
     public async Task<IReadOnlyList<CodigoMaterialDto>> CodigosMaterial()
-    {
-        var tamanhos = (await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho, t => t.ComprimentoM);
-        return (await catalogo.ListarCodigosMaterial())
-            .Select(c => new CodigoMaterialDto(c.IdCodigo, c.IdTamanho, tamanhos.GetValueOrDefault(c.IdTamanho), c.Classe, c.CodigoErp)).ToList();
-    }
+        => (await catalogo.ListarTamanhos())
+            .SelectMany(t => new[] { (Tamanho: t, Classe: (byte)1), (Tamanho: t, Classe: (byte)2) })
+            .Where(x => !string.IsNullOrWhiteSpace(x.Tamanho.CodigoErp(x.Classe)))
+            .Select(x => new CodigoMaterialDto(x.Tamanho.IdTamanho * 10 + x.Classe, x.Tamanho.IdTamanho, x.Tamanho.ComprimentoM, x.Classe, x.Tamanho.CodigoErp(x.Classe)!))
+            .ToList();
 
     /// <summary>Um código por tamanho e classe.</summary>
     public async Task<CodigoMaterialDto> NovoCodigoMaterial(NovoCodigoMaterialDto dto)
     {
-        if ((await catalogo.ListarTamanhos()).All(t => t.IdTamanho != dto.IdTamanho))
-            throw new RegraDeNegocioException("Tamanho de dormente não encontrado.");
+        var tamanho = (await catalogo.ListarTamanhos()).FirstOrDefault(t => t.IdTamanho == dto.IdTamanho)
+            ?? throw new RegraDeNegocioException("Tamanho de dormente não encontrado.");
         if (dto.Classe is not (1 or 2))
             throw new RegraDeNegocioException("A classe é 1 ou 2.");
         if (string.IsNullOrWhiteSpace(dto.CodigoErp))
             throw new RegraDeNegocioException("Informe o código do ERP.");
-        if ((await catalogo.ListarCodigosMaterial()).Any(c => c.IdTamanho == dto.IdTamanho && c.Classe == dto.Classe))
+        if (!string.IsNullOrWhiteSpace(tamanho.CodigoErp(dto.Classe)))
             throw new RegraDeNegocioException("Este tamanho e esta classe já têm código de material.");
-        var codigo = new CodigoMaterial { IdTamanho = dto.IdTamanho, Classe = dto.Classe, CodigoErp = dto.CodigoErp.Trim() };
-        await catalogo.AdicionarCodigoMaterial(codigo);
-        return (await CodigosMaterial()).First(c => c.Id == codigo.IdCodigo);
+        await catalogo.DefinirCodigoErp(dto.IdTamanho, dto.Classe, dto.CodigoErp.Trim());
+        return (await CodigosMaterial()).First(c => c.IdTamanho == dto.IdTamanho && c.Classe == dto.Classe);
     }
 
     private Task Registrar(SistemaIntegracao sistema, TipoIntegracao tipo, string mensagem, string arquivo)

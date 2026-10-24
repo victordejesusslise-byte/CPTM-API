@@ -29,14 +29,10 @@ public class CatalogoRepository(ViaPermanenteContext db) : ICatalogoRepository
     public async Task<IReadOnlyList<ModoLeitura>> ListarModos()
         => await db.Set<ModoLeitura>().AsNoTracking().OrderBy(m => m.IdModo).ToListAsync();
 
-    public async Task<IReadOnlyList<CodigoMaterial>> ListarCodigosMaterial()
-        => await db.Set<CodigoMaterial>().AsNoTracking().OrderBy(c => c.IdTamanho).ThenBy(c => c.Classe).ToListAsync();
-
-    public async Task AdicionarCodigoMaterial(CodigoMaterial codigo)
-    {
-        db.Add(codigo);
-        await db.SaveChangesAsync();
-    }
+    public Task DefinirCodigoErp(int idTamanho, byte classe, string codigoErp)
+        => classe == 1
+            ? db.Set<TamanhoDormente>().Where(t => t.IdTamanho == idTamanho).ExecuteUpdateAsync(s => s.SetProperty(t => t.CodigoErpClasse1, codigoErp))
+            : db.Set<TamanhoDormente>().Where(t => t.IdTamanho == idTamanho).ExecuteUpdateAsync(s => s.SetProperty(t => t.CodigoErpClasse2, codigoErp));
 
     public async Task AdicionarLeitor(Leitor leitor)
     {

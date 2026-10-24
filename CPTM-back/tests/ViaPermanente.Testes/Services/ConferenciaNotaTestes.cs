@@ -9,8 +9,8 @@ public class ConferenciaNotaTestes
 {
     private static readonly Dictionary<int, TamanhoDormente> Tamanhos = new()
     {
-        [1] = new() { IdTamanho = 1, ComprimentoM = 2.80m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true, Ativo = true },
-        [2] = new() { IdTamanho = 2, ComprimentoM = 3.00m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = false, Ativo = true }
+        [1] = new() { IdTamanho = 1, ComprimentoM = 2.80m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = true },
+        [2] = new() { IdTamanho = 2, ComprimentoM = 3.00m, LarguraM = 0.24m, AlturaM = 0.17m, MedidaProvisoria = false }
     };
     private static readonly Dictionary<int, Especie> Especies = new()
     {

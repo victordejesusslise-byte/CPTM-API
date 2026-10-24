@@ -12,7 +12,7 @@ public class ModeloDoBancoTestes
 {
     private static readonly string[] TabelasDoCerebro =
     [
-        "ALERTA", "ARMAZEM", "CLASSIFICACAO_MADEIRA", "CODIGO_MATERIAL", "CONFERENCIA_ARMAZEM", "CONTRATO",
+        "ALERTA", "ARMAZEM", "CLASSIFICACAO_MADEIRA", "CONFERENCIA_ARMAZEM", "CONTRATO",
         "DETECCAO_IMAGEM", "DORMENTE", "EMPRESA", "ESPECIE", "ESTACAO", "EVENTO_POSICAO", "FEIXE", "GRAVACAO_TAG",
         "INSPECAO", "INSPECAO_CORRECAO", "INTEGRACAO_LOG", "LEITOR", "LEITURA_DORMENTE", "LEITURA_OCR", "LEITURA_VIA",
         "LOTE", "MODELO_OCR", "MODO_LEITURA", "MOVIMENTACAO", "NOTA_FISCAL", "NOTA_FISCAL_ITEM", "OCR_CAMPO",
@@ -32,7 +32,7 @@ public class ModeloDoBancoTestes
     }
 
     [Fact]
-    public void Tem_as_50_tabelas_do_cerebro()
+    public void Tem_as_49_tabelas_do_cerebro()
     {
         var tabelas = Modelo().GetEntityTypes().Select(e => e.GetTableName()).OrderBy(n => n).ToArray();
         Assert.Equal(TabelasDoCerebro.OrderBy(n => n), tabelas);
