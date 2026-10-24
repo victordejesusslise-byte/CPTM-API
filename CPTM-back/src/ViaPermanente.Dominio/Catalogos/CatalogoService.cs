@@ -27,9 +27,8 @@ public class CatalogoService(ICatalogoRepository catalogo)
 
     public async Task<IReadOnlyList<LeitorDto>> ListarLeitores()
     {
-        var tipos = (await catalogo.ListarTiposLeitor()).ToDictionary(t => t.IdTipoLeitor, t => t.Nome);
         return (await catalogo.ListarLeitores())
-            .Select(l => new LeitorDto(l.IdLeitor, l.Codigo, l.IdTipoLeitor, tipos.GetValueOrDefault(l.IdTipoLeitor, ""), l.NumeroSerie, l.Ativo))
+            .Select(l => new LeitorDto(l.IdLeitor, l.Codigo, (int)l.Tipo, TiposLeitor.Nome(l.Tipo), l.NumeroSerie, l.Ativo))
             .ToList();
     }
 
@@ -40,7 +39,7 @@ public class CatalogoService(ICatalogoRepository catalogo)
         var serie = string.IsNullOrWhiteSpace(novo.NumeroSerie) ? null : novo.NumeroSerie.Trim();
         if (codigo.Length == 0)
             throw new RegraDeNegocioException("Informe o código do leitor (ex.: MOD-03).");
-        if ((await catalogo.ListarTiposLeitor()).All(t => t.IdTipoLeitor != novo.IdTipoLeitor))
+        if (!Enum.IsDefined(typeof(TipoLeitor), novo.IdTipoLeitor))
             throw new RegraDeNegocioException("Tipo de leitor não encontrado.");
         var leitores = await catalogo.ListarLeitores();
         if (leitores.Any(l => string.Equals(l.Codigo, codigo, StringComparison.OrdinalIgnoreCase)))
@@ -48,7 +47,7 @@ public class CatalogoService(ICatalogoRepository catalogo)
         if (serie is not null && leitores.Any(l => l.NumeroSerie == serie))
             throw new RegraDeNegocioException($"Já existe um leitor com o número de série {serie}.");
 
-        var leitor = new Leitor { IdTipoLeitor = novo.IdTipoLeitor, Codigo = codigo, NumeroSerie = serie, IdSetor = novo.IdSetor, Ativo = true };
+        var leitor = new Leitor { Tipo = (TipoLeitor)novo.IdTipoLeitor, Codigo = codigo, NumeroSerie = serie, IdSetor = novo.IdSetor, Ativo = true };
         await catalogo.AdicionarLeitor(leitor);
         return (await ListarLeitores()).First(l => l.Id == leitor.IdLeitor);
     }

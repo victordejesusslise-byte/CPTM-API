@@ -23,9 +23,6 @@ public class CatalogoRepository(ViaPermanenteContext db) : ICatalogoRepository
     public async Task<IReadOnlyList<Leitor>> ListarLeitores()
         => await db.Set<Leitor>().AsNoTracking().OrderBy(l => l.Codigo).ToListAsync();
 
-    public async Task<IReadOnlyList<TipoLeitor>> ListarTiposLeitor()
-        => await db.Set<TipoLeitor>().AsNoTracking().OrderBy(t => t.IdTipoLeitor).ToListAsync();
-
     public async Task<IReadOnlyList<ModoLeitura>> ListarModos()
         => await db.Set<ModoLeitura>().AsNoTracking().OrderBy(m => m.IdModo).ToListAsync();
 

@@ -5,7 +5,8 @@ namespace ViaPermanente.Dominio.Pecas.Models;
 public class Leitor
 {
     public int IdLeitor { get; set; }
-    public int IdTipoLeitor { get; set; }
+    /// <summary>O tipo, pelo número fixo no código: 1 Módulo RFID, 2 Pistola NIR, 3 Carro.</summary>
+    public TipoLeitor Tipo { get; set; }
     public int? IdSetor { get; set; }
     public string Codigo { get; set; } = "";
     public string? NumeroSerie { get; set; }

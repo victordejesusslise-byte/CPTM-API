@@ -70,6 +70,10 @@ public class ViaPermanenteContext(DbContextOptions<ViaPermanenteContext> options
 
         if (tipo.IsEnum)
         {
+            // Exceção: enum que a configuração pediu como número (HasConversion<int>), como o tipo do leitor (1, 2, 3).
+            if (propriedade.GetProviderClrType() == typeof(int))
+                return;
+
             // Enum gravado como texto: o banco mostra "AguardandoPeca", não 2.
             var conversor = (ValueConverter)Activator.CreateInstance(
                 typeof(EnumToStringConverter<>).MakeGenericType(tipo), new object?[] { null })!;

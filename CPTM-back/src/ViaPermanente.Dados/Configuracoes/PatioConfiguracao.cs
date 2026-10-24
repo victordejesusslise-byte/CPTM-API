@@ -63,8 +63,10 @@ internal static class PatioConfiguracao
             e.HasKey(x => x.IdLeitor);
             e.HasIndex(x => x.Codigo).IsUnique();
             e.HasIndex(x => x.NumeroSerie).IsUnique().HasFilter("[numero_serie] IS NOT NULL");
+            // O tipo do leitor é o número fixo no código (TipoLeitor): 1 Módulo RFID, 2 Pistola NIR, 3 Carro. O banco só aceita esses três.
+            e.Property(x => x.Tipo).HasConversion<int>();
+            e.ToTable(t => t.HasCheckConstraint("CK_LEITOR_tipo", "[tipo] IN (1, 2, 3)"));
         });
-        mb.Fk<Leitor, TipoLeitor>(x => x.IdTipoLeitor);
         mb.Fk<Leitor, Setor>(x => x.IdSetor);
 
         mb.Entity<LeituraDormente>(e =>
@@ -131,15 +133,6 @@ internal static class PatioConfiguracao
         mb.Entity<Sensor>(e => e.HasKey(x => x.IdSensor));
         mb.Fk<Sensor, Leitor>(x => x.IdLeitor);
 
-        mb.Entity<TipoLeitor>(e =>
-        {
-            e.HasKey(x => x.IdTipoLeitor);
-            e.HasIndex(x => x.Nome).IsUnique();
-            e.HasData(
-                new TipoLeitor { IdTipoLeitor = 1, Nome = "Pistola NIR", Descricao = "Analisa a madeira por infravermelho próximo: espécie, umidade e propriedades" },
-                new TipoLeitor { IdTipoLeitor = 2, Nome = "Módulo do celular", Descricao = "Módulo RFID UHF ligado pelo USB-C" },
-                new TipoLeitor { IdTipoLeitor = 3, Nome = "Carro", Descricao = "Carro de inspeção da varredura noturna" });
-        });
     }
 
     private static Armazem Armazem(int id, string nome, decimal km)

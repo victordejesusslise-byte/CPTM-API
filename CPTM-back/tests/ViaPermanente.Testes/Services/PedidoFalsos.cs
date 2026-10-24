@@ -93,7 +93,6 @@ internal class CatalogoRepositoryFalso : ICatalogoRepository
     public Task<IReadOnlyList<Pilha>> ListarPilhas() => throw new NotImplementedException();
     public Task<IReadOnlyDictionary<int, int>> ContarPecasPorPilha() => throw new NotImplementedException();
     public Task<IReadOnlyList<Leitor>> ListarLeitores() => throw new NotImplementedException();
-    public Task<IReadOnlyList<TipoLeitor>> ListarTiposLeitor() => throw new NotImplementedException();
     public Task<IReadOnlyList<ModoLeitura>> ListarModos() => throw new NotImplementedException();
     public Task AdicionarLeitor(Leitor leitor) => throw new NotImplementedException();
     public Task DefinirCodigoErp(int idTamanho, byte classe, string codigoErp) => throw new NotImplementedException();

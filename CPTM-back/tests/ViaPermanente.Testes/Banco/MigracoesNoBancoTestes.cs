@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using ViaPermanente.Dados;
 using ViaPermanente.Dominio.Catalogos.Models;
+using ViaPermanente.Dominio.Pecas.Models;
 using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Testes.Banco;
@@ -50,5 +51,23 @@ public class MigracoesNoBancoTestes : IAsyncLifetime
         Assert.Equal("ERP-280-2A", tamanhos[1].CodigoErpClasse2);
         Assert.Null(tamanhos[1].CodigoErpClasse1);
         Assert.Equal("ERP-400-1A", tamanhos[3].CodigoErpClasse1);
+    }
+
+    [Fact]
+    public async Task O_tipo_do_leitor_vai_para_o_codigo_com_os_numeros_novos()
+    {
+        await MigrarAte("20261024004958_CodigoErpNoTamanho");
+        // Na tabela antiga: 1 Pistola NIR, 2 Módulo do celular, 3 Carro.
+        await db.Database.ExecuteSqlRawAsync(
+            "INSERT INTO LEITOR (id_tipo_leitor, codigo, ativo) VALUES (1, 'NIR-01', 1), (2, 'MOD-01', 1), (3, 'CAR-01', 1);");
+
+        await MigrarAte("20261024010302_TipoLeitorNoCodigo");
+
+        var tipos = await db.Set<Leitor>().AsNoTracking().ToDictionaryAsync(l => l.Codigo, l => l.Tipo);
+        Assert.Equal(TipoLeitor.PistolaNir, tipos["NIR-01"]);
+        Assert.Equal(TipoLeitor.ModuloRfid, tipos["MOD-01"]);
+        Assert.Equal(TipoLeitor.Carro, tipos["CAR-01"]);
+        // O banco só aceita os três tipos da lista.
+        await Assert.ThrowsAnyAsync<Exception>(() => db.Database.ExecuteSqlRawAsync("INSERT INTO LEITOR (tipo, codigo, ativo) VALUES (4, 'X-01', 1);"));
     }
 }

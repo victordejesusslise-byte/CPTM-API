@@ -13,7 +13,6 @@ public interface ICatalogoRepository
     /// <summary>Quantas peças estão em cada pilha agora (DORMENTE.id_pilha).</summary>
     Task<IReadOnlyDictionary<int, int>> ContarPecasPorPilha();
     Task<IReadOnlyList<Leitor>> ListarLeitores();
-    Task<IReadOnlyList<TipoLeitor>> ListarTiposLeitor();
     Task<IReadOnlyList<ModoLeitura>> ListarModos();
     Task AdicionarLeitor(Leitor leitor);
     /// <summary>Grava o código do ERP de um tamanho numa classe (1 ou 2).</summary>

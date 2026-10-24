@@ -46,7 +46,7 @@ public class DaChegadaAoArmazemNoBancoTestes : IAsyncLifetime
         })).Id;
         idLeitor = (await new CatalogoService(new CatalogoRepository(db)).RegistrarLeitor(new NovoLeitorDto
         {
-            IdTipoLeitor = 2, Codigo = "MOD-01", NumeroSerie = "SN-0001"
+            IdTipoLeitor = (int)TipoLeitor.ModuloRfid, Codigo = "MOD-01", NumeroSerie = "SN-0001"
         })).Id;
         var fornecedor = new Empresa { Nome = "TG–Três Guri", Papel = PapelEmpresa.Fornecedor, Ativo = true };
         db.Add(fornecedor);

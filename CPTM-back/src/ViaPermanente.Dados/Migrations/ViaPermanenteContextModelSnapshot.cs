@@ -2404,14 +2404,14 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("int")
                         .HasColumnName("id_setor");
 
-                    b.Property<int>("IdTipoLeitor")
-                        .HasColumnType("int")
-                        .HasColumnName("id_tipo_leitor");
-
                     b.Property<string>("NumeroSerie")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("numero_serie");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int")
+                        .HasColumnName("tipo");
 
                     b.Property<string>("VersaoFirmware")
                         .HasMaxLength(200)
@@ -2430,13 +2430,14 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasIndex("IdSetor");
 
-                    b.HasIndex("IdTipoLeitor");
-
                     b.HasIndex("NumeroSerie")
                         .IsUnique()
                         .HasFilter("[numero_serie] IS NOT NULL");
 
-                    b.ToTable("LEITOR");
+                    b.ToTable("LEITOR", t =>
+                        {
+                            t.HasCheckConstraint("CK_LEITOR_tipo", "[tipo] IN (1, 2, 3)");
+                        });
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pecas.Models.LeituraDormente", b =>
@@ -2782,54 +2783,6 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasIndex("IdLeitor");
 
                     b.ToTable("SENSOR");
-                });
-
-            modelBuilder.Entity("ViaPermanente.Dominio.Pecas.Models.TipoLeitor", b =>
-                {
-                    b.Property<int>("IdTipoLeitor")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id_tipo_leitor");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdTipoLeitor"));
-
-                    b.Property<string>("Descricao")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("descricao");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("nome");
-
-                    b.HasKey("IdTipoLeitor");
-
-                    b.HasIndex("Nome")
-                        .IsUnique();
-
-                    b.ToTable("TIPO_LEITOR");
-
-                    b.HasData(
-                        new
-                        {
-                            IdTipoLeitor = 1,
-                            Descricao = "Analisa a madeira por infravermelho próximo: espécie, umidade e propriedades",
-                            Nome = "Pistola NIR"
-                        },
-                        new
-                        {
-                            IdTipoLeitor = 2,
-                            Descricao = "Módulo RFID UHF ligado pelo USB-C",
-                            Nome = "Módulo do celular"
-                        },
-                        new
-                        {
-                            IdTipoLeitor = 3,
-                            Descricao = "Carro de inspeção da varredura noturna",
-                            Nome = "Carro"
-                        });
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pedidos.Models.Contrato", b =>
@@ -4149,12 +4102,6 @@ namespace ViaPermanente.Dados.Migrations
                         .WithMany()
                         .HasForeignKey("IdSetor")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ViaPermanente.Dominio.Pecas.Models.TipoLeitor", null)
-                        .WithMany()
-                        .HasForeignKey("IdTipoLeitor")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pecas.Models.LeituraDormente", b =>
