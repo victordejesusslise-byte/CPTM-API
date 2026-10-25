@@ -42,9 +42,13 @@ export class LeitorSimulado implements Leitor {
     this.modos.set(atual);
   }
 
-  /** Monta as etiquetas por perto: só a peça; a peça e vizinhas longe; duas peças com sinal parecido; ou nenhuma. */
-  montar(cenario: Cenario, tag: string): void {
-    const alvo = tag.trim() || 'BR0000000001';
+  /**
+   * Monta as etiquetas por perto: só a peça; a peça e vizinhas longe; duas peças com sinal parecido; ou nenhuma.
+   * Sem a tag da peça à frente, não monta (devolve falso): inventar uma tag fazia ler a peça errada.
+   */
+  montar(cenario: Cenario, tag: string): boolean {
+    const alvo = tag.trim();
+    if (!alvo && cenario !== 'nenhuma') return false;
     const lista: Record<Cenario, TagVista[]> = {
       uma: [{ tag: alvo, rssiDbm: -45 }],
       vizinhas: [{ tag: alvo, rssiDbm: -45 }, { tag: 'BR9999999901', rssiDbm: -63 }, { tag: 'BR9999999902', rssiDbm: -71 }],
@@ -52,6 +56,7 @@ export class LeitorSimulado implements Leitor {
       nenhuma: [],
     };
     this.porPerto.set(lista[cenario]);
+    return true;
   }
 
   async ler(): Promise<ResultadoLeitura> {
