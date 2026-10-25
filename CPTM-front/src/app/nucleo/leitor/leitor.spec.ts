@@ -25,6 +25,7 @@ describe('Leitor (o fluxo do módulo, simulado)', () => {
     expect(await leitor().ler()).toEqual({ ok: false, motivo: 'Mais de um dormente próximo. Aproxime ou direcione melhor.' });
     leitor().montar('nenhuma', '');
     expect((await leitor().ler()).ok).toBe(false);
+    expect(leitor().montar('uma', '  ')).toBe(false); // sem a tag da peça à frente, não inventa uma
     leitor().montar('uma', 'BR0000000002');
     leitor().desconectar();
     expect(await leitor().ler()).toEqual({ ok: false, motivo: 'Conecte o módulo no celular.' });

@@ -36,9 +36,10 @@ import { Cenario, LeitorSimulado } from './leitor-simulado';
         </label>
         <div class="painel__cenarios">
           @for (c of cenarios; track c.valor) {
-            <button type="button" (click)="leitor.montar(c.valor, tag())">{{ c.rotulo }}</button>
+            <button type="button" (click)="montar(c.valor)">{{ c.rotulo }}</button>
           }
         </div>
+        @if (semTag()) { <p class="painel__aviso" role="alert">Escreva a tag da peça à frente (a que está no cartão da troca) antes de escolher.</p> }
         <ul class="painel__vistas">
           @for (t of leitor.porPerto(); track t.tag) {
             <li><span class="mono">{{ t.tag }}</span><span>{{ t.rssiDbm }} dBm</span></li>
@@ -67,6 +68,7 @@ import { Cenario, LeitorSimulado } from './leitor-simulado';
     .painel__campo { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--tinta-3); }
     .painel__campo input { min-height: 36px; padding: 0 8px; border: 1px solid var(--linha-2); border-radius: 6px; background: var(--superficie-2); color: var(--tinta); font-size: 14px; }
     .painel__cenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .painel__aviso { margin: 0; font-size: 13px; color: var(--vermelho, var(--vinho)); }
     .painel__vistas { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
     .painel__vistas li { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
   `,
@@ -76,6 +78,7 @@ export class PainelLeitor {
   private readonly catalogos = inject(Catalogos);
   protected readonly aberto = signal(false);
   protected readonly tag = signal('');
+  protected readonly semTag = signal(false);
   protected readonly chaves: ChaveModulo[] = ['A', 'N', 'V'];
   protected readonly cenarios: { valor: Cenario; rotulo: string }[] = [
     { valor: 'uma', rotulo: 'Só a peça' },
@@ -90,6 +93,10 @@ export class PainelLeitor {
     // Ao abrir, a potência e a folga que o supervisor deixou no servidor (sem rede, ficam as de começo).
     if (this.aberto() && !this.modosCarregados)
       this.catalogos.modosLeitura().subscribe({ next: (l) => ((this.modosCarregados = true), this.leitor.usarModosDoServidor(l)), error: () => undefined });
+  }
+
+  protected montar(cenario: Cenario): void {
+    this.semTag.set(!this.leitor.montar(cenario, this.tag()));
   }
 
   protected conectar(ligado: boolean): void {
