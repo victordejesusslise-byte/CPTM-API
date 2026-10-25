@@ -238,3 +238,8 @@ button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-butt
   background: color-mix(in srgb, var(--tinta) 24%, transparent); animation: ybyra-para-direita 1.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) { .botao-carregando::after { animation: none; } }
+
+/* Sem rede, numa tela que precisa de rede: o aviso e as telas do trabalho da noite. */
+.sem-rede { display: grid; gap: 10px; h2 { margin: 0; } p { margin: 0; color: var(--tinta-2); } }
+.sem-rede__telas { display: grid; gap: 8px; margin-top: 4px; }
+.sem-rede__telas a { display: flex; align-items: center; min-height: 48px; padding: 0 14px; border: 1px solid var(--linha-2); border-radius: 8px; color: var(--tinta); font-weight: 600; text-decoration: none; }

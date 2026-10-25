@@ -57,7 +57,18 @@
       </nav>
     }
     @if (navegando()) { <app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Abrindo a tela…" /> }
-    <div [hidden]="navegando()"><router-outlet /></div>
+    @if (precisaDeRede() && !navegando()) {
+      <section class="cartao sem-rede" role="status">
+        <h2>Esta tela precisa de rede</h2>
+        <p>Sem rede, funcionam as telas do trabalho da noite. O que você fizer nelas fica guardado no celular e sobe sozinho quando a rede voltar.</p>
+        @if (telasSemRede().length) {
+          <nav class="sem-rede__telas" aria-label="Telas que funcionam sem rede">
+            @for (t of telasSemRede(); track t.rota) { <a [routerLink]="t.rota">{{ t.rotulo }}</a> }
+          </nav>
+        }
+      </section>
+    }
+    <div [hidden]="navegando() || precisaDeRede()"><router-outlet /></div>
   </main>
 </div>
 <app-painel-leitor />

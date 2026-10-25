@@ -12,6 +12,8 @@ import { Marca } from '../../../compartilhado/componentes/marca/marca';
 import { PainelLeitor } from '../../leitor/painel-leitor';
 import { EstadoFila } from '../../fila/estado-fila';
 import { AvisosDoApp } from '../../ao-vivo/avisos-do-app';
+import { TrabalhoDaNoite } from '../../ao-vivo/trabalho-da-noite';
+import { Cargo } from '../../../pessoas/entidades/usuario';
 
 interface ItemVisivel extends ItemMenu {
   link: string;
@@ -31,11 +33,28 @@ const MINIMO_DO_SKELETON_MS = 300;
 /** A tela sem o ?… e o #…: abrir um item ou trocar um filtro não é abrir outra tela. */
 const semConsulta = (url: string) => url.split(/[?#]/)[0];
 
+/** As telas do trabalho da noite, que abrem sem rede no app (o resto precisa de rede). */
+const FUNCIONAM_SEM_REDE: { rota: string; rotulo: string; cargos: Cargo[]; outras?: string[] }[] = [
+  { rota: '/trocas-trecho', rotulo: 'Trocas do trecho', cargos: ['OperadorVia', 'Supervisor'] },
+  { rota: '/inspecoes', rotulo: 'Fazer a inspeção', cargos: ['Tecnico'] },
+  { rota: '/alertas', rotulo: 'Alertas (vistoria)', cargos: ['OperadorVia', 'Tecnico', 'Supervisor'], outras: ['/alertas/sensores'] },
+];
+
+/** O toque começou em algo que desliza para o lado (gráfico, tabela larga, campo)? Aí o deslize é dele, não do menu. */
+const deslizaSozinho = (alvo: EventTarget | null): boolean => {
+  for (let el = alvo instanceof Element ? alvo : null; el && el !== document.body; el = el.parentElement) {
+    if (el.matches('input, textarea, select, [role="slider"]')) return true;
+    if (el.scrollWidth > el.clientWidth + 2 && /(auto|scroll)/.test(getComputedStyle(el).overflowX)) return true;
+  }
+  return false;
+};
+
 @Component({
   selector: 'app-casca',
   imports: [Esqueleto, RouterOutlet, RouterLink, Marca, PainelLeitor, EstadoFila, AvisosDoApp],
   templateUrl: './casca.html',
   styleUrl: './casca.scss',
+  host: { '(touchstart)': 'tocou($event)', '(touchend)': 'soltou($event)' },
 })
 export class Casca {
   private readonly sessao = inject(Sessao);
@@ -74,6 +93,14 @@ export class Casca {
     for (const item of itens) grupos.set(item.grupo, [...(grupos.get(item.grupo) ?? []), item]);
     return [...grupos].map(([nome, itensDoGrupo]) => ({ nome, itens: itensDoGrupo }));
   });
+  private readonly trabalho = inject(TrabalhoDaNoite);
+  /** No app e sem rede: as telas que funcionam sem rede para este cargo. */
+  protected readonly telasSemRede = computed(() => FUNCIONAM_SEM_REDE.filter((t) => this.sessao.temCargo(...t.cargos)));
+  /** No app e sem rede, nesta tela que precisa de rede: no lugar dela, o aviso com as telas que funcionam (a tela fica guardada por trás). */
+  protected readonly precisaDeRede = computed(
+    () => this.trabalho.usarGuardado() && !FUNCIONAM_SEM_REDE.some((t) => this.caminho() === t.rota || t.outras?.includes(this.caminho())),
+  );
+  private toque: { x: number; y: number; quando: number } | null = null;
   protected readonly abasNoAlto = computed(() => (this.celular() ? (this.grupos().flatMap((g) => g.itens).find((i) => i.ativo)?.abas ?? []) : []));
 
   constructor() {
@@ -102,6 +129,24 @@ export class Casca {
       this.menuAberto.set(false);
     }
     this.recolhidos.set(recolhidos);
+  }
+
+  /** No celular: deslizar o dedo para a direita abre o menu; para a esquerda, fecha (Victor, 2026-10-24). */
+  protected tocou(e: TouchEvent): void {
+    const dedo = e.touches[0];
+    this.toque = this.celular() && e.touches.length === 1 && !deslizaSozinho(e.target) ? { x: dedo.clientX, y: dedo.clientY, quando: e.timeStamp } : null;
+  }
+
+  protected soltou(e: TouchEvent): void {
+    const inicio = this.toque;
+    this.toque = null;
+    const dedo = e.changedTouches[0];
+    if (!inicio || !dedo || e.timeStamp - inicio.quando > 700) return;
+    const [dx, dy] = [dedo.clientX - inicio.x, dedo.clientY - inicio.y];
+    // Um deslize de verdade: pelo menos 70 px para o lado e mais de lado do que para cima ou para baixo.
+    if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    if (dx > 0 && !this.menuAberto()) this.menuAberto.set(true);
+    else if (dx < 0 && this.menuAberto()) this.menuAberto.set(false);
   }
 
   protected sair(): void {
