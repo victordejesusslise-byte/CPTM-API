@@ -61,6 +61,9 @@ html {
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
+/* Nada alarga a página para os lados no celular (Victor, 2026-10-24: o nome comprido da foto empurrava a tela): o que passar é cortado, e o texto comprido quebra. */
+html, body { overflow-x: clip; }
+.conteudo { overflow-wrap: anywhere; }
 body { margin: 0; background: var(--plano); color: var(--tinta); font: 16px/1.45 var(--fonte-texto); -webkit-font-smoothing: antialiased; }
 h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 700; color: var(--tinta); letter-spacing: .01em; }
 h1 { font-size: 26px; margin: 0 0 4px; }
@@ -193,7 +196,7 @@ button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-butt
 .cartao-alerta .tipo { font-weight: 600; }
 .filtro-status { max-width: 320px; }
 .alerta-aberto, .cartao.pilha { margin-bottom: 16px; }
-.btn-foto { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--linha-2); border-radius: 3px; background: var(--superficie); cursor: pointer; font-weight: 600; input { position: absolute; width: 1px; height: 1px; opacity: 0; } &:focus-within { outline: 3px solid var(--anel); } }
+.btn-foto { position: relative; display: inline-flex; align-items: center; gap: 8px; max-width: 100%; overflow-wrap: anywhere; min-height: 44px; padding: 8px 14px; border: 1px solid var(--linha-2); border-radius: 3px; background: var(--superficie); cursor: pointer; font-weight: 600; input { position: absolute; width: 1px; height: 1px; opacity: 0; } &:focus-within { outline: 3px solid var(--anel); } }
 .opcoes { display: flex; flex-direction: column; gap: 6px; }
 .opcao { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; align-items: center; min-height: 44px; padding: 8px 12px; border: 1px solid var(--linha-2); border-radius: 3px; background: var(--superficie); cursor: pointer; font-size: 14px; input { width: 18px; height: 18px; accent-color: var(--tinta); } }
 .opcao.marcada { border-color: var(--tinta); box-shadow: inset 3px 0 0 var(--tinta); }
