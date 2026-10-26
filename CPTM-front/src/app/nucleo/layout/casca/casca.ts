@@ -35,7 +35,7 @@ const semConsulta = (url: string) => url.split(/[?#]/)[0];
 
 /** As telas do trabalho da noite, que abrem sem rede no app (o resto precisa de rede). */
 const FUNCIONAM_SEM_REDE: { rota: string; rotulo: string; cargos: Cargo[]; outras?: string[] }[] = [
-  { rota: '/trocas-trecho', rotulo: 'Trocas do trecho', cargos: ['OperadorVia', 'Supervisor'] },
+  { rota: '/trocas-trecho', rotulo: 'Trocas do trecho', cargos: ['OperadorVia', 'Supervisor'], outras: ['/trocas-trecho/feitas', '/trocas-trecho/recusas'] },
   { rota: '/inspecoes', rotulo: 'Fazer a inspeção', cargos: ['Tecnico'] },
   { rota: '/alertas', rotulo: 'Alertas (vistoria)', cargos: ['OperadorVia', 'Tecnico', 'Supervisor'], outras: ['/alertas/sensores'] },
 ];

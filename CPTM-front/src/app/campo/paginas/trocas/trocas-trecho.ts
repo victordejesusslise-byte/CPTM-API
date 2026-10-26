@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +15,8 @@ import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
 
+/** A troca na tela: esperando = feita ou recusada no celular, ainda na fila. */
+type TrocaNaTela = TrocaDto & { esperando?: boolean };
 type Aba = 'trocar' | 'recusas' | 'feitas';
 const ABAS: Record<Aba, { titulo: string; status: StatusTroca[] }> = {
   trocar: { titulo: 'A trocar', status: ['Separada'] },
@@ -35,6 +37,12 @@ export class TrocasTrecho {
   private readonly fila = inject(Fila);
   private readonly trabalho = inject(TrabalhoDaNoite);
   protected readonly semRede = this.trabalho.usarGuardado;
+  protected readonly enviandoFila = this.fila.enviando;
+  /**
+   * As trocas feitas ou recusadas que ainda esperam na fila (sem rede ou enviando): já aparecem como feitas ou recusadas, com
+   * "esperando a rede", e não podem ser feitas de novo (Victor, 2026-10-25, no teste de campo).
+   */
+  private readonly naFila = computed(() => new Map(this.fila.meus().filter((i) => i.tipo === 'troca' || i.tipo === 'recusa').map((i) => [i.alvo, i] as const)));
   private readonly router = inject(Router);
 
   protected readonly titulo = computed(() => ABAS[this.aba()].titulo);
@@ -46,11 +54,27 @@ export class TrocasTrecho {
         ? of(this.trabalho.trocas(params.status).filter((t) => !this.fila.itens().some((i) => (i.tipo === 'troca' || i.tipo === 'recusa') && i.alvo === t.id)))
         : forkJoin(params.status.map((s) => this.api.listar(s))).pipe(map((l) => l.flat())),
   });
+  protected readonly visiveis = computed<TrocaNaTela[]>(() => {
+    const fila = this.naFila();
+    const lista: TrocaNaTela[] = (this.lista.value() ?? []).filter((t) => !fila.has(t.id));
+    if (this.aba() === 'trocar') return lista;
+    const tipo = this.aba() === 'feitas' ? 'troca' : 'recusa';
+    const esperando = [...fila.values()]
+      .filter((i) => i.tipo === tipo && i.resumo)
+      .map((i) => ({ ...(i.resumo as TrocaDto), status: (tipo === 'troca' ? 'Feita' : 'Recusada') as StatusTroca, esperando: true }));
+    return [...esperando, ...lista];
+  });
   protected readonly erroLista = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly idAberta = computed(() => (this.aberta() ? Number(this.aberta()) : null));
   protected readonly troca = rxResource({
     params: () => (this.idAberta() ? { id: this.idAberta()!, guardado: this.semRede() } : undefined),
     stream: ({ params }) => (params.guardado ? of(this.trabalho.troca(params.id)) : this.api.buscar(params.id)),
+  });
+  /** A troca aberta; se ela espera na fila, já aparece feita ou recusada. */
+  protected readonly trocaVisivel = computed<TrocaNaTela | null | undefined>(() => {
+    const t = this.troca.value();
+    const naFila = t ? this.naFila().get(t.id) : undefined;
+    return t && naFila ? { ...t, status: naFila.tipo === 'troca' ? 'Feita' : 'Recusada', esperando: true } : t;
   });
   protected readonly rotulo = ROTULO_TROCA;
   protected readonly dataHora = dataHora;
@@ -70,6 +94,20 @@ export class TrocasTrecho {
   protected readonly mensagem = signal<string | null>(null);
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
+
+  constructor() {
+    // A fila mandou o que esperava: a lista e a troca aberta passam a mostrar o que está no servidor.
+    let antes = this.fila.meus().length;
+    effect(() => {
+      const agora = this.fila.meus().length;
+      if (agora < antes)
+        untracked(() => {
+          this.lista.reload();
+          this.troca.reload();
+        });
+      antes = agora;
+    });
+  }
 
   protected abrir(t: TrocaDto): void {
     this.acao.set(null);
@@ -93,7 +131,7 @@ export class TrocasTrecho {
     }
     void this.registrar(
       {
-        tipo: 'troca', alvo: t.id, rotulo: `Troca da peça ${t.codigoSaiu ?? t.idDormenteSaiu}`,
+        tipo: 'troca', alvo: t.id, resumo: t, rotulo: `Troca da peça ${t.codigoSaiu ?? t.idDormenteSaiu}`,
         corpo: {
           leituraSaiu: this.saiNaoResponde() ? null : leitura(this.tagSai(), this.metodoSai()),
           tagSaiuNaoResponde: this.saiNaoResponde(),
@@ -114,7 +152,7 @@ export class TrocasTrecho {
     }
     void this.registrar(
       {
-        tipo: 'recusa', alvo: t.id, rotulo: `Recusa da troca da peça ${t.codigoSaiu ?? t.idDormenteSaiu}`,
+        tipo: 'recusa', alvo: t.id, resumo: t, rotulo: `Recusa da troca da peça ${t.codigoSaiu ?? t.idDormenteSaiu}`,
         corpo: { motivo: this.motivo().trim(), descricao: this.descricao().trim() || null },
       },
       'Recusa enviada ao técnico.',

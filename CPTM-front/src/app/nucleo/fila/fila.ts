@@ -19,6 +19,8 @@ export interface NovoRegistro {
   corpo: Record<string, unknown>;
   /** Para a lista: "Troca da peça DM-…". */
   rotulo: string;
+  /** Um retrato do que o registro mexe (a troca), para a tela mostrar na hora, sem rede, como já feito. */
+  resumo?: unknown;
 }
 
 export interface ItemFila extends NovoRegistro {

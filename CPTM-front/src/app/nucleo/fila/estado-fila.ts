@@ -15,6 +15,7 @@ import { Fila } from './fila';
           <span>Sem rede{{ esperando() ? ' · ' + esperando() + ' esperando' : '' }}</span>
         } @else if (esperando()) {
           <span>Enviando · {{ esperando() }}</span>
+          @if (fila.enviando()) { <span class="faixa__barra" aria-hidden="true"><span></span></span> }
         }
         @if (fila.meusNaoEnviados().length) {
           <button type="button" class="faixa__botao" (click)="aberta.set(!aberta())" [attr.aria-expanded]="aberta()">Não enviados · {{ fila.meusNaoEnviados().length }}</button>
@@ -40,6 +41,10 @@ import { Fila } from './fila';
   styles: `
     .faixa { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 16px; background: var(--superficie-3); color: var(--tinta); font-size: 14px; }
     .faixa--sem-rede { background: var(--madeira); color: var(--sobre-escuro); }
+    .faixa__barra { flex: 1 1 100%; height: 3px; border-radius: 3px; overflow: hidden; background: color-mix(in srgb, currentColor 18%, transparent); }
+    .faixa__barra span { display: block; width: 35%; height: 100%; border-radius: 3px; background: currentColor; animation: faixa-envio 1.1s ease-in-out infinite; }
+    @keyframes faixa-envio { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
+    @media (prefers-reduced-motion: reduce) { .faixa__barra span { animation: none; width: 100%; opacity: .5; } }
     .faixa__botao { margin-left: auto; min-height: 36px; padding: 0 12px; border: 1px solid currentColor; border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
     .lista { margin: 0; padding: 8px 16px; list-style: none; display: flex; flex-direction: column; gap: 12px; background: var(--superficie-2); border-bottom: 1px solid var(--linha); }
     .lista li { display: flex; flex-direction: column; gap: 4px; }

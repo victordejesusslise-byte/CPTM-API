@@ -4,13 +4,14 @@
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
-@if (idAberta() && troca.isLoading() && !troca.value()) {
+@if (idAberta() && troca.isLoading() && !trocaVisivel()) {
   <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando a troca…" /></section>
 }
-@if (idAberta() && troca.value(); as t) {
+@if (idAberta() && trocaVisivel(); as t) {
   <section class="cartao pilha">
     <header>
       <h2>Troca {{ t.id }}</h2><span class="pilula" [class.pilula--solida]="t.status === 'Feita'" [class.pilula--alerta]="t.status === 'Recusada'">{{ rotulo[t.status] }}</span>
+      @if (t.esperando) { <span class="etiqueta" [class.etiqueta--enviando]="enviandoFila()">{{ enviandoFila() ? 'Enviando…' : 'Esperando a rede' }}</span> }
       <span class="nota"><button mat-button type="button" (click)="fechar()">Fechar</button></span>
     </header>
     <app-resumo-troca [t]="t" />
@@ -58,14 +59,18 @@
 }
 
 <section class="cartao">
-  <header><h2>{{ titulo() }}</h2><span class="nota">{{ lista.value()?.length ?? 0 }} · toque para abrir</span></header>
-  <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length" textoVazio="Nenhuma troca aqui." />
+  <header><h2>{{ titulo() }}</h2><span class="nota">{{ visiveis().length }} · toque para abrir</span></header>
+  <app-estado [carregando]="lista.isLoading() && !visiveis().length" [erro]="erroLista()" [vazio]="lista.hasValue() && !visiveis().length" textoVazio="Nenhuma troca aqui." />
   <div class="cartoes-alerta">
-    @for (t of lista.value() ?? []; track t.id) {
+    @for (t of visiveis(); track t.id) {
       <button type="button" class="cartao-alerta" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
         <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
         <span class="tipo">{{ rotulo[t.status] }}@if (t.codigoEntrou) { · entra {{ t.codigoEntrou }} }</span>
-        <span class="nota">pedida há {{ t.diasDesdeOPedido }} dias</span>
+        @if (t.esperando) {
+          <span class="etiqueta" [class.etiqueta--enviando]="enviandoFila()">{{ enviandoFila() ? 'Enviando…' : 'Esperando a rede' }}</span>
+        } @else {
+          <span class="nota">pedida há {{ t.diasDesdeOPedido }} dias</span>
+        }
       </button>
     }
   </div>
