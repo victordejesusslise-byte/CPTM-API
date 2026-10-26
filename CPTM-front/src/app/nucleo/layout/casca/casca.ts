@@ -131,7 +131,7 @@ export class Casca {
     this.recolhidos.set(recolhidos);
   }
 
-  /** No celular: deslizar o dedo para a direita abre o menu; para a esquerda, fecha (Victor, 2026-10-24). */
+  /** No celular: deslizar o dedo muda de aba (esquerda: a próxima; direita: a anterior) e, na primeira aba, abre o menu; com o menu aberto, para a esquerda fecha (Victor, 2026-10-24 e 25). */
   protected tocou(e: TouchEvent): void {
     const dedo = e.touches[0];
     this.toque = this.celular() && e.touches.length === 1 && !deslizaSozinho(e.target) ? { x: dedo.clientX, y: dedo.clientY, quando: e.timeStamp } : null;
@@ -145,8 +145,17 @@ export class Casca {
     const [dx, dy] = [dedo.clientX - inicio.x, dedo.clientY - inicio.y];
     // Um deslize de verdade: pelo menos 70 px para o lado e mais de lado do que para cima ou para baixo.
     if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
-    if (dx > 0 && !this.menuAberto()) this.menuAberto.set(true);
-    else if (dx < 0 && this.menuAberto()) this.menuAberto.set(false);
+    if (this.menuAberto()) {
+      if (dx < 0) this.menuAberto.set(false);
+      return;
+    }
+    // Pelas abas do alto (Victor, 2026-10-25): para a esquerda, a próxima aba; para a direita, a anterior; na primeira, abre o menu.
+    const abas = this.abasNoAlto();
+    const atual = abas.findIndex((a) => a.rota === this.caminho());
+    if (dx < 0) {
+      if (atual >= 0 && atual < abas.length - 1) void this.router.navigateByUrl(abas[atual + 1].rota);
+    } else if (atual > 0) void this.router.navigateByUrl(abas[atual - 1].rota);
+    else this.menuAberto.set(true);
   }
 
   protected sair(): void {
