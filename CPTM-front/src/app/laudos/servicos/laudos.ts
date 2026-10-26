@@ -11,7 +11,7 @@ export interface DocumentoLaudoDto {
   codigo: string;
   subtitulo: string;
   geradoEm: string;
-  secoes: { titulo: string; campos: { rotulo: string; valor: string }[]; tabela: { colunas: string[]; linhas: string[][] } | null }[];
+  secoes: { titulo: string; campos: { rotulo: string; valor: string }[]; tabela: { colunas: string[]; linhas: string[][] } | null; fotos?: { legenda: string; caminho: string; tipo: string | null; conteudo: string | null }[] }[];
 }
 
 /** Os laudos: o documento para ver na tela e o PDF para baixar (vem como arquivo, com o token). */

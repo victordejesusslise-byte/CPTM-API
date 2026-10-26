@@ -32,6 +32,16 @@ import { DocumentoLaudoDto } from '../servicos/laudos';
               <p class="vazio">Nenhum registro.</p>
             }
           }
+          @if (s.fotos?.length) {
+            <div class="fotos">
+              @for (f of s.fotos; track $index) {
+                <figure>
+                  @if (f.conteudo && f.tipo) { <img [src]="'data:' + f.tipo + ';base64,' + f.conteudo" [alt]="f.legenda" /> } @else { <p class="vazio">A foto não está no servidor.</p> }
+                  <figcaption>{{ f.legenda }}</figcaption>
+                </figure>
+              }
+            </div>
+          }
         </section>
       }
       <p class="rodape">{{ d.codigo }} · gerado em {{ dataHora(d.geradoEm) }} a partir das tabelas</p>
@@ -52,6 +62,10 @@ import { DocumentoLaudoDto } from '../servicos/laudos';
     dt { color: #666; }
     dd { margin: 0; overflow-wrap: anywhere; }
     .folha-tabela { overflow-x: auto; margin-top: 4px; }
+    .fotos { display: grid; gap: 12px; margin-top: 6px; }
+    .fotos figure { margin: 0; }
+    .fotos img { display: block; max-width: 100%; max-height: 420px; border: 1px solid #ddd; }
+    .fotos figcaption { margin-top: 4px; font-size: 11px; color: #666; }
     table { width: 100%; border-collapse: collapse; font-size: 11px; background: #fff; color: #1a1a1a; }
     th, td { border: 1px solid #d3d3d3; padding: 3px 5px; text-align: left; vertical-align: top; }
     th { background: #f5f5f5; color: #1a1a1a; font-weight: 700; }

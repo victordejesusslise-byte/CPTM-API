@@ -70,6 +70,8 @@ public class DocumentoPdfRepository : IDocumentoPdfRepository
             }
             if (s.Tabela is { } t)
                 Tabela(secao, t);
+            foreach (var f in s.Fotos ?? [])
+                Foto(secao, f);
         }
 
         var renderizador = new PdfDocumentRenderer { Document = documento };
@@ -77,6 +79,23 @@ public class DocumentoPdfRepository : IDocumentoPdfRepository
         using var memoria = new MemoryStream();
         renderizador.PdfDocument.Save(memoria);
         return memoria.ToArray();
+    }
+
+    /// <summary>A foto com a legenda embaixo. O PDF desenha JPG e PNG; sem o arquivo (ou em outro formato), escreve o motivo no lugar.</summary>
+    private static void Foto(Section secao, FotoPdf f)
+    {
+        if (f.Conteudo is { Length: > 0 } imagem && f.Tipo is "image/jpeg" or "image/png")
+        {
+            var figura = secao.AddImage("base64:" + Convert.ToBase64String(imagem));
+            figura.LockAspectRatio = true;
+            figura.Width = Unit.FromCentimeter(10);
+        }
+        else
+            secao.AddParagraph(f.Conteudo is null ? "A foto não está no servidor." : "Foto em formato que o PDF não desenha (veja na tela).").Format.Font.Italic = true;
+        var legenda = secao.AddParagraph(f.Legenda);
+        legenda.Format.Font.Size = 8;
+        legenda.Format.Font.Color = Colors.DimGray;
+        legenda.Format.SpaceAfter = Unit.FromPoint(8);
     }
 
     private static void Tabela(Section secao, TabelaPdf t)
