@@ -21,8 +21,19 @@ namespace ViaPermanente.Dominio.Laudos;
 /// Ainda é refeito a cada download: guardar cada versão com hash e assinar é ponto em aberto (Laudo congelado e assinado).
 /// </summary>
 public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IHistoricoRepository historicos, IUsuarioRepository usuarios,
-    ITrocaRepository trocasRepo, ChegadaService chegadas, PecaService consulta, InspecaoService inspecoes, AlertaService alertas, TrocaService trocas)
+    ITrocaRepository trocasRepo, ChegadaService chegadas, PecaService consulta, InspecaoService inspecoes, AlertaService alertas, TrocaService trocas,
+    IFotoRepository? fotos = null)
 {
+    /// <summary>A foto para o laudo, com a imagem lida da pasta das fotos (nula se o arquivo não está no servidor).</summary>
+    private FotoPdf Foto(string legenda, string caminho)
+    {
+        var tipo = Path.GetExtension(caminho).ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg", ".png" => "image/png", ".webp" => "image/webp", _ => null
+        };
+        return new FotoPdf(legenda, caminho, tipo, tipo is null ? null : fotos?.Ler(caminho));
+    }
+
     private async Task<DocumentoPdf?> DocumentoBoletim(int idRecebimento)
     {
         var recebimento = await pecas.BuscarRecebimento(idRecebimento);
@@ -81,8 +92,8 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             [
                 new("Estado de conservação", inspecao.EstadoConservacao), new("Rachadura", inspecao.Rachadura), new("Ataque biológico", inspecao.AtaqueBiologico),
                 new("Umidade", inspecao.UmidadePct is decimal u ? $"{u:0.#}%" : "—"), new("Vida útil", inspecao.VidaUtilMeses is int v ? $"{v} meses" : "—"),
-                new("Tipo de madeira confere", inspecao.TipoMadeiraConfere ? "sim" : "não"), new("Observação", inspecao.Observacao ?? "—"), new("Foto", inspecao.FotoArquivo)
-            ])
+                new("Tipo de madeira confere", inspecao.TipoMadeiraConfere ? "sim" : "não"), new("Observação", inspecao.Observacao ?? "—")
+            ], null, string.IsNullOrWhiteSpace(inspecao.FotoArquivo) ? null : [Foto("A peça na inspeção", inspecao.FotoArquivo)])
         };
         if (alerta is not null)
             secoes.Add(SecaoAlerta(alerta));
@@ -132,7 +143,7 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
         if (troca.DataSeparacao is not null)
             passos.Add(new[] { "Separada", Nome(nomes, troca.IdUsuarioSeparou), Data(troca.DataSeparacao), troca.CodigoEntrou ?? "" });
         if (troca.Data is not null)
-            passos.Add(new[] { "Feita", Nome(nomes, troca.IdUsuarioFez), Data(troca.Data), $"equipe {troca.Equipe}; foto {troca.FotoArquivo}" });
+            passos.Add(new[] { "Feita", Nome(nomes, troca.IdUsuarioFez), Data(troca.Data), $"equipe {troca.Equipe}" });
         var versao = passos.Count + recusas.Count;
         var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
         var secoes = new List<SecaoPdf>
@@ -144,6 +155,13 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
                 recusas.Select(r => (IReadOnlyList<string>)[Data(r.Data), Nome(nomes, r.IdUsuario), r.Motivo,
                     r.Decisao is null ? "aguardando" : $"{r.Decisao}{(r.Resposta is null ? "" : $": {r.Resposta}")}"]).ToList()))
         };
+        // As fotos da troca: a peça nova no lugar e o que a via viu em cada recusa.
+        var fotosDaTroca = new List<FotoPdf>();
+        if (!string.IsNullOrWhiteSpace(troca.FotoArquivo))
+            fotosDaTroca.Add(Foto($"A peça nova no lugar · {Data(troca.Data)}", troca.FotoArquivo));
+        fotosDaTroca.AddRange(recusas.Where(r => !string.IsNullOrWhiteSpace(r.FotoArquivo)).Select(r => Foto($"Recusa da via · {Data(r.Data)} · {r.Motivo}", r.FotoArquivo)));
+        if (fotosDaTroca.Count > 0)
+            secoes.Add(new SecaoPdf("Fotos", [], null, fotosDaTroca));
         if (troca.IdInspecao is int idInspecao && await inspecoes.BuscarPorId(idInspecao) is { IdAlerta: int idAlerta } && await alertas.BuscarPorId(idAlerta) is { } alerta)
             secoes.Add(SecaoAlerta(alerta));
         secoes.Add(await SecaoVistorias(troca.IdDormenteSaiu, nomes));
