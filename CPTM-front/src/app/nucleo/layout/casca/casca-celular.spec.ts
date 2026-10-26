@@ -40,7 +40,7 @@ describe('Casca no celular (app)', () => {
     online.set(false);
     const { tela } = await abrir();
     expect(tela.textContent).toContain('Esta tela precisa de rede');
-    expect([...tela.querySelectorAll('.sem-rede__telas a')].map((a) => a.textContent?.trim())).toEqual(['Trocas do trecho', 'Alertas (vistoria)']);
+    expect([...tela.querySelectorAll('.sem-rede__telas a')].map((a) => a.textContent?.trim())).toEqual(['Trocas do trecho', 'Consultar peça', 'Alertas (vistoria)']);
   });
 
   it('com rede, não avisa', async () => {

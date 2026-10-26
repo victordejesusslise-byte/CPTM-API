@@ -13,7 +13,8 @@ import { PainelLeitor } from '../../leitor/painel-leitor';
 import { EstadoFila } from '../../fila/estado-fila';
 import { AvisosDoApp } from '../../ao-vivo/avisos-do-app';
 import { TrabalhoDaNoite } from '../../ao-vivo/trabalho-da-noite';
-import { Cargo } from '../../../pessoas/entidades/usuario';
+import { CARGOS, Cargo } from '../../../pessoas/entidades/usuario';
+import { CopiaDaLinha } from '../../linha/copia-da-linha';
 
 interface ItemVisivel extends ItemMenu {
   link: string;
@@ -37,6 +38,7 @@ const semConsulta = (url: string) => url.split(/[?#]/)[0];
 const FUNCIONAM_SEM_REDE: { rota: string; rotulo: string; cargos: Cargo[]; outras?: string[] }[] = [
   { rota: '/trocas-trecho', rotulo: 'Trocas do trecho', cargos: ['OperadorVia', 'Supervisor'], outras: ['/trocas-trecho/feitas', '/trocas-trecho/recusas'] },
   { rota: '/inspecoes', rotulo: 'Fazer a inspeção', cargos: ['Tecnico'] },
+  { rota: '/pecas', rotulo: 'Consultar peça', cargos: CARGOS },
   { rota: '/alertas', rotulo: 'Alertas (vistoria)', cargos: ['OperadorVia', 'Tecnico', 'Supervisor'], outras: ['/alertas/sensores'] },
 ];
 
@@ -94,6 +96,8 @@ export class Casca {
     return [...grupos].map(([nome, itensDoGrupo]) => ({ nome, itens: itensDoGrupo }));
   });
   private readonly trabalho = inject(TrabalhoDaNoite);
+  /** A cópia das linhas (Entrega 2) começa a baixar quando a pessoa entra. */
+  private readonly copia = inject(CopiaDaLinha);
   /** No app e sem rede: as telas que funcionam sem rede para este cargo. */
   protected readonly telasSemRede = computed(() => FUNCIONAM_SEM_REDE.filter((t) => this.sessao.temCargo(...t.cargos)));
   /** No app e sem rede, nesta tela que precisa de rede: no lugar dela, o aviso com as telas que funcionam (a tela fica guardada por trás). */

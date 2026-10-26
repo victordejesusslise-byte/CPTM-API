@@ -10,6 +10,8 @@ import { Pecas } from '../../servicos/pecas';
 import { LeituraTag } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
+import { NO_APP, TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
+import { CopiaDaLinha } from '../../../nucleo/linha/copia-da-linha';
 
 /** Consultar a peça pela tag: onde está e tudo o que aconteceu com ela. */
 @Component({
@@ -18,8 +20,17 @@ import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
   template: `
     <p class="sobre">Peça</p>
     <h1>Consultar peça</h1>
+    @if (noApp) {
+      <p class="chamada chamada--neutra" role="status">
+        @if (copia.sincronizando()) { Baixando as linhas · {{ copia.baixadas() }} peças… }
+        @else { Cópia das linhas no celular: {{ copia.total() }} peças@if (copia.ultimaSincronia(); as quando) { · atualizada em {{ dataHora(quando) }} }. }
+      </p>
+    }
     <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
-    <div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Buscar</button></div>
+    <div class="acoes">
+      <button mat-stroked-button type="button" (click)="buscar()">Buscar</button>
+      @if (noApp) { <button mat-button type="button" (click)="copia.sincronizar()" [disabled]="copia.sincronizando()">Atualizar as linhas agora</button> }
+    </div>
     @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
     @if (buscando()) { <app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Buscando a peça…" /> }
     @if (!buscando() && peca(); as p) {
@@ -66,6 +77,9 @@ export class ConsultaPeca implements OnInit, OnDestroy {
   /** a tag que veio na rota (?tag=), do mapa do trecho */
   readonly tagDaRota = input<string | undefined>(undefined, { alias: 'tag' });
   private readonly pecas = inject(Pecas);
+  private readonly trabalho = inject(TrabalhoDaNoite);
+  protected readonly copia = inject(CopiaDaLinha);
+  protected readonly noApp = inject(NO_APP);
   protected readonly metros = metros;
   protected readonly km = km;
   protected readonly dataHora = dataHora;
@@ -112,6 +126,16 @@ export class ConsultaPeca implements OnInit, OnDestroy {
   protected buscar(): void {
     if (!this.tag().trim()) return;
     this.erro.set(null);
+    if (this.trabalho.usarGuardado()) {
+      // Sem rede (no app): o trabalho da noite e a cópia das linhas; o histórico e as fotos ficam para quando a rede voltar.
+      const tag = this.tag();
+      void (async () => {
+        const p = this.trabalho.pecaPorTag(tag) ?? (await this.copia.pecaPorTag(tag));
+        this.peca.set(p);
+        if (!p) this.erro.set('Sem rede: essa tag não está na cópia das linhas do celular.');
+      })();
+      return;
+    }
     this.buscando.set(true);
     this.pecas.porTag(this.tag()).pipe(finalize(() => this.buscando.set(false))).subscribe({
       next: (p) => {
