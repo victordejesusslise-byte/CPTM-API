@@ -42,7 +42,12 @@ internal static class PatioConfiguracao
         mb.Fk<ConferenciaArmazem, Usuario>(x => x.IdUsuario);
         mb.Fk<ConferenciaArmazem, Leitor>(x => x.IdLeitor);
 
-        mb.Entity<Dormente>(e => e.HasKey(x => x.IdDormente));
+        mb.Entity<Dormente>(e =>
+        {
+            e.HasKey(x => x.IdDormente);
+            // A cópia das linhas no celular pede "o que mudou desde…".
+            e.HasIndex(x => x.DataAlteracao);
+        });
         mb.Fk<Dormente, Lote>(x => x.IdLote);
         mb.Fk<Dormente, Feixe>(x => x.IdFeixe);
         mb.Fk<Dormente, Trecho>(x => x.IdTrecho);

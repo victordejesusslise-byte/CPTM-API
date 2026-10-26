@@ -190,6 +190,23 @@ public class TrocaNoBancoTestes : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_peca_ganha_a_data_de_alteracao_quando_ela_ou_um_registro_dela_muda()
+    {
+        var antiga = new DateTime(2026, 1, 1);
+        await db.Set<Dormente>().ExecuteUpdateAsync(x => x.SetProperty(d => d.DataAlteracao, (DateTime?)antiga));
+        var (peca2, peca3, peca4) = (await Peca(2), await Peca(3), await Peca(4));
+        DateTime? Data(int id) => db.Set<Dormente>().AsNoTracking().Single(d => d.IdDormente == id).DataAlteracao;
+
+        await Reprovar(2); // a inspeção é um registro da peça
+        await Trocas().Pedir(new NovaTrocaDto { IdDormente = peca3, Motivo = "Dormente podre" }, tecnico); // a troca também
+        db.ChangeTracker.Clear();
+
+        Assert.True(Data(peca2) > antiga);
+        Assert.True(Data(peca3) > antiga);
+        Assert.Equal(antiga, Data(peca4)); // a que não mexeu, não muda
+    }
+
+    [Fact]
     public async Task Correcao_que_aprova_cancela_a_troca_e_devolve_a_peca()
     {
         var inspecao = await Reprovar(3);

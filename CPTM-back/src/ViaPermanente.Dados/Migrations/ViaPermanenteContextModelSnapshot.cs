@@ -2185,6 +2185,10 @@ namespace ViaPermanente.Dados.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdDormente"));
 
+                    b.Property<DateTime?>("DataAlteracao")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("data_alteracao");
+
                     b.Property<DateTime?>("EntradaArmazemEm")
                         .HasColumnType("datetime2")
                         .HasColumnName("entrada_armazem_em");
@@ -2225,6 +2229,8 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnName("tag_fornecedor_leitura");
 
                     b.HasKey("IdDormente");
+
+                    b.HasIndex("DataAlteracao");
 
                     b.HasIndex("IdFeixe");
 

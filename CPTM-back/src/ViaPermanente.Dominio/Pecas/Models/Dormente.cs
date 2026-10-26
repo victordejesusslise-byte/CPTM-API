@@ -14,4 +14,9 @@ public class Dormente
     public int? IdPilha { get; set; }
     public DateTime? EntradaArmazemEm { get; set; }
     public DateTime? RetiradaEm { get; set; }
+    /// <summary>
+    /// Quando a peça ou um registro dela (inspeção, tag, movimentação, troca, leitura) mudou pela última vez. O app usa para baixar só
+    /// o que mudou na cópia das linhas (Entrega 2). Gravada sozinha pelo ViaPermanenteContext, não à mão.
+    /// </summary>
+    public DateTime? DataAlteracao { get; set; }
 }
