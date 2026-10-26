@@ -7,6 +7,7 @@ import { forkJoin, map, of } from 'rxjs';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { Fila, NovoRegistro } from '../../../nucleo/fila/fila';
 import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
+import { AvisoGuardado } from '../../../nucleo/ao-vivo/aviso-guardado';
 import { TrocaDto } from '../../entidades/campo';
 import { MetodoCaptura, StatusTroca } from '../../../compartilhado/entidades/enums';
 import { Trocas } from '../../servicos/trocas';
@@ -27,7 +28,7 @@ const ABAS: Record<Aba, { titulo: string; status: StatusTroca[] }> = {
 /** Trocas do trecho (protótipo YBYRA, etapa 13): o operador da via troca a peça pela separada, ou recusa com motivo e foto. */
 @Component({
   selector: 'app-trocas-trecho',
-  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag, ResumoTroca],
+  imports: [AvisoGuardado, Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag, ResumoTroca],
   templateUrl: './trocas-trecho.html',
 })
 export class TrocasTrecho {
@@ -46,7 +47,7 @@ export class TrocasTrecho {
   private readonly router = inject(Router);
 
   protected readonly titulo = computed(() => ABAS[this.aba()].titulo);
-  // Sem rede (no app): o plano guardado, sem as trocas que já foram feitas ou recusadas e esperam na fila.
+  // Sem rede (no app): o plano e o pacote do operador guardados (as feitas e as recusadas dos últimos dias), sem as trocas que já foram feitas ou recusadas e esperam na fila.
   protected readonly lista = rxResource({
     params: () => ({ status: ABAS[this.aba()].status, guardado: this.semRede() }),
     stream: ({ params }) =>

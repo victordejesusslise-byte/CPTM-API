@@ -18,6 +18,7 @@ import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
+import { AvisoGuardado } from '../../../nucleo/ao-vivo/aviso-guardado';
 
 type Aba = 'imagem' | 'sensores' | 'tags';
 const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: 'Alertas dos sensores', tags: 'Tags sem cadastro' };
@@ -28,7 +29,7 @@ const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: '
  */
 @Component({
   selector: 'app-alertas',
-  imports: [LegivelPipe, Esqueleto, FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag, Nota],
+  imports: [AvisoGuardado, LegivelPipe, Esqueleto, FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag, Nota],
   templateUrl: './alertas.html',
 })
 export class Alertas {
@@ -49,8 +50,8 @@ export class Alertas {
       this.aba() === 'tags'
         ? undefined
         : { origem: this.aba() === 'imagem' ? ('Imagem' as const) : ('Sensor' as const), status: this.so() === 'abertos' ? ('Aberto' as const) : null, guardado: this.semRede() },
-    // Sem rede (no app): os alertas abertos do plano guardado.
-    stream: ({ params }) => (params.guardado ? of(this.trabalho.alertas(params.origem)) : this.api.listar(params.origem, params.status)),
+    // Sem rede (no app): os alertas guardados (os abertos do plano e, do pacote do operador, os dos últimos dias).
+    stream: ({ params }) => (params.guardado ? of(this.trabalho.alertas(params.origem, params.status)) : this.api.listar(params.origem, params.status)),
   });
   protected readonly erroLista = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly idAberto = computed(() => (this.aberto() ? Number(this.aberto()) : null));

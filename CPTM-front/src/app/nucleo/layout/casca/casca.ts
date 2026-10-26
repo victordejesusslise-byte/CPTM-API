@@ -34,12 +34,14 @@ const MINIMO_DO_SKELETON_MS = 300;
 /** A tela sem o ?… e o #…: abrir um item ou trocar um filtro não é abrir outra tela. */
 const semConsulta = (url: string) => url.split(/[?#]/)[0];
 
-/** As telas do trabalho da noite, que abrem sem rede no app (o resto precisa de rede). */
+/** As telas que abrem sem rede no app (o trabalho da noite, a cópia das linhas e o pacote do operador da via); o resto precisa de rede. */
 const FUNCIONAM_SEM_REDE: { rota: string; rotulo: string; cargos: Cargo[]; outras?: string[] }[] = [
   { rota: '/trocas-trecho', rotulo: 'Trocas do trecho', cargos: ['OperadorVia', 'Supervisor'], outras: ['/trocas-trecho/feitas', '/trocas-trecho/recusas'] },
   { rota: '/inspecoes', rotulo: 'Fazer a inspeção', cargos: ['Tecnico'] },
   { rota: '/pecas', rotulo: 'Consultar peça', cargos: CARGOS },
   { rota: '/alertas', rotulo: 'Alertas (vistoria)', cargos: ['OperadorVia', 'Tecnico', 'Supervisor'], outras: ['/alertas/sensores'] },
+  { rota: '/trecho', rotulo: 'Mapa do trecho', cargos: ['OperadorVia', 'Tecnico', 'Supervisor'] },
+  { rota: '/passagem', rotulo: 'Passagem da noite', cargos: ['OperadorVia', 'Tecnico', 'Supervisor'], outras: ['/passagem/anteriores', '/passagem/numeros'] },
 ];
 
 /** O toque começou em algo que desliza para o lado (gráfico, tabela larga, campo)? Aí o deslize é dele, não do menu. */

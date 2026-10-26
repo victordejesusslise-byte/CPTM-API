@@ -3,7 +3,9 @@ import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esquelet
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
-import { PassagemDto, Passagens } from '../../servicos/passagens';
+import { PassagemDetalheDto, PassagemDto, Passagens } from '../../servicos/passagens';
+import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
+import { AvisoGuardado } from '../../../nucleo/ao-vivo/aviso-guardado';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
@@ -18,18 +20,27 @@ const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: '
  */
 @Component({
   selector: 'app-passagem',
-  imports: [CartoesNoCelular, Esqueleto, FORMULARIO, Estado, Nota],
+  imports: [AvisoGuardado, CartoesNoCelular, Esqueleto, FORMULARIO, Estado, Nota],
   templateUrl: './passagem.html',
 })
 export class Passagem {
   readonly aba = input<Aba>('noite');
   private readonly api = inject(Passagens);
+  private readonly trabalho = inject(TrabalhoDaNoite);
+  protected readonly semRede = this.trabalho.usarGuardado;
   protected readonly titulo = computed(() => TITULOS[this.aba()]);
-  protected readonly lista = rxResource({ stream: () => this.api.ultimas(30) });
+  // Sem rede (no app): as passagens do pacote guardado (dos últimos 7 ou 30 dias).
+  protected readonly lista = rxResource({
+    params: () => ({ guardado: this.semRede() }),
+    stream: ({ params }) => (params.guardado ? of(this.trabalho.pacote()?.passagens ?? []) : this.api.ultimas(30)),
+  });
   protected readonly erro = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly escolhida = signal<number | null>(null);
   protected readonly idAberta = computed(() => (this.aba() === 'numeros' ? null : (this.escolhida() ?? (this.aba() === 'noite' ? (this.lista.value()?.[0]?.id ?? null) : null))));
-  protected readonly detalhe = rxResource({ params: () => this.idAberta() ?? undefined, stream: ({ params }) => (params ? this.api.buscar(params) : of(null)) });
+  protected readonly detalhe = rxResource({
+    params: () => (this.idAberta() ? { id: this.idAberta()!, guardado: this.semRede() } : undefined),
+    stream: ({ params }) => (params.guardado ? of(this.soResumo(params.id)) : this.api.buscar(params.id)),
+  });
   protected readonly so = signal<'problemas' | 'todas'>('problemas');
   protected readonly leituras = computed(() => {
     const l = this.detalhe.value()?.leituras ?? [];
@@ -50,6 +61,12 @@ export class Passagem {
   });
   protected readonly dataHora = dataHora;
   protected readonly km = km;
+
+  /** Sem rede: só o resumo guardado; as leituras uma a uma abrem quando a rede voltar. */
+  private soResumo(id: number): PassagemDetalheDto | null {
+    const resumo = this.trabalho.pacote()?.passagens.find((p) => p.id === id);
+    return resumo ? { resumo, veiculo: null, kmInicio: null, kmFim: null, limiteMm: 0, leituras: [] } : null;
+  }
 
   protected abrir(p: PassagemDto): void {
     this.escolhida.set(p.id);

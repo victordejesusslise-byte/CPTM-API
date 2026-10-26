@@ -46,4 +46,15 @@ describe('CopiaDaLinha (a cópia das linhas no celular)', () => {
     expect(await copia.pecaPorTag('BR0000000011')).toBeNull();
     expect((await copia.pecaPorCodigo('dm-e01-l08-0012'))?.id).toBe(12);
   });
+
+  it('lista as peças de um trecho pelo km (o mapa do trecho sem rede)', async () => {
+    const { copia, http } = abrir();
+    const baixou = copia.sincronizar();
+    (await pedido(http)).flush({
+      pecas: [{ ...peca(21), km: 213.4 }, { ...peca(22), km: 213.2 }, { ...peca(23), idTrecho: 5 }], proximo: null, geradoEm: '2026-10-26T20:00:00',
+    });
+    await baixou;
+    expect((await copia.pecasDoTrecho(4)).map((p) => p.id)).toEqual([22, 21]);
+    expect((await copia.pecasDoTrecho(9)).length).toBe(0);
+  });
 });

@@ -1,6 +1,6 @@
 <p class="sobre">Via · 13</p>
 <h1>{{ titulo() }}</h1>
-@if (semRede()) { <p class="chamada chamada--neutra">Sem rede: aparece o trabalho da noite guardado no celular.</p> }
+<app-aviso-guardado />
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 

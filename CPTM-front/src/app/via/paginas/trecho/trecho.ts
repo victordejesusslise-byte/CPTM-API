@@ -1,9 +1,12 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { of } from 'rxjs';
+import { from, of } from 'rxjs';
 import { km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
-import { FaixaDoTrechoDto, Trechos } from '../../servicos/trechos';
+import { FaixaDoTrechoDto, MapaDoTrechoDto, Trechos, faixasDoTrecho } from '../../servicos/trechos';
+import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
+import { AvisoGuardado } from '../../../nucleo/ao-vivo/aviso-guardado';
+import { CopiaDaLinha } from '../../../nucleo/linha/copia-da-linha';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { FORMULARIO } from '../../../compartilhado/ui';
@@ -15,11 +18,12 @@ import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cart
  */
 @Component({
   selector: 'app-trecho',
-  imports: [CartoesNoCelular, FORMULARIO, RouterLink, Estado, Nota],
+  imports: [AvisoGuardado, CartoesNoCelular, FORMULARIO, RouterLink, Estado, Nota],
   template: `
     <p class="sobre">Campo</p>
     <h1>Mapa do trecho</h1>
     <p class="rotulo">Cada barra é uma faixa de km; a cor é a nota das peças assentadas nela. Toque numa barra para ver as peças.</p>
+    <app-aviso-guardado texto="Sem rede: o mapa sai do que está guardado no celular (as peças com tag, da cópia das linhas)" />
     <app-estado [carregando]="trechos.isLoading()" [erro]="erro()" [vazio]="trechos.hasValue() && !trechos.value().length" textoVazio="Nenhum trecho cadastrado." />
     @if (trechos.value()?.length) {
       <div class="campos">
@@ -105,8 +109,14 @@ import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cart
 })
 export class Trecho {
   private readonly api = inject(Trechos);
+  private readonly trabalho = inject(TrabalhoDaNoite);
+  private readonly copia = inject(CopiaDaLinha);
   protected readonly km = km;
-  protected readonly trechos = rxResource({ stream: () => this.api.listar() });
+  // Sem rede (no app): os trechos do pacote guardado.
+  protected readonly trechos = rxResource({
+    params: () => ({ guardado: this.trabalho.usarGuardado() }),
+    stream: ({ params }) => (params.guardado ? of(this.trabalho.pacote()?.trechos ?? []) : this.api.listar()),
+  });
   protected readonly erro = computed(() => (this.trechos.error() ? mensagemDeErro(this.trechos.error()) : null));
   protected readonly idTrecho = signal<number | null>(null);
   protected readonly faixaM = signal(100);
@@ -116,8 +126,8 @@ export class Trecho {
     return this.idTrecho() ?? (lista.find((t) => t.pecas > 0) ?? lista[0])?.id ?? null;
   });
   protected readonly mapa = rxResource({
-    params: () => (this.idAtual() === null ? undefined : { id: this.idAtual()!, faixaM: this.faixaM() }),
-    stream: ({ params }) => (params ? this.api.mapa(params.id, params.faixaM) : of(null)),
+    params: () => (this.idAtual() === null ? undefined : { id: this.idAtual()!, faixaM: this.faixaM(), guardado: this.trabalho.usarGuardado() }),
+    stream: ({ params }) => (params.guardado ? from(this.mapaGuardado(params.id, params.faixaM)) : this.api.mapa(params.id, params.faixaM)),
   });
   /** a faixa aberta: começa pela pior (crítico, depois ruim) ou pela primeira com peça */
   protected readonly escolhida = linkedSignal<FaixaDoTrechoDto | null>(() => {
@@ -125,6 +135,16 @@ export class Trecho {
     return faixas.find((f) => f.critico) ?? faixas.find((f) => f.ruim) ?? faixas.find((f) => f.pecas.length) ?? null;
   });
   private readonly maior = computed(() => Math.max(1, ...(this.mapa.value()?.faixas ?? []).map((f) => f.pecas.length)));
+
+  /** Sem rede: o resumo do trecho vem do pacote guardado e as faixas, das peças da cópia das linhas. */
+  private async mapaGuardado(id: number, faixaM: number): Promise<MapaDoTrechoDto | null> {
+    const trecho = this.trabalho.pacote()?.trechos.find((t) => t.id === id);
+    if (!trecho) return null;
+    const pecas = (await this.copia.pecasDoTrecho(id))
+      .filter((p) => p.km !== null)
+      .map((p) => ({ id: p.id, codigo: p.codigo, tag: p.tag, posicao: p.posicao, km: p.km!, nota: p.nota }));
+    return { trecho, faixaM, faixas: faixasDoTrecho(trecho.kmInicio, trecho.kmFim, faixaM, pecas) };
+  }
 
   protected altura(f: FaixaDoTrechoDto): number {
     return (f.pecas.length / this.maior()) * 100;

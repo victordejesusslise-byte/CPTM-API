@@ -34,6 +34,7 @@ export interface ArmazemDaLinha {
   apagar(ids: number[]): Promise<void>;
   porTag(tag: string): Promise<PecaDaLinha | null>;
   porCodigo(codigo: string): Promise<PecaDaLinha | null>;
+  porTrecho(idTrecho: number): Promise<PecaDaLinha[]>;
   contar(): Promise<number>;
   lerSincronia(): Promise<string | null>;
   gravarSincronia(geradoEm: string): Promise<void>;
@@ -53,6 +54,9 @@ class NaMemoria implements ArmazemDaLinha {
   }
   async porCodigo(codigo: string): Promise<PecaDaLinha | null> {
     return [...this.pecas.values()].find((p) => p.codigo === codigo) ?? null;
+  }
+  async porTrecho(idTrecho: number): Promise<PecaDaLinha[]> {
+    return [...this.pecas.values()].filter((p) => p.idTrecho === idTrecho).sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
   }
   async contar(): Promise<number> {
     return this.pecas.size;
@@ -88,6 +92,7 @@ class NoSqlite implements ArmazemDaLinha {
           situacao TEXT NOT NULL, nota TEXT, ultima_inspecao TEXT, ultima_inspecao_em TEXT);
         CREATE INDEX IF NOT EXISTS ix_peca_tag ON peca (tag);
         CREATE INDEX IF NOT EXISTS ix_peca_codigo ON peca (codigo);
+        CREATE INDEX IF NOT EXISTS ix_peca_trecho ON peca (id_trecho, km);
         CREATE TABLE IF NOT EXISTS sincronia (chave TEXT PRIMARY KEY, valor TEXT);`);
       return banco;
     })();
@@ -116,6 +121,10 @@ class NoSqlite implements ArmazemDaLinha {
   }
   porCodigo(codigo: string): Promise<PecaDaLinha | null> {
     return this.uma('codigo', codigo);
+  }
+  async porTrecho(idTrecho: number): Promise<PecaDaLinha[]> {
+    const r = await (await this.abrir()).query('SELECT * FROM peca WHERE id_trecho = ? ORDER BY km', [idTrecho]);
+    return (r.values ?? []).map(daLinha);
   }
   async contar(): Promise<number> {
     const r = await (await this.abrir()).query('SELECT COUNT(*) AS n FROM peca');
@@ -204,6 +213,11 @@ export class CopiaDaLinha {
   async pecaPorTag(tag: string): Promise<PecaDto | null> {
     const p = await this.armazem.porTag(tag.trim());
     return p ? comoPecaDto(p) : null;
+  }
+
+  /** As peças de um trecho, pelo km (o mapa do trecho sem rede). */
+  pecasDoTrecho(idTrecho: number): Promise<PecaDaLinha[]> {
+    return this.armazem.porTrecho(idTrecho);
   }
 
   async pecaPorCodigo(codigo: string): Promise<PecaDto | null> {

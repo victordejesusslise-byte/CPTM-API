@@ -25,6 +25,13 @@ import { CopiaDaLinha } from '../../../nucleo/linha/copia-da-linha';
         @if (copia.sincronizando()) { Baixando as linhas · {{ copia.baixadas() }} peças… }
         @else { Cópia das linhas no celular: {{ copia.total() }} peças@if (copia.ultimaSincronia(); as quando) { · atualizada em {{ dataHora(quando) }} }. }
       </p>
+      @if (trabalho.recebePacote()) {
+        <p class="nota">Guardar no celular os alertas, as trocas e as passagens dos últimos:</p>
+        <div class="seg filtro-status" role="group" aria-label="Quantos dias guardar no celular">
+          <button type="button" [attr.aria-pressed]="trabalho.dias() === 7" (click)="trabalho.escolherDias(7)">7 dias</button>
+          <button type="button" [attr.aria-pressed]="trabalho.dias() === 30" (click)="trabalho.escolherDias(30)">30 dias</button>
+        </div>
+      }
     }
     <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
     <div class="acoes">
@@ -77,7 +84,7 @@ export class ConsultaPeca implements OnInit, OnDestroy {
   /** a tag que veio na rota (?tag=), do mapa do trecho */
   readonly tagDaRota = input<string | undefined>(undefined, { alias: 'tag' });
   private readonly pecas = inject(Pecas);
-  private readonly trabalho = inject(TrabalhoDaNoite);
+  protected readonly trabalho = inject(TrabalhoDaNoite);
   protected readonly copia = inject(CopiaDaLinha);
   protected readonly noApp = inject(NO_APP);
   protected readonly metros = metros;
