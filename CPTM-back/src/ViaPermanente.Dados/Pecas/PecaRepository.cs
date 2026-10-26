@@ -106,6 +106,15 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
         await transacao.CommitAsync();
     }
 
+    public async Task<IReadOnlyList<int>> IdsDaLinha(DateTime? desde, int depoisDe, int limite)
+    {
+        var naVia = db.Set<Dormente>().AsNoTracking().Where(d => d.IdTrecho != null && d.IdDormente > depoisDe);
+        naVia = desde is DateTime d0
+            ? naVia.Where(d => d.DataAlteracao > d0)
+            : naVia.Where(d => d.RetiradaEm == null && db.Set<Rfid>().Any(t => t.IdDormente == d.IdDormente && t.Ativo));
+        return await naVia.OrderBy(d => d.IdDormente).Select(d => d.IdDormente).Take(limite).ToListAsync();
+    }
+
     public async Task<IReadOnlyList<PecaResumo>> Resumos(int? idDormente = null, int? idFeixe = null, bool soDisponiveis = false, IReadOnlyCollection<int>? ids = null)
     {
         var dormentes = db.Set<Dormente>().AsNoTracking()

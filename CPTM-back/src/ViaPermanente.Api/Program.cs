@@ -119,6 +119,9 @@ builder.Services.AddScoped<InspecaoService>();
 builder.Services.AddScoped<TrocaService>();
 builder.Services.AddScoped<FotoCampoService>();
 builder.Services.AddScoped<PlanoCampoService>();
+builder.Services.AddScoped<LinhaCampoService>();
+// A cópia das linhas (app, Entrega 2) vai compactada: até dezenas de MB de JSON viram poucos MB no 4G.
+builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
 // O ao vivo do campo: o celular logado recebe os avisos do trabalho da noite (CampoHub em /hub/campo).
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<AvisoAoVivo>();
@@ -186,6 +189,8 @@ var app = builder.Build();
 // HTTPS de produção (Seguranca:ExigirHttps: verdadeiro no appsettings, falso no Development e no Docker local).
 app.UseHttpsDeProducao(builder.Configuration.GetValue("Seguranca:ExigirHttps", false));
 app.UseCabecalhosDeSeguranca();
+// Compacta só a cópia das linhas (resposta grande, sem nada que o usuário digite refletido nela).
+app.UseWhen(c => c.Request.Path.StartsWithSegments("/api/campo/linha"), a => a.UseResponseCompression());
 
 app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())

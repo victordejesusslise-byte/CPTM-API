@@ -36,5 +36,10 @@ public interface IPecaRepository
     Task Guardar(int idDormente, int idPilha, DateTime entradaEm, Movimentacao movimentacao, LeituraDormente leitura);
 
     /// <summary>As peças com tudo o que a tela mostra. soDisponiveis: aprovadas, com tag ativa, fora da via.</summary>
+    /// <summary>
+    /// Os ids da cópia das linhas, em ordem e a partir de depoisDe: as peças cadastradas (com tag ativa) que estão na via. Com desde, só as
+    /// que mudaram depois (e também as que saíram da via, para o celular apagar).
+    /// </summary>
+    Task<IReadOnlyList<int>> IdsDaLinha(DateTime? desde, int depoisDe, int limite);
     Task<IReadOnlyList<PecaResumo>> Resumos(int? idDormente = null, int? idFeixe = null, bool soDisponiveis = false, IReadOnlyCollection<int>? ids = null);
 }

@@ -207,6 +207,35 @@ public class TrocaNoBancoTestes : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_copia_das_linhas_vem_em_paginas_e_depois_so_o_que_mudou()
+    {
+        LinhaCampoService Linha() { db.ChangeTracker.Clear(); return new LinhaCampoService(new PecaRepository(db), new InspecaoRepository(db), BancoDeTeste.Pecas(db)); }
+        var (peca2, peca3) = (await Peca(2), await Peca(3));
+        var agora = DateTime.Now;
+
+        // A primeira vez: as duas peças da via, uma por página.
+        var primeira = await Linha().Pagina(null, 0, 1, agora);
+        Assert.Equal([peca2], primeira.Pecas.Select(p => p.Id));
+        Assert.Equal(peca2, primeira.Proximo);
+        var segunda = await Linha().Pagina(null, primeira.Proximo!.Value, 1, agora);
+        Assert.Equal([peca3], segunda.Pecas.Select(p => p.Id));
+        Assert.Equal(Tag(3), segunda.Pecas[0].Tag);
+        Assert.Null((await Linha().Pagina(null, segunda.Proximo!.Value, 1, agora)).Proximo);
+
+        // Depois: só o que mudou desde a última cópia, e a peça que saiu da via vai como Retirada.
+        var antiga = new DateTime(2026, 1, 1);
+        await db.Set<Dormente>().ExecuteUpdateAsync(x => x.SetProperty(d => d.DataAlteracao, (DateTime?)antiga));
+        var desde = DateTime.Now;
+        await Reprovar(2);
+        await db.Set<Dormente>().Where(d => d.IdDormente == peca3).ExecuteUpdateAsync(x => x.SetProperty(d => d.RetiradaEm, (DateTime?)DateTime.Now).SetProperty(d => d.DataAlteracao, (DateTime?)DateTime.Now.AddSeconds(1)));
+        var mudou = await Linha().Pagina(desde, 0, 100, DateTime.Now);
+        Assert.Equal([peca2, peca3], mudou.Pecas.Select(p => p.Id));
+        Assert.Equal("Reprovada", mudou.Pecas[0].UltimaInspecao);
+        Assert.Equal("Retirada", mudou.Pecas[1].Situacao);
+        Assert.DoesNotContain((await Linha().Pagina(null, 0, 100, DateTime.Now)).Pecas, p => p.Id == peca3);
+    }
+
+    [Fact]
     public async Task Correcao_que_aprova_cancela_a_troca_e_devolve_a_peca()
     {
         var inspecao = await Reprovar(3);

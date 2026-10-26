@@ -16,6 +16,8 @@ public class AoVivoDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
     {
         Assert.Equal(HttpStatusCode.Unauthorized, (await api.Cliente().GetAsync("/api/campo/plano")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await api.Cliente().GetAsync("/api/app/versao")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await api.Cliente().GetAsync("/api/campo/linha")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await api.Cliente(Cargo.OperadorVia).GetAsync("/api/campo/linha?limite=10")).StatusCode);
 
         var plano = await api.Cliente(Cargo.OperadorVia).GetFromJsonAsync<PlanoLido>("/api/campo/plano");
         Assert.NotNull(plano!.Trocas);

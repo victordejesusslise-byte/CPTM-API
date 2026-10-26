@@ -7,6 +7,11 @@ namespace ViaPermanente.Dados.Campo;
 
 public class InspecaoRepository(ViaPermanenteContext db) : IInspecaoRepository
 {
+    public async Task<IReadOnlyDictionary<int, Inspecao>> UltimasDasPecas(IReadOnlyCollection<int> idsDormente)
+        => idsDormente.Count == 0 ? new Dictionary<int, Inspecao>() : (await db.Set<Inspecao>().AsNoTracking()
+                .Where(i => idsDormente.Contains(i.IdDormente)).ToListAsync())
+            .GroupBy(i => i.IdDormente).ToDictionary(g => g.Key, g => g.MaxBy(i => i.FinalizadoEm)!);
+
     public async Task<int?> IdPorCliente(Guid idCliente)
         => await db.Set<Inspecao>().Where(i => i.IdCliente == idCliente).Select(i => (int?)i.IdInspecao).FirstOrDefaultAsync();
 
