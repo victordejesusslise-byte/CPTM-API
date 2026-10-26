@@ -107,6 +107,19 @@ describe('Fila (sem internet)', () => {
     expect(fila.naoEnviados()).toEqual([]);
   });
 
+  it('o recusado de outro usuário do mesmo celular não aparece nem pode ser mexido por quem entrou', async () => {
+    preparar();
+    const doOutro = { ...troca, id: 'outro', idUsuario: 99, criadoEm: new Date().toISOString(), foto: 'outro.jpg', tentativas: 0, motivo: 'recusada' };
+    await TestBed.inject(GUARDADO).gravar('ybyra.fila', JSON.stringify({ itens: [], naoEnviados: [doOutro] }));
+    const fila = TestBed.inject(Fila);
+    await fila.enviarTudo();
+    expect(fila.meusNaoEnviados()).toEqual([]);
+    await fila.descartar(fila.naoEnviados()[0]);
+    await fila.tentarDeNovo(fila.naoEnviados()[0]);
+    expect(fila.naoEnviados()).toHaveLength(1);
+    expect(fila.itens()).toEqual([]);
+  });
+
   it('só sobem os registros de quem está logado', async () => {
     preparar();
     const outro = { ...troca, id: 'outro', idUsuario: 99, criadoEm: new Date().toISOString(), foto: 'outro.jpg', tentativas: 0 };

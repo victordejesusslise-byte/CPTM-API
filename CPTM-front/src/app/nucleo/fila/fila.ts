@@ -62,8 +62,10 @@ export class Fila {
   readonly naoEnviados = signal<ItemFila[]>([]);
   readonly enviando = signal(false);
   readonly online = this.rede.online;
-  /** Os que esperam e são de quem está logado. */
+  /** Os que esperam e são de quem está logado. O registro é de quem fez: só ele envia e só ele vê (Victor, 2026-10-25). */
   readonly meus = computed(() => this.itens().filter((i) => i.idUsuario === this.sessao.usuario()?.id));
+  /** Os recusados de quem está logado (os de outro usuário do mesmo celular não aparecem para ele). */
+  readonly meusNaoEnviados = computed(() => this.naoEnviados().filter((i) => i.idUsuario === this.sessao.usuario()?.id));
   private readonly carregada = this.carregar();
   private readonly respostas = new Map<string, unknown>();
   private espera?: ReturnType<typeof setTimeout>;
@@ -120,8 +122,9 @@ export class Fila {
     }
   }
 
-  /** Tira de "Não enviados" de vez (e apaga a foto guardada). */
+  /** Tira de "Não enviados" de vez (e apaga a foto guardada). Só quem fez o registro. */
   async descartar(item: ItemFila): Promise<void> {
+    if (item.idUsuario !== this.sessao.usuario()?.id) return;
     this.naoEnviados.update((l) => l.filter((i) => i.id !== item.id));
     await this.guardado.apagarFoto(item.foto);
     await this.salvar();
@@ -129,6 +132,7 @@ export class Fila {
 
   /** Volta o registro de "Não enviados" para a fila (no fim) e tenta mandar. */
   async tentarDeNovo(item: ItemFila): Promise<void> {
+    if (item.idUsuario !== this.sessao.usuario()?.id) return;
     this.naoEnviados.update((l) => l.filter((i) => i.id !== item.id));
     this.itens.update((l) => [...l, { ...item, motivo: undefined, tentativas: 0 }]);
     await this.salvar();

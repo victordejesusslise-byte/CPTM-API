@@ -4,25 +4,25 @@ import { Fila } from './fila';
 
 /**
  * A faixa da fila embaixo do alto da tela: "Sem rede · 3 esperando", "Enviando · 2" e "Não enviados · 1" (abre a lista, com o motivo,
- * para tentar de novo ou descartar). Some quando não há nada para mostrar.
+ * para tentar de novo ou descartar). Mostra só o que é de quem está logado. Some quando não há nada para mostrar.
  */
 @Component({
   selector: 'app-estado-fila',
   template: `
-    @if (!fila.online() || esperando() || fila.naoEnviados().length) {
+    @if (!fila.online() || esperando() || fila.meusNaoEnviados().length) {
       <div class="faixa" [class.faixa--sem-rede]="!fila.online()" role="status">
         @if (!fila.online()) {
           <span>Sem rede{{ esperando() ? ' · ' + esperando() + ' esperando' : '' }}</span>
         } @else if (esperando()) {
           <span>Enviando · {{ esperando() }}</span>
         }
-        @if (fila.naoEnviados().length) {
-          <button type="button" class="faixa__botao" (click)="aberta.set(!aberta())" [attr.aria-expanded]="aberta()">Não enviados · {{ fila.naoEnviados().length }}</button>
+        @if (fila.meusNaoEnviados().length) {
+          <button type="button" class="faixa__botao" (click)="aberta.set(!aberta())" [attr.aria-expanded]="aberta()">Não enviados · {{ fila.meusNaoEnviados().length }}</button>
         }
       </div>
-      @if (aberta() && fila.naoEnviados().length) {
+      @if (aberta() && fila.meusNaoEnviados().length) {
         <ul class="lista" aria-label="Não enviados">
-          @for (item of fila.naoEnviados(); track item.id) {
+          @for (item of fila.meusNaoEnviados(); track item.id) {
             <li>
               <strong>{{ item.rotulo }}</strong>
               <span class="lista__quando">{{ dataHora(item.criadoEm) }}</span>
