@@ -18,6 +18,10 @@ public class AoVivoDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
         Assert.Equal(HttpStatusCode.Unauthorized, (await api.Cliente().GetAsync("/api/app/versao")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await api.Cliente().GetAsync("/api/campo/linha")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await api.Cliente(Cargo.OperadorVia).GetAsync("/api/campo/linha?limite=10")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await api.Cliente().GetAsync("/api/campo/operador")).StatusCode);
+        var pacote = await api.Cliente(Cargo.OperadorVia).GetFromJsonAsync<PacoteLido>("/api/campo/operador?dias=30");
+        Assert.Equal(30, pacote!.Dias);
+        Assert.NotNull(pacote.Trechos);
 
         var plano = await api.Cliente(Cargo.OperadorVia).GetFromJsonAsync<PlanoLido>("/api/campo/plano");
         Assert.NotNull(plano!.Trocas);
@@ -37,4 +41,5 @@ public class AoVivoDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
 
     private record PlanoLido(DateOnly Noite, List<object> Trocas, List<object> Alertas);
     private record VersaoLida(string Versao, string Baixar);
+    private record PacoteLido(int Dias, List<object> Trechos, List<object> Alertas, List<object> Trocas, List<object> Passagens);
 }

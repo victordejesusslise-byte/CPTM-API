@@ -120,6 +120,7 @@ builder.Services.AddScoped<TrocaService>();
 builder.Services.AddScoped<FotoCampoService>();
 builder.Services.AddScoped<PlanoCampoService>();
 builder.Services.AddScoped<LinhaCampoService>();
+builder.Services.AddScoped<OperadorCampoService>();
 // A cópia das linhas (app, Entrega 2) vai compactada: até dezenas de MB de JSON viram poucos MB no 4G.
 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
 // O ao vivo do campo: o celular logado recebe os avisos do trabalho da noite (CampoHub em /hub/campo).
