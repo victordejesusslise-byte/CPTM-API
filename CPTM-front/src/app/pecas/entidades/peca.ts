@@ -15,6 +15,8 @@ export interface EventoDaPecaDto { data: string; tipo: string; descricao: string
 export interface NovaPecaDto {
   idFeixe: number; tagFornecedor?: string | null; tagFornecedorLeitura?: MetodoCaptura | null; metodo: MetodoCaptura;
   tag: string; tagRelida?: string | null; tagsVistas?: number; idCliente?: string;
+  /** Com o módulo: o modo da leitura. O leitor, o servidor põe o único módulo ativo cadastrado. */
+  idModo?: number | null;
 }
 export interface VerificarPecaDto {
   leitura: LeituraDto; ataqueBiologico: AtaqueBiologicoVerificacao; rachadura: RachaduraVerificacao;

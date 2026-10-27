@@ -80,6 +80,7 @@ export class Cadastro {
       .cadastrar({
         idFeixe: f.id, metodo: this.metodo(), tag: this.tag().trim(), tagRelida: this.tagRelida().trim() || null,
         tagFornecedor: this.tagFornecedor().trim() || null, tagsVistas: 1, idCliente: novoIdCliente(),
+        idModo: this.metodo() === 'ModuloUhf' ? this.leitor.modo().idModo : null,
       })
       .subscribe({
         next: (r) => {
