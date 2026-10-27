@@ -143,6 +143,24 @@ public class DaChegadaAoArmazemNoBancoTestes : IAsyncLifetime
         Assert.Equal(1, await db.Set<ClassificacaoMadeira>().CountAsync(c => c.Metodo == MetodoClassificacao.PlacaFornecedor && c.IdDormente == ok.Peca.Id));
     }
 
+    /// <summary>O celular não sabe o id do próprio módulo (2026-10-27): sem leitor, vale o único módulo ativo; com dois, precisa dizer qual.</summary>
+    [Fact]
+    public async Task Sem_leitor_o_cadastro_usa_o_unico_modulo_ativo()
+    {
+        var feixe = (await Chegar()).Feixes[0];
+        NovaPecaDto SemLeitor(string tag) => new() { IdFeixe = feixe.Id, Metodo = MetodoCaptura.ModuloUhf, Tag = tag, TagRelida = tag, IdModo = 2 };
+
+        var tag = await Pecas().ProximaTag();
+        var cadastrada = await Pecas().Cadastrar(SemLeitor(tag), idUsuario);
+        Assert.Equal(idLeitor, (await db.Set<GravacaoTag>().SingleAsync(g => g.TagGravada == tag)).IdLeitor);
+
+        await new CatalogoService(new CatalogoRepository(db)).RegistrarLeitor(new NovoLeitorDto { IdTipoLeitor = (int)TipoLeitor.ModuloRfid, Codigo = "MOD-02" });
+        db.ChangeTracker.Clear();
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(async () => await Pecas().Cadastrar(SemLeitor(await Pecas().ProximaTag()), idUsuario));
+        Assert.Contains("informe o leitor", erro.Message);
+        Assert.NotNull(cadastrada.Peca);
+    }
+
     [Fact]
     public async Task Cadastro_so_com_o_modulo_a_pistola_agora_e_a_NIR()
     {

@@ -38,7 +38,17 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
         var leitores = await catalogo.ListarLeitores();
         if (nova.IdLeitor is int idLeitor && leitores.All(l => l.IdLeitor != idLeitor || !l.Ativo))
             throw new RegraDeNegocioException("Leitor não encontrado.");
-        if (modulo && (nova.IdLeitor is null || nova.IdModo is null))
+        // O celular não sabe o id do próprio módulo: sem leitor, vale o único módulo RFID ativo cadastrado (Victor, 2026-10-27).
+        var idLeitorUsado = nova.IdLeitor;
+        if (modulo && idLeitorUsado is null)
+        {
+            var modulos = leitores.Where(l => l.Ativo && l.Tipo == TipoLeitor.ModuloRfid).ToList();
+            if (modulos.Count == 0)
+                throw new RegraDeNegocioException("Nenhum módulo do celular cadastrado: cadastre em Cadastros › Leitores de tag.");
+            if (modulos.Count == 1)
+                idLeitorUsado = modulos[0].IdLeitor;
+        }
+        if (modulo && (idLeitorUsado is null || nova.IdModo is null))
             throw new RegraDeNegocioException("Com o módulo, informe o leitor e o modo de leitura.");
         if (nova.IdModo is int idModo && (await catalogo.ListarModos()).All(m => m.IdModo != idModo))
             throw new RegraDeNegocioException("Modo de leitura não encontrado.");
@@ -56,7 +66,7 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
             gravacao = new GravacaoTag
             {
                 TagGravada = tag, TagRelida = nova.TagRelida?.Trim(), Resultado = resultado, TagsVistas = nova.TagsVistas,
-                RssiDbm = nova.RssiDbm, IdModo = nova.IdModo!.Value, IdLeitor = nova.IdLeitor!.Value, IdUsuario = idUsuario,
+                RssiDbm = nova.RssiDbm, IdModo = nova.IdModo!.Value, IdLeitor = idLeitorUsado!.Value, IdUsuario = idUsuario,
                 Data = agora, IdCliente = nova.IdCliente, RegistradoEm = registradoEm, RecebidoEm = agora
             };
             if (resultado != ResultadoGravacao.Ok)
