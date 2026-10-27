@@ -104,6 +104,26 @@ public class OcrNoBancoTestes : IAsyncLifetime
     }
 
     /// <summary>
+    /// A foto tirada pelo app no celular (2026-10-27): o JPEG vem deitado, com a orientação 6 no EXIF. Sem endireitar, o Tesseract
+    /// lia "== E" e nenhum campo; em pé, a placa sai.
+    /// </summary>
+    [Fact]
+    public async Task Le_a_foto_do_celular_que_vem_deitada()
+    {
+        var (servico, idPedido, idUsuario) = await Preparar();
+
+        var leitura = await servico.Ler(await Foto("placa-celular-deitada.jpg"), ".jpg", idPedido, idUsuario);
+        var campos = leitura.Campos.ToDictionary(c => c.Campo);
+
+        var lidos = string.Join(" · ", leitura.Campos.Select(c => $"{c.Campo}={c.ValorLido}"));
+        Assert.True(campos.Count >= 7, $"campos lidos: {lidos} · texto: {leitura.TextoLido}");
+        Assert.Equal("AR00224", campos["Ata"].ValorLido);
+        // Na cópia reduzida da foto, o A do contrato às vezes sai N: o operador corrige na conferência.
+        Assert.EndsWith("R00224-03", campos["Contrato"].ValorLido);
+        Assert.True(campos["Comprimento"].ConferePedido, lidos);
+    }
+
+    /// <summary>
     /// A placa é do pedido (Victor, 2026-10-17): lida e confirmada em Placa do feixe, ela aparece na chegada daquele pedido; registrada a
     /// chegada com ela, fica ligada ao feixe e sai da lista. Sem pedido, não lê.
     /// </summary>
