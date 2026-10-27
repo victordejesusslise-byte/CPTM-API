@@ -18,8 +18,9 @@ services:
       MSSQL_PID: Express
       TZ: America/Sao_Paulo
       MSSQL_SA_PASSWORD: ${Banco__SenhaSa}
+    # Só neste PC (SSMS em localhost,14330): nem o Wi-Fi nem o Tailscale alcançam o banco, só o back.
     ports:
-      - "14330:1433"
+      - "127.0.0.1:14330:1433"
     volumes:
       - banco:/var/opt/mssql
     healthcheck:
