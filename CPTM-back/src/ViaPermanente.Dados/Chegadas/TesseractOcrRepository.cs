@@ -18,7 +18,9 @@ public class TesseractOcrRepository(string pastaTessdata) : IOcrRepository
     public IReadOnlyList<ResultadoOcr> Ler(byte[] imagem, string modeloBase)
     {
         using var motor = new TesseractEngine(pastaTessdata, modeloBase, EngineMode.Default);
-        using var original = Pix.LoadFromMemory(imagem);
+        using var comoVeio = Pix.LoadFromMemory(imagem);
+        // A foto do celular vem deitada, com a orientação no EXIF: em pé antes de ler (OrientacaoDaFoto).
+        using var original = OrientacaoDaFoto.Endireitar(comoVeio, OrientacaoDaFoto.Ler(imagem));
         var inteira = FotoInteira(motor, original, PageSegMode.Auto, 1, emFaixas: false);
         // As outras leituras precisam da foto em tons de cinza (8 bits); foto em outro formato fica só com a leitura inteira.
         if (original.Depth is not (8 or 32))
