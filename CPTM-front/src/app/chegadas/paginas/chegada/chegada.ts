@@ -39,6 +39,9 @@ export class Chegada {
   protected readonly valorDe = valorDe;
   /** ?pedido= vindo da tela do pedido */
   readonly pedido = input<string>();
+  /** ?restante= vindo do pedido que chegou em parte: as peças que ainda faltam já vêm em "Peças recebidas" e no feixe (Victor, 2026-10-31) */
+  readonly restante = input<string>();
+  private readonly pecasQueFaltam = computed(() => Math.max(0, Number(this.restante()) || 0));
   private readonly pedidos = inject(Pedidos);
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly catalogos = inject(Catalogos);
@@ -87,6 +90,15 @@ export class Chegada {
       if (id === null || !placas || !especies.length || !tamanhos.length || this.placasDe === id) return;
       untracked(() => this.feixesDasPlacas(id, placas, especies, tamanhos));
     });
+    effect(() => {
+      const restante = this.pecasQueFaltam();
+      if (!restante) return;
+      untracked(() => {
+        this.form.controls.quantidadeRecebida.setValue(restante);
+        const feixes = this.form.controls.feixes;
+        if (feixes.length === 1 && !feixes.at(0).controls.idLeituraOcr.value) feixes.at(0).controls.quantidade.setValue(restante);
+      });
+    });
     inject(DestroyRef).onDestroy(() => this.fotos().forEach((url) => URL.revokeObjectURL(url)));
   }
 
@@ -124,7 +136,11 @@ export class Chegada {
       mapa.set(feixe, placa);
       this.baixarFoto(leitura);
     }
-    if (!placas.length) feixes.push(this.novoFeixe());
+    if (!placas.length) {
+      const feixe = this.novoFeixe();
+      if (this.pecasQueFaltam()) feixe.controls.quantidade.setValue(this.pecasQueFaltam());
+      feixes.push(feixe);
+    }
     this.placas.set(mapa);
   }
 

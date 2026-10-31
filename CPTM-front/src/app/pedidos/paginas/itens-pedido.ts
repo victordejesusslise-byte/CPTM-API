@@ -34,12 +34,16 @@ export const itensValidos = (itens: FormArray<FormItem>): NovoPedidoItemDto[] =>
 /** O padrão serve à espécie do item: é dela ou de todas. */
 const serve = (m: MedidaDto, idEspecie: number | null) => m.idEspecie === null || m.idEspecie === idEspecie;
 
-/** Os padrões que o item pode escolher: os ativos do fornecedor que servem à espécie, e o que ele já usa (mesmo desativado). */
+/**
+ * Os padrões que o item pode escolher: os ativos do fornecedor que servem à espécie, e o que ele já usa (mesmo desativado). Com a
+ * espécie em branco, todos os ativos: escolher o padrão de uma espécie preenche a espécie (Victor, 2026-10-31: o padrão ficava vazio
+ * quando o fornecedor só tinha padrões por espécie, e o pedido não chegava à revisão).
+ */
 export const padroesDoItem = (medidas: MedidaDto[], idEspecie: number | null, idAtual = 0): MedidaDto[] =>
-  medidas.filter((m) => m.id === idAtual || (m.ativo && serve(m, idEspecie)));
+  medidas.filter((m) => m.id === idAtual || (m.ativo && (idEspecie === null || serve(m, idEspecie))));
 
-/** "0,24 × 0,17 m · todas as espécies". */
-export const rotuloPadrao = (m: MedidaDto): string => `${m.rotulo} · ${m.especie ?? 'todas as espécies'}`;
+/** "0,24 × 0,17 m · todas as espécies"; com o nome popular da espécie, quando vier: "0,22 × 0,18 m · Amarelão". */
+export const rotuloPadrao = (m: MedidaDto, nomeDaEspecie?: string | null): string => `${m.rotulo} · ${nomeDaEspecie ?? m.especie ?? 'todas as espécies'}`;
 
 /** O m³ de uma peça: comprimento × largura × altura do padrão (5 casas, como na API). */
 export const m3DaPeca = (comprimentoM: number, medida: Pick<MedidaDto, 'larguraM' | 'alturaM'> | undefined): number =>
@@ -69,7 +73,13 @@ export class ItensPedido {
   protected readonly medidas = computed(() => this.fornecedores().find((f) => f.id === this.idEmpresa())?.medidas ?? []);
   protected readonly metros = metros;
   protected readonly m3 = m3;
-  protected readonly rotulo = rotuloPadrao;
+  /** o padrão com o nome popular da espécie, como na lista de espécies */
+  protected rotulo(m: MedidaDto): string {
+    const e = this.especies().find((x) => x.id === m.idEspecie);
+    return rotuloPadrao(m, e ? (e.nomePopular ?? e.nomeCientifico) : null);
+  }
+  /** o padrão que cada item tinha na última conferência: para saber se a pessoa acabou de escolher o padrão */
+  private readonly padraoAnterior = new WeakMap<FormItem, number>();
   protected readonly versao = signal(0);
   protected readonly verificacao = signal<VerificacaoPedidoDto | null>(null);
 
@@ -117,7 +127,8 @@ export class ItensPedido {
   }
 
   /**
-   * Padrão de outro fornecedor ou de outra espécie sai; se só um padrão serve ao item, ele fica marcado. Com os padrões ainda
+   * Escolheu o padrão de uma espécie com a espécie em branco: a espécie sai do padrão (a API exige a espécie do padrão). Fora isso,
+   * padrão de outro fornecedor ou de outra espécie sai, e se só um padrão serve ao item, ele fica marcado. Com os padrões ainda
    * carregando, não mexe (a correção já vem com o padrão de cada item).
    */
   private ajustarPadroes(itens: FormArray<FormItem>): void {
@@ -126,9 +137,13 @@ export class ItensPedido {
     for (const item of itens.controls) {
       const especie = item.controls.idEspecie.value;
       const atual = medidas.find((m) => m.id === item.controls.idMedida.value);
-      if (atual && serve(atual, especie)) continue;
-      const servem = medidas.filter((m) => m.ativo && serve(m, especie));
-      item.controls.idMedida.setValue(servem.length === 1 ? servem[0].id : 0, { emitEvent: false });
+      const escolheuAgora = this.padraoAnterior.get(item) !== item.controls.idMedida.value;
+      if (atual && especie === null && atual.idEspecie !== null && escolheuAgora) item.controls.idEspecie.setValue(atual.idEspecie, { emitEvent: false });
+      else if (!atual || !serve(atual, especie)) {
+        const servem = medidas.filter((m) => m.ativo && serve(m, especie));
+        item.controls.idMedida.setValue(servem.length === 1 ? servem[0].id : 0, { emitEvent: false });
+      }
+      this.padraoAnterior.set(item, item.controls.idMedida.value);
     }
   }
 

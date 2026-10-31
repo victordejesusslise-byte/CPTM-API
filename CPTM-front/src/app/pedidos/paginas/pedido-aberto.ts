@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { Esqueleto } from '../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { data, dataHora, m3, mensagemDeErro, metros } from '../../compartilhado/utilitarios/formato';
 import { ChegadaDto, PedidoDto } from '../entidades/pedido';
@@ -21,7 +22,7 @@ interface Evento { data: string; titulo: string; texto?: string; motivo?: string
 /** O pedido aberto em Acompanhar pedidos: revisão, correção (até a carga chegar), cancelamento e "O que teve". */
 @Component({
   selector: 'app-pedido-aberto',
-  imports: [CartoesNoCelular, Esqueleto, FORMULARIO, ItensPedido, TabelaItens, PreviaLaudo],
+  imports: [CartoesNoCelular, Esqueleto, FORMULARIO, ItensPedido, TabelaItens, PreviaLaudo, RouterLink],
   templateUrl: './pedido-aberto.html',
 })
 export class PedidoAberto {

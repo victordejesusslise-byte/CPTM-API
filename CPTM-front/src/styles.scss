@@ -93,7 +93,8 @@ a { color: inherit; }
 .acoes button, .acoes a { min-height: 44px; }
 .etiqueta { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--linha-2); font-size: 12px; font-weight: 600; color: var(--tinta-2); white-space: nowrap; }
 .etiqueta--vermelha { border-color: var(--vermelho-linha); background: var(--vermelho-suave); color: var(--vermelho); }
-.campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 12px; }
+/* 8px entre as linhas: o nome do campo de baixo sobe 7px acima da borda e encostava na dica ou no erro do campo de cima (no celular, 2026-10-31) */
+.campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 12px; }
 .mat-mdc-form-field { width: 100%; }
 
 /* Tabelas (shared/tabela, Angular Material) */
