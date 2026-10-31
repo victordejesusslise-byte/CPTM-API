@@ -13,6 +13,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 import { LeituraOcrDto, Ocr } from '../../servicos/ocr';
 import { PlacaNoFeixe, feixeDaPlaca, placaNoFeixe } from './placa-no-feixe';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /**
  * A chegada da carga: os feixes que vieram, conferidos com o pedido e a nota. A primeira chegada cria o lote.
@@ -35,6 +36,7 @@ import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
   `,
 })
 export class Chegada {
+  protected readonly valorDe = valorDe;
   /** ?pedido= vindo da tela do pedido */
   readonly pedido = input<string>();
   private readonly pedidos = inject(Pedidos);
@@ -45,7 +47,7 @@ export class Chegada {
 
   protected readonly metros = metros;
   protected readonly lista = rxResource({ stream: () => this.pedidos.listar() });
-  protected readonly abertos = computed(() => (this.lista.value() ?? []).filter((p) => p.situacao !== 'Cancelado' && p.situacao !== 'Recebido'));
+  protected readonly abertos = computed(() => (valorDe(this.lista) ?? []).filter((p) => p.situacao !== 'Cancelado' && p.situacao !== 'Recebido'));
   protected readonly idPedido = linkedSignal(() => (this.pedido() ? Number(this.pedido()) : null));
   protected readonly notas = rxResource({ params: () => this.idPedido() ?? undefined, stream: ({ params }) => this.pedidos.notas(params) });
   /** As placas confirmadas do pedido que ainda não viraram feixe. */

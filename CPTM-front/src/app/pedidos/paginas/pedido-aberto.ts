@@ -14,6 +14,7 @@ import { FormItem, ItensPedido, itensValidos, novoItemPedido, paraTabela } from 
 import { editavel, faltaChegar, hojeIso, situacao } from './situacao';
 import { ItemParaTabela, TabelaItens } from './tabela-itens';
 import { CartoesNoCelular } from '../../compartilhado/componentes/tabela/cartoes';
+import { valorDe } from '../../compartilhado/utilitarios/recurso';
 
 interface Evento { data: string; titulo: string; texto?: string; motivo?: string; tipo?: 'trava' | 'cancela'; }
 
@@ -24,6 +25,7 @@ interface Evento { data: string; titulo: string; texto?: string; motivo?: string
   templateUrl: './pedido-aberto.html',
 })
 export class PedidoAberto {
+  protected readonly valorDe = valorDe;
   readonly id = input.required<number>();
   readonly fechar = output<void>();
   readonly mudou = output<void>();
@@ -42,7 +44,7 @@ export class PedidoAberto {
   protected readonly notas = rxResource({ params: () => this.id(), stream: ({ params }) => this.servico.notas(params) });
   protected readonly chegadas = rxResource({ params: () => this.id(), stream: ({ params }) => this.servico.chegadas(params) });
   protected readonly historico = rxResource({ params: () => this.id(), stream: ({ params }) => this.servico.historico(params) });
-  protected readonly contratos = rxResource({ params: () => this.pedido.value()?.idEmpresa, stream: ({ params }) => this.cadastros.contratos(params) });
+  protected readonly contratos = rxResource({ params: () => valorDe(this.pedido)?.idEmpresa, stream: ({ params }) => this.cadastros.contratos(params) });
 
   protected readonly data = data;
   protected readonly dataHora = dataHora;
@@ -58,21 +60,21 @@ export class PedidoAberto {
   protected readonly mensagem = signal<string | null>(null);
   protected readonly enviando = signal(false);
 
-  protected readonly lote = computed(() => this.chegadas.value()?.[0]?.lote ?? null);
-  protected readonly cadastradas = computed(() => (this.chegadas.value() ?? []).flatMap((c) => c.feixes).reduce((a, f) => a + f.cadastradas, 0));
+  protected readonly lote = computed(() => valorDe(this.chegadas)?.[0]?.lote ?? null);
+  protected readonly cadastradas = computed(() => (valorDe(this.chegadas) ?? []).flatMap((c) => c.feixes).reduce((a, f) => a + f.cadastradas, 0));
   protected readonly itensTabela = computed<ItemParaTabela[]>(() =>
-    (this.pedido.value()?.itens ?? []).map((i) => ({ comprimentoM: i.comprimentoM, classe: i.classe, especie: i.especie, medida: i.medida, quantidade: i.quantidade, volumeM3: i.volumeM3 })),
+    (valorDe(this.pedido)?.itens ?? []).map((i) => ({ comprimentoM: i.comprimentoM, classe: i.classe, especie: i.especie, medida: i.medida, quantidade: i.quantidade, volumeM3: i.volumeM3 })),
   );
   protected readonly eventos = computed<Evento[]>(() => {
-    const p = this.pedido.value();
+    const p = valorDe(this.pedido);
     if (!p) return [];
     const ev: Evento[] = [{ data: p.criadoEm, titulo: 'Pedido registrado', texto: `${p.quantidade} peças · ${m3(p.volumeM3)}` }];
-    for (const h of this.historico.value() ?? []) {
+    for (const h of valorDe(this.historico) ?? []) {
       const cancelou = h.retratoDepois.includes('Cancelado');
       ev.push({ data: h.data, titulo: cancelou ? 'Pedido cancelado' : 'Pedido corrigido', motivo: h.motivo, tipo: cancelou ? 'cancela' : undefined });
     }
-    for (const n of this.notas.value() ?? []) ev.push({ data: n.dataConferencia ?? n.dataEmissao, titulo: `Nota ${n.numero}`, texto: n.statusConferencia === 'Confere' ? 'confere com o pedido' : n.divergencias.join(' ') });
-    (this.chegadas.value() ?? []).forEach((c, i) =>
+    for (const n of valorDe(this.notas) ?? []) ev.push({ data: n.dataConferencia ?? n.dataEmissao, titulo: `Nota ${n.numero}`, texto: n.statusConferencia === 'Confere' ? 'confere com o pedido' : n.divergencias.join(' ') });
+    (valorDe(this.chegadas) ?? []).forEach((c, i) =>
       ev.push({ data: c.dataRecebimento, titulo: i === 0 ? 'Primeira carga chegou: o pedido travou' : 'Carga chegou', texto: `${c.quantidadeRecebida} peças em ${c.armazem} · lote ${c.lote}`, tipo: i === 0 ? 'trava' : undefined }),
     );
     return ev.sort((a, b) => a.data.localeCompare(b.data));
@@ -116,7 +118,7 @@ export class PedidoAberto {
     const novos = paraTabela(itensValidos(this.itensCorrecao), this.tamanhos(), this.especies(), medidas);
     const dif: string[] = [];
     if (v.dataCompra !== p.dataCompra) dif.push(`Data da compra: ${data(p.dataCompra)} → ${data(v.dataCompra)}`);
-    if (v.idContrato !== p.idContrato) dif.push(`Contrato: ${p.contrato ?? '—'} → ${this.contratos.value()?.find((c) => c.id === v.idContrato)?.numeroContrato ?? '—'}`);
+    if (v.idContrato !== p.idContrato) dif.push(`Contrato: ${p.contrato ?? '—'} → ${valorDe(this.contratos)?.find((c) => c.id === v.idContrato)?.numeroContrato ?? '—'}`);
     const chave = (i: ItemParaTabela) => `${metros(i.comprimentoM)} · ${i.classe}ª · ${i.especie ?? 'qualquer da classe'} · ${i.medida ?? 'sem padrão'}`;
     const antes = new Map(this.itensTabela().map((i) => [chave(i), i.quantidade]));
     const depois = new Map(novos.map((i) => [chave(i), i.quantidade]));

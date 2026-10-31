@@ -13,6 +13,7 @@ import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 const METODOS: { valor: MetodoClassificacao; rotulo: string }[] = [
   { valor: 'Nir', rotulo: 'Pistola NIR' }, { valor: 'Comparacao', rotulo: 'Comparação com a amostra' }, { valor: 'Visual', rotulo: 'Visual' },
@@ -36,6 +37,7 @@ const NOME_METODO: Record<string, string> = { PlacaFornecedor: 'Placa do fornece
   `,
 })
 export class Classificar {
+  protected readonly valorDe = valorDe;
   /** Buscando a peça pela tag: o cartão dela mostra o skeleton. */
   protected readonly buscando = signal(false);
   readonly aba = input<'peca' | 'feitas'>('peca');

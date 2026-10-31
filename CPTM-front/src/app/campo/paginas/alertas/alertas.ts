@@ -19,6 +19,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 import { AvisoGuardado } from '../../../nucleo/ao-vivo/aviso-guardado';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 type Aba = 'imagem' | 'sensores' | 'tags';
 const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: 'Alertas dos sensores', tags: 'Tags sem cadastro' };
@@ -33,6 +34,7 @@ const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: '
   templateUrl: './alertas.html',
 })
 export class Alertas {
+  protected readonly valorDe = valorDe;
   readonly aba = input<Aba>('imagem');
   /** ?aberto= */
   readonly aberto = input<string>();

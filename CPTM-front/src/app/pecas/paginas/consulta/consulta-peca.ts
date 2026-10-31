@@ -12,6 +12,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 import { NO_APP, TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
 import { CopiaDaLinha } from '../../../nucleo/linha/copia-da-linha';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /** Consultar a peça pela tag: onde está e tudo o que aconteceu com ela. */
 @Component({
@@ -72,13 +73,14 @@ import { CopiaDaLinha } from '../../../nucleo/linha/copia-da-linha';
       <p class="chamada chamada--neutra"><b>Análise da IA:</b> {{ analise() }}</p>
       <h2>Histórico</h2>
       @if (historico.isLoading()) { <app-esqueleto tipo="lista" [quantidade]="3" rotulo="Carregando o histórico…" /> }
-      @for (e of historico.value() ?? []; track $index) {
+      @for (e of valorDe(historico) ?? []; track $index) {
         <p class="aviso"><strong>{{ dataHora(e.data) }} · {{ e.tipo | legivel }}</strong> — {{ e.descricao }}</p>
       }
     }
   `,
 })
 export class ConsultaPeca implements OnInit, OnDestroy {
+  protected readonly valorDe = valorDe;
   /** Buscando a peça pela tag: o cartão dela mostra o skeleton. */
   protected readonly buscando = signal(false);
   /** a tag que veio na rota (?tag=), do mapa do trecho */

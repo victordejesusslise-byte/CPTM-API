@@ -10,6 +10,7 @@ import { FORMULARIO } from '../../compartilhado/ui';
 import { PedidoAberto } from './pedido-aberto';
 import { OPCOES_SITUACAO, PERIODOS, Periodo, dentroDoPeriodo, entregaIncompleta, faltaChegar, situacao } from './situacao';
 import { CartoesNoCelular } from '../../compartilhado/componentes/tabela/cartoes';
+import { valorDe } from '../../compartilhado/utilitarios/recurso';
 
 /**
  * Acompanhar pedidos (protótipo YBYRA, Pedidos → Acompanhar pedidos): totais do filtro, período, busca e situação,
@@ -37,7 +38,7 @@ export class AcompanharPedidos {
   protected readonly busca = signal('');
   protected readonly filtroSituacao = signal('all');
 
-  private readonly todos = computed(() => this.pedidos.value() ?? []);
+  private readonly todos = computed(() => valorDe(this.pedidos) ?? []);
   protected readonly contagem = computed(() => {
     const c = {} as Record<Periodo, number>;
     for (const p of PERIODOS) c[p.valor] = this.todos().filter((x) => dentroDoPeriodo(x.dataCompra, p.valor)).length;

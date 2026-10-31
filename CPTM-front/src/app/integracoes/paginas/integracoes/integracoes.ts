@@ -12,6 +12,7 @@ import { ImportacaoNotasDto, Integracoes as IntegracoesApi } from '../../servico
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 type Aba = 'notas' | 'erp' | 'historico';
 const TITULOS: Record<Aba, string> = { notas: 'Notas pela planilha', erp: 'Estoque para o ERP', historico: 'Histórico das integrações' };
@@ -23,6 +24,7 @@ const TITULOS: Record<Aba, string> = { notas: 'Notas pela planilha', erp: 'Estoq
   templateUrl: './integracoes.html',
 })
 export class Integracoes {
+  protected readonly valorDe = valorDe;
   readonly aba = input<Aba>('notas');
   private readonly api = inject(IntegracoesApi);
   protected readonly titulo = computed(() => TITULOS[this.aba()]);

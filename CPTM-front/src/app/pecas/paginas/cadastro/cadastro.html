@@ -14,7 +14,7 @@
   <mat-form-field appearance="outline">
     <mat-label>Chegada</mat-label>
     <mat-select [value]="idChegada()" (selectionChange)="idChegada.set($event.value); feixe.set(null)" [disabled]="!idPedido()">
-      @for (c of chegadas.value() ?? []; track c.id) { <mat-option [value]="c.id">Lote {{ c.lote }} · {{ c.quantidadeRecebida }} peças</mat-option> }
+      @for (c of valorDe(chegadas) ?? []; track c.id) { <mat-option [value]="c.id">Lote {{ c.lote }} · {{ c.quantidadeRecebida }} peças</mat-option> }
     </mat-select>
   </mat-form-field>
 </div>
@@ -56,9 +56,9 @@
     </div>
   </section>
   @if (doFeixe.isLoading()) { <app-esqueleto tipo="tabela" [quantidade]="4" rotulo="Carregando as peças do feixe…" /> }
-  @if (doFeixe.value()?.length) {
+  @if (valorDe(doFeixe)?.length) {
     <h2>Peças do feixe</h2>
-    <app-tabela [colunas]="colunas" [linhas]="doFeixe.value() ?? []" />
+    <app-tabela [colunas]="colunas" [linhas]="valorDe(doFeixe) ?? []" />
   }
 }
 }

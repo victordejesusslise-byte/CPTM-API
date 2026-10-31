@@ -14,7 +14,7 @@
         <mat-label>Armazém</mat-label>
         <mat-select [value]="filtro().idArmazem" (selectionChange)="mudarFiltro('idArmazem', $event.value)">
           <mat-option [value]="null">Todos</mat-option>
-          @for (a of armazens.value() ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }} · {{ a.pecas }} peças</mat-option> }
+          @for (a of valorDe(armazens) ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }} · {{ a.pecas }} peças</mat-option> }
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
@@ -32,10 +32,10 @@
       </mat-form-field>
     </div>
     @if (estoque.isLoading()) { <app-esqueleto tipo="tabela" [quantidade]="5" rotulo="Carregando o estoque…" /> } @else {
-    <p class="rotulo">{{ estoque.value()?.length ?? 0 }} peças em estoque.</p>
+    <p class="rotulo">{{ valorDe(estoque)?.length ?? 0 }} peças em estoque.</p>
     }
-    @if (estoque.value()?.length) {
-      <app-tabela [colunas]="colunasEstoque" [linhas]="estoque.value() ?? []" />
+    @if (valorDe(estoque)?.length) {
+      <app-tabela [colunas]="colunasEstoque" [linhas]="valorDe(estoque) ?? []" />
     }
   }
   }
@@ -73,7 +73,7 @@
 
   @case ('pilhas') {
     @if (armazens.isLoading()) { <app-esqueleto tipo="cartoes" [quantidade]="3" rotulo="Carregando as pilhas…" /> }
-    @for (a of armazens.value() ?? []; track a.id) {
+    @for (a of valorDe(armazens) ?? []; track a.id) {
       <section class="cartao">
         <header><h2>{{ a.nome }}</h2><span class="nota">{{ a.linha }} · {{ a.pecas }} peças</span></header>
         <div class="tabela">
@@ -127,7 +127,7 @@
         <mat-form-field appearance="outline">
           <mat-label>Armazém</mat-label>
           <mat-select [value]="idArmazemConferencia()" (selectionChange)="idArmazemConferencia.set($event.value)">
-            @for (a of armazens.value() ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }}</mat-option> }
+            @for (a of valorDe(armazens) ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }}</mat-option> }
           </mat-select>
         </mat-form-field>
         <div class="acoes"><button mat-flat-button type="button" (click)="iniciarConferencia()" [disabled]="!idArmazemConferencia() || enviando()">Abrir conferência</button></div>

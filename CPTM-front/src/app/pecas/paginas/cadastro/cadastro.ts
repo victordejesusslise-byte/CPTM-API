@@ -13,6 +13,7 @@ import { LeituraTag } from '../../../compartilhado/componentes/leitura-tag/leitu
 import { Coluna, Tabela } from '../../../compartilhado/componentes/tabela/tabela';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { LEITOR } from '../../../nucleo/leitor/leitor-simulado';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /**
  * O cadastro da peça: escolhe o feixe, pega a próxima tag, grava no módulo e relê.
@@ -24,6 +25,7 @@ import { LEITOR } from '../../../nucleo/leitor/leitor-simulado';
   templateUrl: './cadastro.html',
 })
 export class Cadastro {
+  protected readonly valorDe = valorDe;
   readonly pedido = input<string>();
   readonly chegada = input<string>();
   private readonly pedidos = inject(Pedidos);
@@ -31,11 +33,11 @@ export class Cadastro {
 
   protected readonly metros = metros;
   protected readonly lista = rxResource({ stream: () => this.pedidos.listar() });
-  protected readonly comChegada = computed(() => (this.lista.value() ?? []).filter((p) => p.pecasRecebidas > 0));
+  protected readonly comChegada = computed(() => (valorDe(this.lista) ?? []).filter((p) => p.pecasRecebidas > 0));
   protected readonly idPedido = linkedSignal(() => (this.pedido() ? Number(this.pedido()) : null));
   protected readonly chegadas = rxResource({ params: () => this.idPedido() ?? undefined, stream: ({ params }) => this.pedidos.chegadas(params) });
   protected readonly idChegada = linkedSignal(() => (this.chegada() ? Number(this.chegada()) : null));
-  protected readonly feixes = computed(() => this.chegadas.value()?.find((c) => c.id === this.idChegada())?.feixes ?? []);
+  protected readonly feixes = computed(() => valorDe(this.chegadas)?.find((c) => c.id === this.idChegada())?.feixes ?? []);
   protected readonly feixe = signal<FeixeDto | null>(null);
   protected readonly doFeixe = rxResource({ params: () => this.feixe()?.id, stream: ({ params }) => this.pecas.doFeixe(params) });
 

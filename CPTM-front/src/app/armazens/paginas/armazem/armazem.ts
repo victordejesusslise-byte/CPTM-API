@@ -16,6 +16,7 @@ import { Nota, classeNota } from '../../../compartilhado/componentes/nota/nota';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /** O armazém: estoque, entrada na pilha, troca de pilha e conferência pilha por pilha. */
 @Component({
@@ -24,6 +25,7 @@ import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
   templateUrl: './armazem.html',
 })
 export class Armazem {
+  protected readonly valorDe = valorDe;
   /** Buscando a peça pela tag: o cartão dela mostra o skeleton. */
   protected readonly buscando = signal(false);
   /** a aba vem do data da rota: Guardar na pilha, Pilhas dos armazéns, Estoque, Conferência */
@@ -62,7 +64,7 @@ export class Armazem {
   protected readonly metodo = signal<MetodoCaptura>('ModuloUhf');
   protected readonly peca = signal<PecaDto | null>(null);
   protected readonly idPilha = signal<number | null>(null);
-  protected readonly pilhasDaPeca = computed(() => this.armazens.value()?.find((a) => a.id === this.peca()?.idArmazem)?.pilhas ?? []);
+  protected readonly pilhasDaPeca = computed(() => valorDe(this.armazens)?.find((a) => a.id === this.peca()?.idArmazem)?.pilhas ?? []);
   protected readonly mensagem = signal<string | null>(null);
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
@@ -96,7 +98,7 @@ export class Armazem {
   protected readonly conferencia = signal<ConferenciaDto | null>(null);
   protected readonly pilhaConferida = signal<number | null>(null);
   protected readonly tagsLidas = signal('');
-  protected readonly pilhasDaConferencia = computed(() => this.armazens.value()?.find((a) => a.id === this.conferencia()?.idArmazem)?.pilhas ?? []);
+  protected readonly pilhasDaConferencia = computed(() => valorDe(this.armazens)?.find((a) => a.id === this.conferencia()?.idArmazem)?.pilhas ?? []);
 
   protected iniciarConferencia(): void {
     const id = this.idArmazemConferencia();

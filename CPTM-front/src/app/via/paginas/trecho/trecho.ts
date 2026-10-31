@@ -11,6 +11,7 @@ import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /**
  * A tela do trecho (pedido do Victor em 2026-10-12): cada barra é uma faixa de km com a nota das peças assentadas nela;
@@ -25,12 +26,12 @@ import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cart
     <p class="rotulo">Cada barra é uma faixa de km; a cor é a nota das peças assentadas nela. Toque numa barra para ver as peças.</p>
     <app-aviso-guardado texto="Sem rede: o mapa sai do que está guardado no celular (as peças com tag, da cópia das linhas)" />
     <app-estado [carregando]="trechos.isLoading()" [erro]="erro()" [vazio]="trechos.hasValue() && !trechos.value().length" textoVazio="Nenhum trecho cadastrado." />
-    @if (trechos.value()?.length) {
+    @if (valorDe(trechos)?.length) {
       <div class="campos">
         <mat-form-field appearance="outline">
           <mat-label>Trecho</mat-label>
           <mat-select [value]="idAtual()" (selectionChange)="idTrecho.set($event.value)">
-            @for (t of trechos.value(); track t.id) {
+            @for (t of valorDe(trechos) ?? []; track t.id) {
               <mat-option [value]="t.id">{{ t.nome }} · {{ t.pecas }} {{ t.pecas === 1 ? 'peça' : 'peças' }}{{ t.ruimOuCritico ? ' · ' + t.ruimOuCritico + ' ruim/crítico' : '' }}</mat-option>
             }
           </mat-select>
@@ -44,7 +45,7 @@ import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cart
       </div>
     }
     @if (mapa.isLoading()) { <app-estado esqueleto="pagina" [carregando]="true" /> }
-    @if (mapa.value(); as m) {
+    @if (valorDe(mapa); as m) {
       <div class="kv cartao">
         <div><span class="lbl">Linha</span><b>{{ m.trecho.linha }}</b></div>
         <div><span class="lbl">Km</span><b class="mono">{{ km(m.trecho.kmInicio) }} a {{ km(m.trecho.kmFim) }}</b></div>
@@ -108,6 +109,7 @@ import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cart
   `,
 })
 export class Trecho {
+  protected readonly valorDe = valorDe;
   private readonly api = inject(Trechos);
   private readonly trabalho = inject(TrabalhoDaNoite);
   private readonly copia = inject(CopiaDaLinha);
@@ -122,7 +124,7 @@ export class Trecho {
   protected readonly faixaM = signal(100);
   /** o escolhido; sem escolha, o primeiro trecho com peça assentada */
   protected readonly idAtual = computed(() => {
-    const lista = this.trechos.value() ?? [];
+    const lista = valorDe(this.trechos) ?? [];
     return this.idTrecho() ?? (lista.find((t) => t.pecas > 0) ?? lista[0])?.id ?? null;
   });
   protected readonly mapa = rxResource({
@@ -131,10 +133,10 @@ export class Trecho {
   });
   /** a faixa aberta: começa pela pior (crítico, depois ruim) ou pela primeira com peça */
   protected readonly escolhida = linkedSignal<FaixaDoTrechoDto | null>(() => {
-    const faixas = this.mapa.value()?.faixas ?? [];
+    const faixas = valorDe(this.mapa)?.faixas ?? [];
     return faixas.find((f) => f.critico) ?? faixas.find((f) => f.ruim) ?? faixas.find((f) => f.pecas.length) ?? null;
   });
-  private readonly maior = computed(() => Math.max(1, ...(this.mapa.value()?.faixas ?? []).map((f) => f.pecas.length)));
+  private readonly maior = computed(() => Math.max(1, ...(valorDe(this.mapa)?.faixas ?? []).map((f) => f.pecas.length)));
 
   /** Sem rede: o resumo do trecho vem do pacote guardado e as faixas, das peças da cópia das linhas. */
   private async mapaGuardado(id: number, faixaM: number): Promise<MapaDoTrechoDto | null> {

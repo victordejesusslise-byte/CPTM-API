@@ -9,6 +9,7 @@ import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 const mesAtual = () => new Date().toISOString().slice(0, 7);
 const nomeDoMes = (iso: string) => new Date(`${iso.slice(0, 7)}-15T12:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -23,6 +24,7 @@ const nomeDoMes = (iso: string) => new Date(`${iso.slice(0, 7)}-15T12:00:00`).to
   templateUrl: './relatorio-ambiental.html',
 })
 export class RelatorioAmbiental {
+  protected readonly valorDe = valorDe;
   readonly aba = input<'mes' | 'especies'>('mes');
   private readonly api = inject(Relatorios);
 
@@ -31,7 +33,7 @@ export class RelatorioAmbiental {
   protected readonly mes = signal(mesAtual());
   protected readonly escolhido = signal<number | null>(null);
   protected readonly relatorio = computed<RelatorioDto | null>(() => {
-    const lista = this.relatorios.value() ?? [];
+    const lista = valorDe(this.relatorios) ?? [];
     return lista.find((r) => r.id === this.escolhido()) ?? lista.find((r) => r.mesReferencia.slice(0, 7) === this.mes()) ?? null;
   });
   protected readonly maiorEstoque = computed(() => Math.max(1, ...(this.relatorio()?.itens ?? []).map((i) => i.volumeM3Estoque)));

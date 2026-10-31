@@ -15,6 +15,7 @@ import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
 import { PedidosDeTroca } from '../../../nucleo/ao-vivo/pedidos-de-troca';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 type Aba = 'aprovar' | 'decididas' | 'andamento' | 'recusas' | 'feitas';
 const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[] }> = {
@@ -41,6 +42,7 @@ const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[] }
   `,
 })
 export class TrocasGestao {
+  protected readonly valorDe = valorDe;
   readonly aba = input<Aba>('andamento');
   readonly aberta = input<string>();
   private readonly api = inject(Trocas);

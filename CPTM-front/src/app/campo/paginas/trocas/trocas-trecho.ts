@@ -15,6 +15,7 @@ import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /** A troca na tela: esperando = feita ou recusada no celular, ainda na fila. */
 type TrocaNaTela = TrocaDto & { esperando?: boolean };
@@ -57,7 +58,7 @@ export class TrocasTrecho {
   });
   protected readonly visiveis = computed<TrocaNaTela[]>(() => {
     const fila = this.naFila();
-    const lista: TrocaNaTela[] = (this.lista.value() ?? []).filter((t) => !fila.has(t.id));
+    const lista: TrocaNaTela[] = (valorDe(this.lista) ?? []).filter((t) => !fila.has(t.id));
     if (this.aba() === 'trocar') return lista;
     const tipo = this.aba() === 'feitas' ? 'troca' : 'recusa';
     const esperando = [...fila.values()]
@@ -73,7 +74,7 @@ export class TrocasTrecho {
   });
   /** A troca aberta; se ela espera na fila, já aparece feita ou recusada. */
   protected readonly trocaVisivel = computed<TrocaNaTela | null | undefined>(() => {
-    const t = this.troca.value();
+    const t = valorDe(this.troca);
     const naFila = t ? this.naFila().get(t.id) : undefined;
     return t && naFila ? { ...t, status: naFila.tipo === 'troca' ? 'Feita' : 'Recusada', esperando: true } : t;
   });

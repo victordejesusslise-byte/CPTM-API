@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { Pedidos } from '../../../pedidos/servicos/pedidos';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { LerPlaca } from './ler-placa';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /**
  * Chegada → Placa do feixe: a foto da placa lida pelo OCR no servidor; o operador confere e corrige cada campo.
@@ -20,7 +21,7 @@ export class PlacaFeixe {
   readonly pedido = input<string>();
   private readonly pedidos = inject(Pedidos);
   protected readonly lista = rxResource({ stream: () => this.pedidos.listar() });
-  protected readonly abertos = computed(() => (this.lista.value() ?? []).filter((p) => p.situacao !== 'Cancelado' && p.situacao !== 'Recebido'));
+  protected readonly abertos = computed(() => (valorDe(this.lista) ?? []).filter((p) => p.situacao !== 'Cancelado' && p.situacao !== 'Recebido'));
   protected readonly idPedido = linkedSignal(() => (this.pedido() ? Number(this.pedido()) : null));
   /** Quantas placas foram confirmadas nesta tela para o pedido escolhido. */
   protected readonly confirmadas = linkedSignal({ source: this.idPedido, computation: () => 0 });
