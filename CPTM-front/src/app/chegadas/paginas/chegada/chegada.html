@@ -81,7 +81,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Classe</mat-label>
-              <mat-select formControlName="classe">
+              <mat-select formControlName="classe"><app-busca-opcoes />
                 <mat-option [value]="1">1ª</mat-option><mat-option [value]="2">2ª</mat-option>
               </mat-select>
               <mat-error>Escolha 1ª ou 2ª.</mat-error>

@@ -112,7 +112,7 @@
         <mat-form-field appearance="outline"><mat-label>Até</mat-label>
           <mat-select [(ngModel)]="trecho.idEstacaoFim"><app-busca-opcoes />@for (e of valorDe(estacoes) ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Classe exigida</mat-label>
-          <mat-select [(ngModel)]="trecho.classeExigida"><mat-option [value]="1">1ª classe</mat-option><mat-option [value]="2">aceita 2ª classe</mat-option></mat-select></mat-form-field>
+          <mat-select [(ngModel)]="trecho.classeExigida"><app-busca-opcoes /><mat-option [value]="1">1ª classe</mat-option><mat-option [value]="2">aceita 2ª classe</mat-option></mat-select></mat-form-field>
       </div>
       <div class="acoes"><button mat-flat-button type="button" (click)="salvarTrecho()" [disabled]="enviando()" [appCarregando]="enviando()">Cadastrar trecho</button></div>
     </section>

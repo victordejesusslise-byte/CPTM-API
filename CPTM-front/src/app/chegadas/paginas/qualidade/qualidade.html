@@ -14,19 +14,19 @@
     <div class="campos">
       <mat-form-field appearance="outline">
         <mat-label>Ataque biológico</mat-label>
-        <mat-select formControlName="ataqueBiologico">
+        <mat-select formControlName="ataqueBiologico"><app-busca-opcoes />
           <mat-option value="Nenhum">Nenhum</mat-option><mat-option value="Suspeito">Suspeito</mat-option><mat-option value="Presente">Presente</mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Rachadura</mat-label>
-        <mat-select formControlName="rachadura">
+        <mat-select formControlName="rachadura"><app-busca-opcoes />
           <mat-option value="Nenhuma">Nenhuma</mat-option><mat-option value="Leve">Leve</mat-option><mat-option value="Grave">Grave</mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Resultado</mat-label>
-        <mat-select formControlName="resultado">
+        <mat-select formControlName="resultado"><app-busca-opcoes />
           <mat-option value="Aprovada" [disabled]="temDefeito()">Aprovada</mat-option><mat-option value="Reprovada">Reprovada</mat-option>
         </mat-select>
         @if (temDefeito()) { <mat-hint>Com ataque biológico ou rachadura, a peça é reprovada.</mat-hint> }

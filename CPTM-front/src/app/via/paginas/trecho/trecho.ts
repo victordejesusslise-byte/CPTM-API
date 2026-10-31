@@ -34,7 +34,7 @@ import { valorDe } from '../../../compartilhado/utilitarios/recurso';
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Faixa</mat-label>
-          <mat-select [value]="faixaM()" (selectionChange)="faixaM.set($event.value)">
+          <mat-select [value]="faixaM()" (selectionChange)="faixaM.set($event.value)"><app-busca-opcoes />
             <mat-option [value]="100">100 m</mat-option><mat-option [value]="500">500 m</mat-option><mat-option [value]="1000">1 km</mat-option>
           </mat-select>
         </mat-form-field>
