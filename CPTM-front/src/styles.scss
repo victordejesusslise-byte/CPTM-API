@@ -250,3 +250,11 @@ button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-butt
 
 /* A opção que não bate com a pesquisa do select (compartilhado/componentes/busca-opcoes, 2026-10-31). */
 .mat-mdc-option.opcao-escondida { display: none !important; }
+
+/* A lista que abre do select, redonda e solta do campo (Victor, 2026-10-31: "esse design está feio, tente deixar meio redondo").
+   Fica aqui porque a lista abre no overlay, fora do componente; a pesquisa no alto está em busca-opcoes. */
+.cdk-overlay-pane div.mat-mdc-select-panel {
+  margin-top: 6px; padding: 0 0 6px; border: 1px solid var(--linha); border-radius: 16px; box-shadow: 0 12px 28px rgb(0 0 0 / .2);
+}
+.cdk-overlay-pane.mat-mdc-select-panel-above div.mat-mdc-select-panel { margin: 0 0 6px; border-radius: 16px; }
+.cdk-overlay-pane div.mat-mdc-select-panel .mat-mdc-option { margin: 2px 6px 0; border-radius: 10px; }
