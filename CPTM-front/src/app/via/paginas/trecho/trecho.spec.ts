@@ -19,7 +19,7 @@ const mapa: MapaDoTrechoDto = {
 describe('Trecho', () => {
   beforeEach(() => TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] }));
 
-  it('abre o trecho com peça, desenha uma barra por faixa e abre a faixa com peça ruim', async () => {
+  it('abre o trecho com peça, pinta as faixas com peça na via e abre a faixa com peça ruim, com a lupa na peça ruim', async () => {
     const fixture = TestBed.createComponent(Trecho);
     const http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
@@ -31,9 +31,21 @@ describe('Trecho', () => {
     await fixture.whenStable();
 
     const tela = fixture.nativeElement as HTMLElement;
-    expect(tela.querySelectorAll('.mapa-trecho__faixa')).toHaveLength(2);
-    expect(tela.querySelector('.seg--ruim')).toBeTruthy();
-    expect(tela.textContent).toContain('L09-213106-0002');
+    const faixas = [...tela.querySelectorAll<HTMLElement>('.via__faixa')];
+    expect(faixas).toHaveLength(2);
+    // a faixa com peça ruim é a aberta, pintada de "Ruim", com o selo de 1 peça
+    const aberta = tela.querySelector<HTMLElement>('.via__faixa.ativa')!;
+    expect(aberta.style.getPropertyValue('--cor')).toBe('var(--nota-ruim)');
+    expect(aberta.querySelector('.via__qtd')?.textContent?.trim()).toBe('1');
+    expect(aberta.getAttribute('aria-label')).toContain('1 Ruim');
+    // as duas faixas ocupam a via inteira, cada uma a metade
+    expect(faixas.map((f) => f.style.getPropertyValue('--ini'))).toEqual(['0', '0.5']);
+    // a régua de 100 em 100 m e a lupa com a peça ruim aberta
+    expect([...tela.querySelectorAll('.via__km')].map((k) => k.textContent?.trim())).toEqual(['km 213,0', 'km 213,1', 'km 213,2']);
+    expect(tela.querySelectorAll('.lupa__peca')).toHaveLength(1);
+    // a lupa de 100 m (6 px por metro) marca o km de 25 em 25 m
+    expect([...tela.querySelectorAll('.lupa__km span')].map((k) => k.textContent?.trim())).toEqual(['213,100', '213,125', '213,150', '213,175', '213,200']);
+    expect(tela.querySelector('.lupa__aberta')?.textContent).toContain('L09-213106-0002');
     expect(tela.textContent).not.toContain('L09-213000-0001');
     http.verify();
   });
