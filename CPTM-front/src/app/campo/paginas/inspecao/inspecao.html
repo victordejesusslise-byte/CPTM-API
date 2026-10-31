@@ -37,11 +37,11 @@
     } @else {
       <div class="campos">
         <mat-form-field appearance="outline"><mat-label>Estado de conservação</mat-label>
-          <mat-select [value]="estado()" (selectionChange)="estado.set($event.value)"><mat-option value="Bom">Bom</mat-option><mat-option value="Regular">Regular</mat-option><mat-option value="Ruim">Ruim</mat-option></mat-select></mat-form-field>
+          <mat-select [value]="estado()" (selectionChange)="estado.set($event.value)"><app-busca-opcoes /><mat-option value="Bom">Bom</mat-option><mat-option value="Regular">Regular</mat-option><mat-option value="Ruim">Ruim</mat-option></mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Rachadura</mat-label>
-          <mat-select [value]="rachadura()" (selectionChange)="rachadura.set($event.value)"><mat-option value="Nenhuma">Nenhuma</mat-option><mat-option value="Leve">Leve</mat-option><mat-option value="Media">Média</mat-option><mat-option value="Grave">Grave</mat-option></mat-select></mat-form-field>
+          <mat-select [value]="rachadura()" (selectionChange)="rachadura.set($event.value)"><app-busca-opcoes /><mat-option value="Nenhuma">Nenhuma</mat-option><mat-option value="Leve">Leve</mat-option><mat-option value="Media">Média</mat-option><mat-option value="Grave">Grave</mat-option></mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Ataque biológico</mat-label>
-          <mat-select [value]="ataque()" (selectionChange)="ataque.set($event.value)"><mat-option value="Nenhum">Nenhum</mat-option><mat-option value="Inicio">Início</mat-option><mat-option value="Avancado">Avançado</mat-option></mat-select></mat-form-field>
+          <mat-select [value]="ataque()" (selectionChange)="ataque.set($event.value)"><app-busca-opcoes /><mat-option value="Nenhum">Nenhum</mat-option><mat-option value="Inicio">Início</mat-option><mat-option value="Avancado">Avançado</mat-option></mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Umidade (%)</mat-label><input matInput type="number" [ngModel]="umidade()" (ngModelChange)="umidade.set($event)" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Vida útil (meses)</mat-label><input matInput type="number" [ngModel]="vidaUtil()" (ngModelChange)="vidaUtil.set($event)" /></mat-form-field>
       </div>

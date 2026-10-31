@@ -26,7 +26,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Classe</mat-label>
-        <mat-select [value]="filtro().classe" (selectionChange)="mudarFiltro('classe', $event.value)">
+        <mat-select [value]="filtro().classe" (selectionChange)="mudarFiltro('classe', $event.value)"><app-busca-opcoes />
           <mat-option [value]="null">As duas</mat-option><mat-option [value]="1">1ª</mat-option><mat-option [value]="2">2ª</mat-option>
         </mat-select>
       </mat-form-field>

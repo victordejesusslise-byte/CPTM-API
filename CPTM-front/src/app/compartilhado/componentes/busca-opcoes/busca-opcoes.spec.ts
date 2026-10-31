@@ -43,7 +43,7 @@ describe('BuscaNasOpcoes (Victor, 2026-10-31: pesquisa nos campos de opções)',
     expect(normalizarBusca('  São JOÃO ')).toBe('sao joao');
   });
 
-  it('com 8 opções ou mais, filtra pelo texto; a seta e o Enter escolhem entre as que ficaram', async () => {
+  it('filtra pelo texto; a seta e o Enter escolhem entre as que ficaram', async () => {
     const fixture = await abrir();
     expect(campo()).toBeTruthy();
     digitar('sao joao');
@@ -58,7 +58,7 @@ describe('BuscaNasOpcoes (Victor, 2026-10-31: pesquisa nos campos de opções)',
     expect(fixture.componentInstance.escolhido()).toBe('PD-006 · Ipê Forte');
   });
 
-  it('nada encontrado avisa; com poucas opções, a pesquisa nem aparece', async () => {
+  it('nada encontrado avisa; com poucas opções, a pesquisa aparece também (em toda a jornada)', async () => {
     const fixture = await abrir();
     digitar('xyz');
     fixture.detectChanges();
@@ -68,7 +68,10 @@ describe('BuscaNasOpcoes (Victor, 2026-10-31: pesquisa nos campos de opções)',
     fixture.detectChanges();
     TestBed.resetTestingModule();
     document.querySelectorAll('.cdk-overlay-container').forEach((c) => c.remove());
-    await abrir(5);
-    expect(campo()).toBeNull();
+    const poucas = await abrir(2);
+    expect(campo()).toBeTruthy();
+    digitar('002');
+    poucas.detectChanges();
+    expect(visiveis()).toEqual(['PD-002 · Madeireira São João']);
   });
 });
