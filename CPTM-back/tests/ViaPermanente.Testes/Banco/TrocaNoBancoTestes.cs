@@ -10,6 +10,7 @@ using ViaPermanente.Dominio.Armazens.Models;
 using ViaPermanente.Dominio.Campo;
 using ViaPermanente.Dominio.Campo.Dtos;
 using ViaPermanente.Dominio.Campo.Models;
+using ViaPermanente.Dominio.Catalogos.Models;
 using ViaPermanente.Dominio.Comum;
 using ViaPermanente.Dominio.Pecas.Dtos;
 using ViaPermanente.Dominio.Pecas.Models;
@@ -80,7 +81,7 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         Assert.Equal(("Pedida", "Inspecao"), (pedida.Status, pedida.Origem));
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Pedir(new NovaTrocaDto { IdDormente = pedida.IdDormenteSaiu, Motivo = "de novo" }, tecnico));
 
-        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Tecnico, tecnico));
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.OperadorVia, via));
         var aprovada = await Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Supervisor, 1);
         Assert.Equal("Aprovada", aprovada!.Status);
 
@@ -115,6 +116,22 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         Assert.Equal("Retirada", velha.Situacao);
         Assert.Equal(["Separada", "Devolvida", "Separada", "Saida"],
             await db.Set<Movimentacao>().AsNoTracking().Where(m => m.IdTroca == pedida.Id).OrderBy(m => m.IdMovimentacao).Select(m => m.Tipo.ToString()).ToListAsync());
+    }
+
+    /// <summary>Victor, 2026-10-31: o técnico também aprova, até o pedido que ele mesmo fez. Quem aprova segue no parâmetro (a lista de cargos).</summary>
+    [Fact]
+    public async Task Tecnico_tambem_aprova_ate_o_proprio_pedido_e_o_parametro_manda()
+    {
+        Assert.Equal("supervisor,tecnico", (await db.Set<Parametro>().AsNoTracking().SingleAsync(p => p.Chave == TrocaService.ChaveQuemAprova)).Valor);
+        var pedida = await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(3), Motivo = "Dormente rachado" }, tecnico);
+        var aprovada = await Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Tecnico, tecnico);
+        Assert.Equal(("Aprovada", (int?)tecnico), (aprovada!.Status, aprovada.IdUsuarioAprovou));
+
+        // Com o parâmetro só no supervisor, o técnico não aprova.
+        await db.Set<Parametro>().Where(p => p.Chave == TrocaService.ChaveQuemAprova).ExecuteUpdateAsync(s => s.SetProperty(p => p.Valor, "supervisor"));
+        var outra = await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(2), Motivo = "Dormente podre" }, outroTecnico);
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Decidir(outra.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Tecnico, tecnico));
+        Assert.Contains("supervisor", erro.Message);
     }
 
     [Fact]

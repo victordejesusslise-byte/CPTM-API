@@ -10,7 +10,7 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Campo;
 
-/// <summary>Etapas 11 a 13: a troca em quatro passos (técnico pede, supervisor aprova, pátio separa, via troca).</summary>
+/// <summary>Etapas 11 a 13: a troca em quatro passos (técnico pede, supervisor ou técnico aprova, pátio separa, via troca).</summary>
 [ApiController]
 [Route("api/trocas")]
 public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerBase
@@ -28,9 +28,13 @@ public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerB
     [HttpPost]
     [Authorize(Roles = nameof(Cargo.Tecnico))]
     public async Task<ActionResult<TrocaDto>> Pedir(NovaTrocaDto dto)
-        => StatusCode(StatusCodes.Status201Created, await trocas.Pedir(dto, TokenHelper.IdUsuario(User)));
+    {
+        var troca = await trocas.Pedir(dto, TokenHelper.IdUsuario(User));
+        await aoVivo.Avisar(AvisoAoVivo.TrocaPedida, troca.Id); // quem aprova vê o pedido chegar
+        return StatusCode(StatusCodes.Status201Created, troca);
+    }
 
-    /// <summary>Aprovar ou reprovar: o cargo que aprova vem de PARAMETRO troca_quem_aprova (hoje, supervisor).</summary>
+    /// <summary>Aprovar ou reprovar: os cargos que aprovam vêm de PARAMETRO troca_quem_aprova (hoje, supervisor e técnico).</summary>
     [HttpPost("{id:int}/decisao")]
     public async Task<ActionResult<TrocaDto>> Decidir(int id, DecisaoTrocaDto dto)
     {

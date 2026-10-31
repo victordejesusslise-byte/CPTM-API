@@ -2,8 +2,10 @@ import { Component, inject, input, signal } from '@angular/core';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Fila } from '../../../nucleo/fila/fila';
 import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
+import { PedidosDeTroca } from '../../../nucleo/ao-vivo/pedidos-de-troca';
 import { CopiaDaLinha } from '../../../nucleo/linha/copia-da-linha';
 import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { AtaqueBiologicoInspecao, EstadoConservacao, MetodoCaptura, RachaduraInspecao } from '../../../compartilhado/entidades/enums';
@@ -23,7 +25,7 @@ import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
  */
 @Component({
   selector: 'app-inspecao',
-  imports: [LegivelPipe, Esqueleto, FormsModule, FORMULARIO, LeituraTag, Nota, PreviaLaudo],
+  imports: [LegivelPipe, Esqueleto, FormsModule, RouterLink, FORMULARIO, LeituraTag, Nota, PreviaLaudo],
   templateUrl: './inspecao.html',
 })
 export class Inspecao {
@@ -38,6 +40,7 @@ export class Inspecao {
   private readonly copia = inject(CopiaDaLinha);
   protected readonly semRede = this.trabalho.usarGuardado;
   private readonly trocas = inject(Trocas);
+  private readonly pedidos = inject(PedidosDeTroca);
   /** A inspeção cujo laudo (LI) está aberto na primeira visão, sem baixar. */
   protected readonly laudoDe = signal<number | null>(null);
   protected readonly metros = metros;
@@ -58,7 +61,8 @@ export class Inspecao {
   protected readonly observacao = signal('');
   protected readonly foto = signal<File | null>(null);
   protected readonly resultado = signal<InspecaoDto | null>(null);
-  protected readonly trocaPedida = signal(false);
+  /** A troca pedida agora: a tela mostra para onde ela foi (Aprovar trocas) e abre o pedido (Victor, 2026-10-31). */
+  protected readonly trocaPedida = signal<number | null>(null);
   protected readonly mensagem = signal<string | null>(null);
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
@@ -68,7 +72,7 @@ export class Inspecao {
     this.erro.set(null);
     this.mensagem.set(null);
     this.resultado.set(null);
-    this.trocaPedida.set(false);
+    this.trocaPedida.set(null);
     if (this.semRede()) {
       // Sem rede: primeiro o trabalho da noite, depois a cópia das linhas (Entrega 2).
       const tag = this.tag();
@@ -136,10 +140,11 @@ export class Inspecao {
   protected pedirTroca(p: PecaDto, i: InspecaoDto): void {
     this.enviando.set(true);
     this.trocas.pedir(p.id, i.id, i.motivosDeReprovacao.join('; ') || 'Reprovada na inspeção.', p.kmProjeto).subscribe({
-      next: () => {
+      next: (t) => {
         this.enviando.set(false);
-        this.trocaPedida.set(true);
-        this.mensagem.set('Troca pedida. Agora ela espera a aprovação do supervisor.');
+        this.trocaPedida.set(t.id);
+        this.mensagem.set(`Troca ${t.id} pedida. Ela está em Campo › Aprovar trocas, esperando a aprovação do supervisor ou do técnico.`);
+        void this.pedidos.contar();
       },
       error: (e) => {
         this.enviando.set(false);

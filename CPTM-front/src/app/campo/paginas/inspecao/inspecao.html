@@ -29,6 +29,9 @@
         @if (i.resultado === 'Reprovada' && !trocaPedida()) {
           <button mat-flat-button type="button" (click)="pedirTroca(p, i)" [disabled]="enviando()" [appCarregando]="enviando()">Pedir a troca</button>
         }
+        @if (trocaPedida(); as id) {
+          <a mat-flat-button routerLink="/aprovar" [queryParams]="{ aberta: id }">Abrir o pedido para aprovar</a>
+        }
       </div>
       @if (laudoDe() === i.id) { <app-previa-laudo tipo="inspecao" [id]="i.id" [podeFechar]="true" (fechar)="laudoDe.set(null)" /> }
     } @else {

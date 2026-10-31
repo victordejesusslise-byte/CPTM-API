@@ -13,6 +13,7 @@ import { PainelLeitor } from '../../leitor/painel-leitor';
 import { EstadoFila } from '../../fila/estado-fila';
 import { AvisosDoApp } from '../../ao-vivo/avisos-do-app';
 import { TrabalhoDaNoite } from '../../ao-vivo/trabalho-da-noite';
+import { PedidosDeTroca } from '../../ao-vivo/pedidos-de-troca';
 import { CARGOS, Cargo } from '../../../pessoas/entidades/usuario';
 import { CopiaDaLinha } from '../../linha/copia-da-linha';
 
@@ -98,6 +99,8 @@ export class Casca {
     return [...grupos].map(([nome, itensDoGrupo]) => ({ nome, itens: itensDoGrupo }));
   });
   private readonly trabalho = inject(TrabalhoDaNoite);
+  /** Quantos pedidos de troca esperam aprovação: o número ao lado de "Aprovar trocas". */
+  protected readonly pedidos = inject(PedidosDeTroca);
   /** A cópia das linhas (Entrega 2) começa a baixar quando a pessoa entra. */
   private readonly copia = inject(CopiaDaLinha);
   /** No app e sem rede: as telas que funcionam sem rede para este cargo. */

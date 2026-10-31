@@ -14,6 +14,7 @@ import { Trocas } from '../../servicos/trocas';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
+import { PedidosDeTroca } from '../../../nucleo/ao-vivo/pedidos-de-troca';
 
 type Aba = 'aprovar' | 'decididas' | 'andamento' | 'recusas' | 'feitas';
 const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[] }> = {
@@ -25,7 +26,7 @@ const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[] }
 };
 
 /**
- * Aprovar trocas (supervisor, etapa 11) e Trocas e laudos (técnico e supervisor): decidir, acompanhar, responder a recusa e os laudos.
+ * Aprovar trocas (supervisor e técnico, etapa 11; Victor, 2026-10-31: o técnico também aprova) e Trocas e laudos (técnico e supervisor): decidir, acompanhar, responder a recusa e os laudos.
  * Toda troca aberta mostra o laudo: primeiro a folha, sem baixar; "Abrir o laudo" abre a janela com Baixar PDF (Victor, 2026-10-18).
  */
 @Component({
@@ -54,7 +55,9 @@ export class TrocasGestao {
   protected readonly erroLista = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly idAberta = computed(() => (this.aberta() ? Number(this.aberta()) : null));
   protected readonly troca = rxResource({ params: () => this.idAberta() ?? undefined, stream: ({ params }) => (params ? this.api.buscar(params) : of(null)) });
-  protected readonly ehSupervisor = computed(() => this.sessao.temCargo('Supervisor'));
+  /** Quem aprova: supervisor e técnico (a API confere de novo pelo parâmetro troca_quem_aprova). */
+  protected readonly podeAprovar = computed(() => this.sessao.temCargo('Supervisor', 'Tecnico'));
+  private readonly pedidos = inject(PedidosDeTroca);
   protected readonly ehTecnico = computed(() => this.sessao.temCargo('Tecnico'));
   protected readonly rotulo = ROTULO_TROCA;
   protected readonly dataHora = dataHora;
@@ -109,6 +112,7 @@ export class TrocasGestao {
         this.mensagem.set(ok);
         this.troca.reload();
         this.lista.reload();
+        void this.pedidos.contar();
       },
       error: (e) => {
         this.enviando.set(false);
