@@ -9,7 +9,11 @@ public class RedeLocalHelperTestes
     [InlineData("http://10.0.0.7:4200", true)]
     [InlineData("http://172.20.1.5:4200", true)]
     [InlineData("http://localhost:4200", true)]
+    // o site de produção, na 4300 (Victor, 2026-10-31: o ng serve fica na 4200 e a produção na 4300, a que a VPN serve)
+    [InlineData("http://192.168.18.7:4300", true)]
+    [InlineData("http://localhost:4300", true)]
     [InlineData("http://192.168.0.10:8080", false)]
+    [InlineData("http://192.168.0.10:4301", false)]
     [InlineData("http://172.32.1.5:4200", false)]
     [InlineData("http://200.10.1.5:4200", false)]
     [InlineData("http://exemplo.com:4200", false)]

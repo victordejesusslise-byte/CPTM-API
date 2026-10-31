@@ -4,16 +4,17 @@ using System.Net.Sockets;
 namespace ViaPermanente.Api.Helpers;
 
 /// <summary>
-/// O front aberto pelo celular no mesmo Wi-Fi (http://192.168.x.x:4200). Só em desenvolvimento (Cors:RedeLocal):
-/// vale endereço de rede privada (10.x, 172.16-31.x, 192.168.x) ou localhost, sempre na porta do ng serve.
+/// O front aberto por outro aparelho da mesma rede (http://192.168.x.x:4200 ou :4300). Só em desenvolvimento (Cors:RedeLocal):
+/// vale endereço de rede privada (10.x, 172.16-31.x, 192.168.x) ou localhost, na porta do ng serve (4200) ou na do site de
+/// produção (4300, a que a VPN serve; Victor, 2026-10-31).
 /// </summary>
 public static class RedeLocalHelper
 {
-    public const int PortaDoFront = 4200;
+    public static readonly int[] PortasDoFront = [4200, 4300];
 
     public static bool EhFrontDaRede(string? origem)
     {
-        if (!Uri.TryCreate(origem, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https") || uri.Port != PortaDoFront)
+        if (!Uri.TryCreate(origem, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https") || !PortasDoFront.Contains(uri.Port))
             return false;
         if (uri.IsLoopback) return true;
         if (!IPAddress.TryParse(uri.Host, out var ip) || ip.AddressFamily != AddressFamily.InterNetwork) return false;

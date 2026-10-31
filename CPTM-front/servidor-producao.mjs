@@ -1,5 +1,6 @@
 // Serve a versão de produção do front (dist/cptm-front/browser) com os cabeçalhos de segurança. Só o Node, sem dependência nenhuma.
-// npm run producao: aberto para a rede (http://localhost:4200 no PC e http://SEU-IP:4200 nos outros aparelhos, Victor, 2026-10-31)
+// npm run producao: aberto para a rede, na porta 4300 (http://localhost:4300 no PC, http://SEU-IP:4300 nos outros aparelhos e, pela VPN,
+// https://ybyra-pc.tail60ace9.ts.net). A 4200 fica para o ng serve, o modo de desenvolvimento (Victor, 2026-10-31).
 // Só neste PC, sem o --rede: node servidor-producao.mjs (depois do ng build).
 // Segurança (Victor, 2026-10-23): sem código-fonte legível, sem as ferramentas de depuração, com a política de conteúdo (CSP).
 import { createServer } from 'node:http';
@@ -10,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const pasta = resolve(fileURLToPath(new URL('.', import.meta.url)), 'dist', 'cptm-front', 'browser');
 const rede = process.argv.includes('--rede');
-const porta = 4200;
+const porta = 4300;
 
 const tipos = {
   '.html': 'text/html; charset=utf-8',

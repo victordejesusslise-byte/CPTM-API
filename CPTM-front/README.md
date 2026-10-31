@@ -16,7 +16,7 @@ Todos dentro de `CPTM-front`.
 | Instalar as dependências (a primeira vez e depois de mudar o `package.json`) | `npm install` |
 | Ligar o site no PC (abre em http://localhost:4200) | `npx ng serve` |
 | Ligar o site aberto para o celular no mesmo Wi-Fi (abre em `http://SEU-IP:4200`) | `npm run celular` |
-| Ligar o site **fechado**, na versão de produção (para apresentar e usar), aberto para os aparelhos da mesma rede: http://localhost:4200 no PC e `http://SEU-IP:4200` nos outros | `npm run producao` |
+| Ligar o site **fechado**, na versão de produção (para apresentar e usar), na porta **4300**, aberto para os aparelhos da mesma rede: http://localhost:4300 no PC, `http://SEU-IP:4300` nos outros e, pela VPN, https://ybyra-pc.tail60ace9.ts.net | `npm run producao` |
 | Rodar os testes uma vez (Vitest) | `npx ng test --watch=false` |
 | Rodar os testes e continuar olhando as mudanças | `npx ng test` |
 | Gerar a versão de produção (vai para `dist/`) | `npx ng build` |
@@ -29,7 +29,7 @@ Mesmo assim, quem tem o site aberto sempre consegue mexer no que o navegador rec
 
 ## Entrar
 
-Abra http://localhost:4200 e entre com o e-mail e a senha do supervisor do `.env` do back. O login vale 8 horas; "Sair" encerra a sessão em todos os aparelhos.
+Abra http://localhost:4300 (produção) ou http://localhost:4200 (`ng serve`) e entre com o e-mail e a senha do supervisor do `.env` do back. O login vale 8 horas; "Sair" encerra a sessão em todos os aparelhos.
 
 Depois de uma atualização de segurança, todos precisam entrar de novo uma vez: os logins de antes deixam de valer.
 
