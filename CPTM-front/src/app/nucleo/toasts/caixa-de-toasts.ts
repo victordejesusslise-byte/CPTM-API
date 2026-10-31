@@ -23,8 +23,8 @@ const SELETOR = '.aviso--erro[role="alert"], .aviso--ok[role="status"]';
     </div>
   `,
   styles: `
-    /* em cima, embaixo da barra: embaixo à direita fica o indicador do leitor de tag */
-    .toasts { position: fixed; right: 20px; top: 72px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
+    /* embaixo à direita (Victor, 2026-10-31), logo acima do indicador do leitor de tag, que fica no canto */
+    .toasts { position: fixed; right: 16px; bottom: calc(64px + var(--fundo-seguro, 0px)); z-index: 2000; display: flex; flex-direction: column; gap: 10px; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
     .toast { pointer-events: auto; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 14px 12px 16px; border-radius: 8px;
       background: var(--bloco); color: var(--sobre-escuro); border-left: 4px solid var(--areia); box-shadow: 0 10px 28px rgba(0, 0, 0, .35); animation: entra .25s ease-out; }
     .toast--erro { background: var(--vinho); border-left-color: var(--sobre-escuro); }
@@ -33,8 +33,8 @@ const SELETOR = '.aviso--erro[role="alert"], .aviso--ok[role="status"]';
     .toast button { grid-column: 2; grid-row: 1 / span 2; align-self: start; min-width: 36px; min-height: 36px; border: 0; border-radius: 6px; background: transparent;
       color: inherit; font-size: 22px; line-height: 1; cursor: pointer; }
     .toast button:hover { background: rgba(255, 255, 255, .12); }
-    @keyframes entra { from { opacity: 0; transform: translateY(-10px); } }
-    @media (max-width: 600px) { .toasts { right: 16px; left: 16px; top: 64px; width: auto; } }
+    @keyframes entra { from { opacity: 0; transform: translateY(10px); } }
+    @media (max-width: 600px) { .toasts { left: 16px; width: auto; } }
   `,
 })
 export class CaixaDeToasts {
