@@ -32,7 +32,7 @@
 .menu__grupo { margin: 14px 8px 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); }
 .menu__grupo:first-child { margin-top: 0; }
 .menu__item {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 3px; border-left: 2px solid transparent;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 0 var(--raio) var(--raio) 0; border-left: 2px solid transparent;
   color: var(--tinta-2); text-decoration: none;
   &:hover { background: var(--superficie-2); color: var(--tinta); }
 }
