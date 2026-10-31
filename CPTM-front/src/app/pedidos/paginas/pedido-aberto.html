@@ -18,7 +18,7 @@
             <mat-form-field appearance="outline"><mat-label>Data da compra</mat-label><input matInput type="date" formControlName="dataCompra" [max]="hoje" /></mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Contrato</mat-label>
-              <mat-select formControlName="idContrato">
+              <mat-select formControlName="idContrato"><app-busca-opcoes />
                 <mat-option [value]="null">Sem contrato</mat-option>
                 @for (c of valorDe(contratos) ?? []; track c.id) { <mat-option [value]="c.id">{{ c.numeroContrato }} · ata {{ c.numeroAta }}</mat-option> }
               </mat-select>

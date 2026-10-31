@@ -4,6 +4,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { BuscaNasOpcoes } from '../busca-opcoes/busca-opcoes';
 import { LeituraDto, METODOS_WEB, MetodoCaptura } from '../../entidades/enums';
 import { detalhesDoModulo } from '../../../nucleo/leitor/leitor';
 import { LEITOR } from '../../../nucleo/leitor/leitor-simulado';
@@ -20,7 +21,7 @@ export const leitura = (tag: string, metodo: MetodoCaptura): LeituraDto => ({
  */
 @Component({
   selector: 'app-leitura-tag',
-  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, BuscaNasOpcoes],
   template: `
     <div class="leitura">
       <mat-form-field appearance="outline" class="leitura__tag">
@@ -30,7 +31,7 @@ export const leitura = (tag: string, metodo: MetodoCaptura): LeituraDto => ({
       </mat-form-field>
       <mat-form-field appearance="outline" class="leitura__metodo">
         <mat-label>Lida por</mat-label>
-        <mat-select [ngModel]="metodo()" (ngModelChange)="metodo.set($event)">
+        <mat-select [ngModel]="metodo()" (ngModelChange)="metodo.set($event)"><app-busca-opcoes />
           @for (m of metodos; track m.valor) {
             <mat-option [value]="m.valor">{{ m.rotulo }}</mat-option>
           }

@@ -30,7 +30,7 @@ import { valorDe } from '../../../compartilhado/utilitarios/recurso';
       <div class="campos">
         <mat-form-field appearance="outline">
           <mat-label>Trecho</mat-label>
-          <mat-select [value]="idAtual()" (selectionChange)="idTrecho.set($event.value)">
+          <mat-select [value]="idAtual()" (selectionChange)="idTrecho.set($event.value)"><app-busca-opcoes />
             @for (t of valorDe(trechos) ?? []; track t.id) {
               <mat-option [value]="t.id">{{ t.nome }} · {{ t.pecas }} {{ t.pecas === 1 ? 'peça' : 'peças' }}{{ t.ruimOuCritico ? ' · ' + t.ruimOuCritico + ' ruim/crítico' : '' }}</mat-option>
             }

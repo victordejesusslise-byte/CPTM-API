@@ -257,3 +257,6 @@ button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-butt
   display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 8px; padding: 0 6px; border-radius: 10px;
   background: var(--vinho); color: var(--sobre-escuro); font-size: 12px; font-weight: 700; vertical-align: middle;
 }
+
+/* A opção que não bate com a pesquisa do select (compartilhado/componentes/busca-opcoes, 2026-10-31). */
+.mat-mdc-option.opcao-escondida { display: none !important; }

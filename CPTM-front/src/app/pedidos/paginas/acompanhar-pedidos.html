@@ -32,7 +32,7 @@
     </mat-form-field>
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>Situação</mat-label>
-      <mat-select [value]="filtroSituacao()" (selectionChange)="filtroSituacao.set($event.value)">
+      <mat-select [value]="filtroSituacao()" (selectionChange)="filtroSituacao.set($event.value)"><app-busca-opcoes />
         <mat-option value="all">Todas</mat-option>
         <mat-option value="__falta">Só o que está a caminho</mat-option>
         @for (s of situacoes; track s.valor) { <mat-option [value]="s.valor">{{ s.rotulo }}</mat-option> }

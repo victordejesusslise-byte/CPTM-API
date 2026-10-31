@@ -1,7 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
-import { switchMap, finalize } from 'rxjs';
+import { finalize, merge, switchMap } from 'rxjs';
 import { FormBuilder, Validators } from '@angular/forms';
 import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
 import { mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
@@ -12,7 +13,20 @@ import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 
-/** A verificação de qualidade (especialista): lê a peça, marca o que viu e aprova ou reprova. */
+/** O defeito que reprova a peça, já escrito para o motivo; sem ataque biológico nem rachadura, nulo. */
+export const defeitoDaVerificacao = (ataque: AtaqueBiologicoVerificacao, rachadura: RachaduraVerificacao): string | null => {
+  const partes = [ataque !== 'Nenhum' ? 'ataque biológico ' + ataque.toLowerCase() : null, rachadura !== 'Nenhuma' ? 'rachadura ' + rachadura.toLowerCase() : null]
+    .filter((p): p is string => !!p);
+  if (!partes.length) return null;
+  const texto = partes.join('; ');
+  return texto[0].toUpperCase() + texto.slice(1);
+};
+
+/**
+ * A verificação de qualidade (especialista): lê a peça, marca o que viu e aprova ou reprova. Com ataque biológico ou rachadura, de
+ * qualquer grau, o resultado vira Reprovada sozinho, o motivo já vem escrito e Aprovada fica travada (Victor, 2026-10-31: evitar erro
+ * humano); o servidor confere de novo.
+ */
 @Component({
   selector: 'app-qualidade',
   imports: [LegivelPipe, Esqueleto, FORMULARIO, LeituraTag, Nota],
@@ -44,6 +58,30 @@ export class Qualidade {
     resultado: ['Aprovada' as ResultadoVerificacao, Validators.required],
     motivo: [''],
   });
+  /** Tem ataque biológico ou rachadura: Aprovada fica travada. */
+  protected readonly temDefeito = signal(false);
+
+  constructor() {
+    let motivoAutomatico = '';
+    const { ataqueBiologico, rachadura, resultado, motivo } = this.form.controls;
+    merge(ataqueBiologico.valueChanges, rachadura.valueChanges)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        const defeito = defeitoDaVerificacao(ataqueBiologico.value, rachadura.value);
+        // o motivo que o especialista escreveu fica; só o escrito aqui é trocado
+        const motivoEraAutomatico = !motivo.value.trim() || motivo.value === motivoAutomatico;
+        if (defeito) {
+          resultado.setValue('Reprovada');
+          if (motivoEraAutomatico) motivo.setValue(defeito);
+          motivoAutomatico = defeito;
+        } else if (motivoAutomatico) {
+          resultado.setValue('Aprovada');
+          if (motivoEraAutomatico) motivo.setValue('');
+          motivoAutomatico = '';
+        }
+        this.temDefeito.set(!!defeito);
+      });
+  }
 
   protected buscar(): void {
     if (!this.tag().trim()) return;

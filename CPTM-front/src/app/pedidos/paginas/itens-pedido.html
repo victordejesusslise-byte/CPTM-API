@@ -3,7 +3,7 @@
   <div class="linha-item" [formGroup]="item">
     <mat-form-field appearance="outline">
       <mat-label>Comprimento</mat-label>
-      <mat-select formControlName="idTamanho">
+      <mat-select formControlName="idTamanho"><app-busca-opcoes />
         @for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }
       </mat-select>
     </mat-form-field>
@@ -16,14 +16,14 @@
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Espécie (opcional)</mat-label>
-      <mat-select formControlName="idEspecie">
+      <mat-select formControlName="idEspecie"><app-busca-opcoes />
         <mat-option [value]="null">Qualquer da classe</mat-option>
         @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Padrão (largura × altura)</mat-label>
-      <mat-select formControlName="idMedida">
+      <mat-select formControlName="idMedida"><app-busca-opcoes />
         @for (m of padroes(item); track m.id) { <mat-option [value]="m.id">{{ rotulo(m) }}@if (!m.ativo) { · desativado }</mat-option> }
       </mat-select>
       @if (!idEmpresa()) { <mat-hint>Escolha o fornecedor</mat-hint> }

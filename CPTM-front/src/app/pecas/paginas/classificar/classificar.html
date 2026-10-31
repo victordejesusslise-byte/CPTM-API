@@ -22,7 +22,7 @@
       </div>
       <mat-form-field appearance="outline">
         <mat-label>Como você conferiu</mat-label>
-        <mat-select [value]="metodo()" (selectionChange)="metodo.set($event.value)">
+        <mat-select [value]="metodo()" (selectionChange)="metodo.set($event.value)"><app-busca-opcoes />
           @for (m of metodos; track m.valor) { <mat-option [value]="m.valor">{{ m.rotulo }}</mat-option> }
         </mat-select>
       </mat-form-field>
@@ -41,7 +41,7 @@
       @if (corrigir()) {
         <mat-form-field appearance="outline">
           <mat-label>Espécie correta</mat-label>
-          <mat-select [value]="idEspecie()" (selectionChange)="idEspecie.set($event.value)">
+          <mat-select [value]="idEspecie()" (selectionChange)="idEspecie.set($event.value)"><app-busca-opcoes />
             @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }} · {{ e.nomeCientifico }}</mat-option> }
           </mat-select>
         </mat-form-field>

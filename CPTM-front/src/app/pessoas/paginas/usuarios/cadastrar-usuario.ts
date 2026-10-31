@@ -21,7 +21,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
         <mat-form-field appearance="outline"><mat-label>E-mail</mat-label><input matInput type="email" formControlName="email" autocomplete="off" /><mat-error>Confira o e-mail.</mat-error></mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Cargo</mat-label>
-          <mat-select formControlName="cargo">
+          <mat-select formControlName="cargo"><app-busca-opcoes />
             @for (c of cargos; track c) { <mat-option [value]="c">{{ nomeDoCargo(c) }}</mat-option> }
           </mat-select>
           <mat-error>Escolha o cargo.</mat-error>
