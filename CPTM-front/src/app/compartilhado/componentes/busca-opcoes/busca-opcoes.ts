@@ -18,17 +18,27 @@ export const normalizarBusca = (texto: string): string => texto.normalize('NFD')
   selector: 'app-busca-opcoes',
   template: `
     <div class="busca-opcoes">
-      <input #campo type="search" placeholder="Pesquisar…" aria-label="Pesquisar nas opções" autocomplete="off"
-        [value]="texto()" (input)="filtrar($any($event.target).value)" (keydown)="tecla($event)" />
+      <label class="campo">
+        <svg class="lupa" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
+        <input #campo type="search" placeholder="Pesquisar…" aria-label="Pesquisar nas opções" autocomplete="off"
+          [value]="texto()" (input)="filtrar($any($event.target).value)" (keydown)="tecla($event)" />
+      </label>
       @if (nenhuma()) { <p>Nada encontrado.</p> }
     </div>
   `,
+  // Redonda (Victor, 2026-10-31: "tente deixar meio redondo"); a lista em volta também, em styles.scss.
   styles: `
-    .busca-opcoes { position: sticky; top: 0; z-index: 1; padding: 8px 12px; background: var(--superficie); border-bottom: 1px solid var(--linha); }
-    input { width: 100%; box-sizing: border-box; min-height: 40px; padding: 0 12px; border: 1px solid var(--linha-2); border-radius: 6px;
-      background: var(--superficie-2); color: var(--tinta); font: inherit; }
-    input:focus { outline: 2px solid var(--marcador); outline-offset: 1px; }
-    p { margin: 10px 2px 2px; color: var(--tinta-3); font-size: 14px; }
+    /* sem caixa própria, a pesquisa fica presa no alto da lista quando ela rola, com a mesma cor de fundo */
+    :host { display: contents; background: inherit; }
+    .busca-opcoes { position: sticky; top: 0; z-index: 1; padding: 10px 10px 6px; background: inherit; }
+    .campo { position: relative; display: block; }
+    .lupa { position: absolute; left: 14px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); pointer-events: none;
+      fill: none; stroke: var(--tinta-3); stroke-width: 2; stroke-linecap: round; }
+    input { width: 100%; box-sizing: border-box; min-height: 42px; padding: 0 14px 0 40px; border: 1px solid var(--linha-2); border-radius: 999px;
+      background: var(--superficie); color: var(--tinta); font: inherit; }
+    input::placeholder { color: var(--tinta-3); }
+    input:focus { outline: none; border-color: var(--marcador); box-shadow: 0 0 0 3px var(--anel); }
+    p { margin: 10px 6px 2px; color: var(--tinta-3); font-size: 14px; }
   `,
 })
 export class BuscaNasOpcoes {
