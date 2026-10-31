@@ -75,8 +75,8 @@
           <div class="t">A caminho<b [class.vermelho]="p.pecasRecebidas > 0 && faltaChegar(p) > 0">{{ faltaChegar(p) }}</b></div>
           <div class="t">Cadastradas<b>{{ cadastradas() }}</b></div>
         </div>
+        <!-- o aviso da 2ª classe é para quem está montando o pedido; no pedido cadastrado ele não aparece (Victor, 2026-10-31) -->
         <app-tabela-itens [itens]="itensTabela()" />
-        <div class="chamada" [class.chamada--neutra]="p.segundaClasse.valido"><b>{{ p.segundaClasse.mensagem }}</b></div>
 
         @if (valorDe(notas)?.length) {
           <div>
@@ -125,6 +125,14 @@
           </div>
         } @else {
           <div class="chamada chamada--neutra"><b>Travado.</b> A primeira carga chegou. O que foi pedido fica como está — se faltar entrega, a falta aparece aqui e não some.</div>
+          <!-- chegou em parte: o resto das peças entra numa nova chegada, já com este pedido e as peças que faltam (Victor, 2026-10-31) -->
+          @if (faltaChegar(p) > 0) {
+            <div class="acoes">
+              <a mat-flat-button routerLink="/chegadas" [queryParams]="{ pedido: p.id, restante: faltaChegar(p) }">
+                Cadastrar a chegada do restante · {{ faltaChegar(p) }} {{ faltaChegar(p) === 1 ? 'peça' : 'peças' }}
+              </a>
+            </div>
+          }
         }
 
         <div>

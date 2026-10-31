@@ -27,7 +27,9 @@
         @for (m of padroes(item); track m.id) { <mat-option [value]="m.id">{{ rotulo(m) }}@if (!m.ativo) { · desativado }</mat-option> }
       </mat-select>
       @if (!idEmpresa()) { <mat-hint>Escolha o fornecedor</mat-hint> }
-      @else if (!padroes(item).length) { <mat-hint>Sem padrão para esta espécie: cadastre em Cadastros › Empresas</mat-hint> }
+      @else if (!padroes(item).length) {
+        <mat-hint>{{ item.controls.idEspecie.value === null ? 'Este fornecedor não tem padrão ativo' : 'Sem padrão para esta espécie' }}: cadastre em Cadastros › Empresas</mat-hint>
+      }
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Peças</mat-label>

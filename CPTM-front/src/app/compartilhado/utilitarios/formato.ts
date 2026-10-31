@@ -22,9 +22,15 @@ export const diasDesde = (iso: string | null | undefined, agora = Date.now()): n
 export const dataHora = (iso: string | null | undefined): string =>
   !iso ? '—' : new Date(iso).toLocaleString(br, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-/** ISO → "11/10/2026" */
-export const data = (iso: string | null | undefined): string =>
-  !iso ? '—' : new Date(iso).toLocaleDateString(br);
+/**
+ * ISO → "11/10/2026". Só a data ("2026-10-31", como a data da compra) é o dia do calendário, sem fuso: o new Date() leria como
+ * meia-noite em UTC, e no Brasil mostrava o dia anterior (Victor, 2026-10-31: a revisão do pedido mostrava 30/10 para uma compra de 31/10).
+ */
+export const data = (iso: string | null | undefined): string => {
+  if (!iso) return '—';
+  const dia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return (dia ? new Date(+dia[1], +dia[2] - 1, +dia[3]) : new Date(iso)).toLocaleDateString(br);
+};
 
 const nomes: Record<Cargo, string> = {
   Supervisor: 'Supervisor', Tecnico: 'Técnico', Especialista: 'Especialista', OperadorPatio: 'Operador de pátio', OperadorVia: 'Operador da via',

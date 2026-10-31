@@ -1,8 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { consulta } from './consulta';
-import { diasDesde, km, m3, mensagemDeErro, nomeDoCargo } from './formato';
+import { data, diasDesde, km, m3, mensagemDeErro, nomeDoCargo } from './formato';
 
 describe('formato', () => {
+  it('a data só com o dia mostra o mesmo dia, em qualquer fuso (a compra de 31/10 não vira 30/10)', () => {
+    expect(data('2026-10-31')).toBe('31/10/2026');
+    expect(data('2026-01-01')).toBe('01/01/2026');
+    expect(data(null)).toBe('—');
+  });
+
   it('formata m³ e km como no Brasil', () => {
     expect(m3(3.19872)).toBe('3,199 m³');
     expect(km(213.12)).toBe('213,120');
