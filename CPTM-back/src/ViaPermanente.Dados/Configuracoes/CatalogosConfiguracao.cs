@@ -48,7 +48,8 @@ internal static class CatalogosConfiguracao
                 new Parametro { Chave = "limite_segunda_classe_pct", Valor = "20" },
                 new Parametro { Chave = "limite_segunda_classe_unidade", Valor = "m3" },
                 new Parametro { Chave = "alerta_imagem_confianca_minima", Valor = "0.80" },
-                new Parametro { Chave = "troca_quem_aprova", Valor = "supervisor" },
+                // Os cargos que aprovam a troca, separados por vírgula (Victor, 2026-10-31: o técnico também aprova).
+                new Parametro { Chave = "troca_quem_aprova", Valor = "supervisor,tecnico" },
                 // O plano da noite fecha neste horário (Victor, 2026-10-24): depois dele, só troca urgente entra na mesma noite.
                 new Parametro { Chave = "troca_plano_horario", Valor = "20:00" },
                 new Parametro { Chave = "ocr_confianca_minima", Valor = "97" },

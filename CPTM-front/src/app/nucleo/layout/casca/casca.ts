@@ -12,6 +12,7 @@ import { Marca } from '../../../compartilhado/componentes/marca/marca';
 import { PainelLeitor } from '../../leitor/painel-leitor';
 import { EstadoFila } from '../../fila/estado-fila';
 import { AvisosDoApp } from '../../ao-vivo/avisos-do-app';
+import { PedidosDeTroca } from '../../ao-vivo/pedidos-de-troca';
 
 interface ItemVisivel extends ItemMenu {
   link: string;
@@ -74,6 +75,8 @@ export class Casca {
     for (const item of itens) grupos.set(item.grupo, [...(grupos.get(item.grupo) ?? []), item]);
     return [...grupos].map(([nome, itensDoGrupo]) => ({ nome, itens: itensDoGrupo }));
   });
+  /** Quantos pedidos de troca esperam aprovação: o número ao lado de "Aprovar trocas". */
+  protected readonly pedidos = inject(PedidosDeTroca);
   protected readonly abasNoAlto = computed(() => (this.celular() ? (this.grupos().flatMap((g) => g.itens).find((i) => i.ativo)?.abas ?? []) : []));
 
   constructor() {

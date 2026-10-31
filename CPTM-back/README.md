@@ -153,7 +153,7 @@ Para rodar SQL à mão no `sqlcmd`, use `-I` (os índices filtrados exigem `QUOT
 | `GET /api/inspecoes/{id}` · `GET /api/inspecoes?idDormente=` | logado |
 | `POST /api/inspecoes/{id}/correcao` (só quem fez, com motivo) | técnico |
 | `POST /api/trocas` (pedir) | técnico |
-| `POST /api/trocas/{id}/decisao` (aprovar ou reprovar; o cargo vem de `troca_quem_aprova`) | hoje, supervisor |
+| `POST /api/trocas/{id}/decisao` (aprovar ou reprovar; os cargos vêm de `troca_quem_aprova`, separados por vírgula) | hoje, supervisor e técnico |
 | `GET /api/trocas/{id}/compativeis` · `POST /api/trocas/{id}/separacao` | operador de pátio |
 | `POST /api/trocas/{id}/execucao` · `POST /api/trocas/{id}/recusa` | operador da via |
 | `POST /api/trocas/{id}/recusa/decisao` (manter ou aceitar) | técnico |

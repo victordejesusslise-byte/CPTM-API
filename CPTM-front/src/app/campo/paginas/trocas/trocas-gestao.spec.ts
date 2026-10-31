@@ -45,6 +45,22 @@ describe('TrocasGestao', () => {
     expect(req.request.body).toEqual({ aprovar: true, motivo: null });
   });
 
+  it('o técnico também aprova (Victor, 2026-10-31), até o pedido que ele fez', async () => {
+    localStorage.clear();
+    entrarComo('Tecnico');
+    await TestBed.configureTestingModule({ imports: [TrocasGestao], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] }).compileComponents();
+    const fixture = TestBed.createComponent(TrocasGestao);
+    fixture.componentRef.setInput('aba', 'aprovar');
+    fixture.componentRef.setInput('aberta', '5');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    await responder(fixture, http);
+    const tela = fixture.nativeElement as HTMLElement;
+    [...tela.querySelectorAll('button')].find((b) => b.textContent?.includes('Aprovar a troca'))!.click();
+    const req = http.expectOne('http://localhost:8045/api/trocas/5/decisao');
+    expect(req.request.body).toEqual({ aprovar: true, motivo: null });
+  });
+
   it('mostra o laudo da troca em andamento sem baixar; baixar só no laudo aberto', async () => {
     localStorage.clear();
     entrarComo('Tecnico');

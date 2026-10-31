@@ -1,10 +1,23 @@
 import { Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { PedidosDeTroca } from './pedidos-de-troca';
 import { TrabalhoDaNoite } from './trabalho-da-noite';
 
-/** Os avisos do app embaixo do alto: troca urgente que chegou ao vivo e versão nova do app (com o link para baixar). */
+/**
+ * Os avisos embaixo do alto: troca urgente que chegou ao vivo e versão nova do app (com o link para baixar), no app;
+ * e o pedido de troca que acabou de chegar para quem aprova (supervisor e técnico), no site e no app.
+ */
 @Component({
   selector: 'app-avisos-do-app',
+  imports: [RouterLink],
   template: `
+    @if (pedidos.chegou(); as id) {
+      <div class="aviso-app aviso-app--urgente" role="alert">
+        <span>Chegou um pedido de troca para aprovar (troca {{ id }}).</span>
+        <a routerLink="/aprovar" [queryParams]="{ aberta: id }" (click)="pedidos.chegou.set(null)">Abrir</a>
+        <button type="button" (click)="pedidos.chegou.set(null)">Ok</button>
+      </div>
+    }
     @if (trabalho.urgente(); as aviso) {
       <div class="aviso-app aviso-app--urgente" role="alert">
         <span>{{ aviso }}</span>
@@ -28,4 +41,5 @@ import { TrabalhoDaNoite } from './trabalho-da-noite';
 })
 export class AvisosDoApp {
   protected readonly trabalho = inject(TrabalhoDaNoite);
+  protected readonly pedidos = inject(PedidosDeTroca);
 }

@@ -107,7 +107,7 @@ export const MENU: ItemMenu[] = [
     subs: [{ rota: '/inspecoes', rotulo: 'Fazer a inspeção', curto: 'Inspecionar' }, { rota: '/inspecoes/feitas', rotulo: 'Inspeções feitas', curto: 'Feitas' }],
   },
   {
-    rota: '/aprovar', rotulo: 'Aprovar trocas', grupo: 'Campo', cargos: ['Supervisor'],
+    rota: '/aprovar', rotulo: 'Aprovar trocas', grupo: 'Campo', cargos: ['Supervisor', 'Tecnico'],
     subs: [{ rota: '/aprovar', rotulo: 'Para aprovar', curto: 'Aprovar' }, { rota: '/aprovar/decididas', rotulo: 'Decididas', curto: 'Decididas' }],
   },
   {

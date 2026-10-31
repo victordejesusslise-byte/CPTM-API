@@ -18,6 +18,8 @@ public class AvisoAoVivo(IHubContext<CampoHub> hub, ILogger<AvisoAoVivo> log)
 {
     public const string TrocaNoPlano = "trocaNoPlano";
     public const string TrocaUrgente = "trocaUrgente";
+    /// <summary>O técnico pediu uma troca: o aviso para quem aprova (Victor, 2026-10-31).</summary>
+    public const string TrocaPedida = "trocaPedida";
     public const string AlertaNovo = "alertaNovo";
     public const string AlertaFechado = "alertaFechado";
 

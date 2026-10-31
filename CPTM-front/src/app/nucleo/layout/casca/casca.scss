@@ -37,6 +37,10 @@
   &:hover { background: var(--superficie-2); color: var(--tinta); }
 }
 .menu__item--ativo { background: var(--superficie-3); color: var(--tinta); font-weight: 600; border-left-color: var(--marcador); }
+.menu__contador {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 8px; padding: 0 6px; border-radius: 10px;
+  background: var(--vinho); color: var(--sobre-escuro); font-size: 12px; font-weight: 700; vertical-align: middle;
+}
 .menu__seta { flex: none; color: var(--tinta-3); transform: rotate(-90deg); transition: transform .15s; }
 .menu__seta--aberta { transform: none; }
 .menu__subs { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 6px 24px; border-left: 1px solid var(--linha-2); }

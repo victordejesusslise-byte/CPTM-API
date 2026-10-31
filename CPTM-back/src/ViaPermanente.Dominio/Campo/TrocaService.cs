@@ -52,15 +52,19 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         return (await BuscarPorId(troca.IdTroca))!;
     }
 
-    /// <summary>Aprova ou reprova. Quem decide é o cargo de PARAMETRO troca_quem_aprova. Aprovada sem peça compatível fica aguardando peça.</summary>
+    /// <summary>
+    /// Aprova ou reprova. Quem decide são os cargos de PARAMETRO troca_quem_aprova, separados por vírgula (Victor, 2026-10-31:
+    /// o técnico também aprova, até o pedido que ele mesmo fez). Aprovada sem peça compatível fica aguardando peça.
+    /// </summary>
     public async Task<TrocaDto?> Decidir(int idTroca, DecisaoTrocaDto dto, Cargo cargo, int idUsuario)
     {
         var troca = await Buscar(idTroca);
         if (troca is null)
             return null;
-        var quemAprova = (await parametros.Buscar(ChaveQuemAprova))?.Valor?.Trim();
-        if (!string.Equals(quemAprova, cargo.ToString(), StringComparison.OrdinalIgnoreCase))
-            throw new RegraDeNegocioException($"Quem aprova a troca é o cargo {quemAprova} (parâmetro {ChaveQuemAprova}).");
+        var quemAprova = ((await parametros.Buscar(ChaveQuemAprova))?.Valor ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (!quemAprova.Contains(cargo.ToString(), StringComparer.OrdinalIgnoreCase))
+            throw new RegraDeNegocioException($"Quem aprova a troca: {string.Join(", ", quemAprova)} (parâmetro {ChaveQuemAprova}).");
         if (troca.Status != StatusTroca.Pedida)
             throw new RegraDeNegocioException("Só a troca pedida é aprovada ou reprovada.");
         if (!dto.Aprovar && string.IsNullOrWhiteSpace(dto.Motivo))

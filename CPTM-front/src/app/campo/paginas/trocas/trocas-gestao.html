@@ -15,7 +15,7 @@
     <app-resumo-troca [t]="t" />
     @if (t.motivoReprovacao) { <p class="nota">Reprovada: {{ t.motivoReprovacao }}</p> }
 
-    @if (t.status === 'Pedida' && ehSupervisor()) {
+    @if (t.status === 'Pedida' && podeAprovar()) {
       <mat-form-field appearance="outline"><mat-label>Motivo (obrigatório para reprovar)</mat-label><input matInput [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" /></mat-form-field>
       <mat-checkbox [checked]="urgente()" (change)="urgente.set($event.checked)">Urgente: entra no plano desta noite mesmo depois das 20:00</mat-checkbox>
       <div class="acoes">
