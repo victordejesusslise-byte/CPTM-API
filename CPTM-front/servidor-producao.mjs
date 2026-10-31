@@ -37,8 +37,8 @@ const scripts = indice.match(/script-src[^;"]*/)?.[0] ?? "script-src 'self'";
 const politica = [
   "default-src 'self'",
   scripts,
-  // A API fica no mesmo endereço, na porta 8045 (src/environments/ambiente.ts).
-  "connect-src 'self' http://*:8045 https://*:8045",
+  // A API fica no mesmo endereço, na porta 8045 (src/environments/ambiente.ts); o ao vivo (/hub, SignalR) vai por WebSocket na mesma porta.
+  "connect-src 'self' http://*:8045 https://*:8045 ws://*:8045 wss://*:8045",
   "img-src 'self' data: blob:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
