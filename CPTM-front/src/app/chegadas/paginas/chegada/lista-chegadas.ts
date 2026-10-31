@@ -25,10 +25,10 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
     <p class="sobre">{{ texto().sobre }}</p>
     <h1>{{ texto().titulo }}</h1>
     <section class="cartao">
-      <header><h2>{{ texto().titulo }}</h2><span class="nota">{{ cargas.value()?.length ?? 0 }} cargas · {{ texto().nota }}</span></header>
-      <app-estado esqueleto="tabela" [carregando]="cargas.isLoading()" [erro]="erro()" [vazio]="cargas.hasValue() && !cargas.value().length" textoVazio="Nenhuma carga chegou ainda." />
+      <header><h2>{{ texto().titulo }}</h2><span class="nota">{{ lista().length }} cargas · {{ texto().nota }}</span></header>
+      <app-estado esqueleto="tabela" [carregando]="cargas.isLoading()" [erro]="erro()" [vazio]="cargas.hasValue() && !lista().length" textoVazio="Nenhuma carga chegou ainda." />
       @if (modo() === 'andamento') {
-        @for (c of cargas.value() ?? []; track c.chegada.id) {
+        @for (c of lista(); track c.chegada.id) {
           <div class="pilha carga">
             <p><b class="mono">{{ c.chegada.lote }}</b> · pedido <span class="mono">{{ c.pedido.codigo }}</span> · {{ c.chegada.armazem }} · {{ dataHora(c.chegada.dataRecebimento) }}</p>
             <div class="tabela">
@@ -44,12 +44,12 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
             </div>
           </div>
         }
-      } @else if (cargas.value()?.length) {
+      } @else if (lista().length) {
         <div class="tabela">
           <table class="simples">
             <thead><tr><th>Chegou em</th><th>Pedido</th><th class="so-computador">Fornecedor</th><th>Armazém</th><th class="num">Peças</th><th class="so-computador">Lote</th><th>Conferência</th></tr></thead>
             <tbody>
-              @for (c of cargas.value(); track c.chegada.id) {
+              @for (c of lista(); track c.chegada.id) {
                 <tr class="clicavel" tabindex="0" [class.selecionada]="boletimDe() === c.chegada.id" (click)="boletim(c.chegada)" (keydown.enter)="boletim(c.chegada)">
                   <td>{{ dataHora(c.chegada.dataRecebimento) }}</td><td class="mono">{{ c.pedido.codigo }}</td><td class="so-computador">{{ c.pedido.empresa }}</td>
                   <td>{{ c.chegada.armazem }}</td><td class="num">{{ c.chegada.quantidadeRecebida }}</td><td class="mono so-computador">{{ c.chegada.lote }}</td>
@@ -84,6 +84,8 @@ export class ListaChegadas {
         map((grupos) => grupos.flat().sort((a, b) => b.chegada.dataRecebimento.localeCompare(a.chegada.dataRecebimento))),
       ),
   });
+  /** Com erro, o valor da busca não pode ser lido (o Angular lança): a lista fica vazia e a tela mostra o erro (Victor, 2026-10-31: ficava carregando). */
+  protected readonly lista = computed(() => (this.cargas.hasValue() ? this.cargas.value() : []));
   protected readonly erro = computed(() => (this.cargas.error() ? mensagemDeErro(this.cargas.error()) : null));
 
   protected boletim(c: ChegadaDto): void {
