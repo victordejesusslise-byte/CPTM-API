@@ -179,14 +179,15 @@ export class TrabalhoDaNoite {
     const { HubConnectionBuilder } = await import('@microsoft/signalr');
     const conexao = new HubConnectionBuilder()
       .withUrl(HUB, { accessTokenFactory: () => this.sessao.token() ?? '', withCredentials: false })
-      .withAutomaticReconnect()
+      // tenta voltar por uns 2 minutos: aguenta o servidor reiniciando (por exemplo, para anunciar uma versão nova do app)
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 20000, 30000, 60000])
       .build();
     for (const evento of ['trocaNoPlano', 'alertaNovo', 'alertaFechado']) conexao.on(evento, () => void this.atualizar());
     conexao.on('trocaUrgente', () => {
       this.urgente.set('Chegou uma troca urgente para esta noite. Confira em "A trocar".');
       void this.atualizar();
     });
-    conexao.onreconnected(() => void this.atualizar());
+    conexao.onreconnected(() => void this.aoReconectar());
     this.conexao = conexao;
     try {
       await conexao.start();
@@ -199,6 +200,15 @@ export class TrabalhoDaNoite {
     const conexao = this.conexao;
     this.conexao = undefined;
     await conexao?.stop().catch(() => undefined);
+  }
+
+  /**
+   * O servidor voltou: baixa o plano de novo e confere a versão de novo. Reiniciar o servidor com uma versão nova anunciada
+   * faz o aviso chegar a quem está com o app aberto, na hora (Victor, 2026-10-31); só aparece para quem tem uma versão mais velha.
+   */
+  async aoReconectar(): Promise<void> {
+    this.versaoConferida = false;
+    await Promise.all([this.atualizar(), this.conferirVersao()]);
   }
 
   private async conferirVersao(): Promise<void> {

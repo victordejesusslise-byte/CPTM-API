@@ -7,6 +7,7 @@ import { PecaDto } from '../../pecas/entidades/peca';
 import { GUARDADO } from '../fila/guardado';
 import { Rede } from '../fila/rede';
 import { Sessao } from '../sessao/sessao';
+import { ambiente } from '../../../environments/ambiente';
 import { NO_APP, PacoteDoOperadorDto, PlanoCampoDto, TrabalhoDaNoite, versaoMaisNova } from './trabalho-da-noite';
 
 describe('TrabalhoDaNoite (o plano guardado no celular)', () => {
@@ -35,6 +36,27 @@ describe('TrabalhoDaNoite (o plano guardado no celular)', () => {
     expect(versaoMaisNova('0.1.12', '0.1.9')).toBe(true);
     expect(versaoMaisNova('0.1.9', '0.1.9')).toBe(false);
     expect(versaoMaisNova('0.1.8', '0.1.10')).toBe(false);
+  });
+
+  it('quando o servidor volta, confere a versão de novo: o aviso de versão nova chega com o app aberto (Victor, 2026-10-31)', async () => {
+    const antes = ambiente.versao;
+    ambiente.versao = '0.1.29';
+    try {
+      const { trabalho, http } = abrir();
+      const versao = 'http://localhost:8045/api/app/versao';
+      let voltou = trabalho.aoReconectar();
+      http.expectOne('http://localhost:8045/api/campo/plano').flush(plano);
+      http.expectOne(versao).flush({ versao: '0.1.29', baixar: '' });
+      await voltou;
+      expect(trabalho.versaoNova()).toBeNull(); // a mesma versão: nada
+      voltou = trabalho.aoReconectar();
+      http.expectOne('http://localhost:8045/api/campo/plano').flush(plano);
+      http.expectOne(versao).flush({ versao: '0.1.30', baixar: 'https://github.com/x/releases/tag/app-homol-0.1.30' });
+      await voltou;
+      expect(trabalho.versaoNova()?.versao).toBe('0.1.30');
+    } finally {
+      ambiente.versao = antes;
+    }
   });
 
   it('baixa o plano, guarda no celular e as telas leem dele', async () => {
