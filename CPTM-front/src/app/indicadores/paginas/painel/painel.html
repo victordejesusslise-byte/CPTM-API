@@ -49,7 +49,7 @@
   <h2 id="t-sequencia">O caminho da peça</h2>
   <app-estado esqueleto="cartoes" [quantidade]="6" [carregando]="fluxo.isLoading()" [erro]="erroFluxo()" [vazio]="fluxo.hasValue() && !fluxo.value().length" textoVazio="Sem etapas para mostrar." />
   <div class="grade">
-    @for (e of fluxo.value() ?? []; track e.etapa) {
+    @for (e of valorDe(fluxo) ?? []; track e.etapa) {
       <article class="cartao indicador">
         <p class="sobre">Etapa {{ e.etapa }} · {{ e.quemFaz }}</p>
         <h3>{{ e.nome }}</h3>

@@ -14,6 +14,7 @@ import { FormItem, ItensPedido, itensValidos, novoItemPedido, paraTabela } from 
 import { hojeIso } from './situacao';
 import { TabelaItens } from './tabela-itens';
 import { CartoesNoCelular } from '../../compartilhado/componentes/tabela/cartoes';
+import { valorDe } from '../../compartilhado/utilitarios/recurso';
 
 const codigoNovo = () => {
   const d = new Date();
@@ -31,6 +32,7 @@ const codigoNovo = () => {
   templateUrl: './cadastrar-pedido.html',
 })
 export class CadastrarPedido {
+  protected readonly valorDe = valorDe;
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly pedidos = inject(Pedidos);
   private readonly cadastros = inject(Cadastros);
@@ -59,9 +61,9 @@ export class CadastrarPedido {
   protected readonly idEmpresa = toSignal(this.form.controls.idEmpresa.valueChanges, { initialValue: 0 });
   protected readonly contratos = rxResource({ params: () => this.idEmpresa() || undefined, stream: ({ params }) => this.cadastros.contratos(params) });
   protected readonly ofertas = rxResource({ params: () => this.idEmpresa() || undefined, stream: ({ params }) => this.pedidos.ofertas(params) });
-  protected readonly contrato = computed(() => this.contratos.value()?.find((c) => c.id === this.idContrato()) ?? null);
+  protected readonly contrato = computed(() => valorDe(this.contratos)?.find((c) => c.id === this.idContrato()) ?? null);
   private readonly idContrato = signal<number | null>(null);
-  protected readonly fornecedor = computed(() => this.fornecedores.value()?.find((f) => f.id === this.idEmpresa()) ?? null);
+  protected readonly fornecedor = computed(() => valorDe(this.fornecedores)?.find((f) => f.id === this.idEmpresa()) ?? null);
 
   protected readonly passo = signal<'preencher' | 'revisar'>('preencher');
   protected readonly verificacao = signal<VerificacaoPedidoDto | null>(null);
@@ -74,7 +76,7 @@ export class CadastrarPedido {
     this.form.controls.idEmpresa.valueChanges.subscribe(() => this.form.controls.idContrato.setValue(null));
     this.form.controls.idContrato.valueChanges.subscribe((v) => this.idContrato.set(v));
     effect(() => {
-      const lista = this.contratos.value() ?? [];
+      const lista = valorDe(this.contratos) ?? [];
       if (lista.length && this.form.controls.idContrato.value === null) this.form.controls.idContrato.setValue(lista[0].id);
     });
   }

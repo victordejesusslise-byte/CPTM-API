@@ -34,7 +34,7 @@
           <mat-label>Nota fiscal</mat-label>
           <mat-select formControlName="idNota">
             <mat-option [value]="null">Sem nota ainda</mat-option>
-            @for (n of notas.value() ?? []; track n.id) { <mat-option [value]="n.id">{{ n.numero }} · {{ n.statusConferencia }}</mat-option> }
+            @for (n of valorDe(notas) ?? []; track n.id) { <mat-option [value]="n.id">{{ n.numero }} · {{ n.statusConferencia }}</mat-option> }
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">

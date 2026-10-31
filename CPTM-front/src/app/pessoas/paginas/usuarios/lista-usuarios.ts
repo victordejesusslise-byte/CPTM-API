@@ -8,6 +8,7 @@ import { Sessao } from '../../../nucleo/sessao/sessao';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /**
  * Usuários → Usuários cadastrados (supervisor). Desativar derruba na hora as sessões abertas da conta (segurança, 2026-10-18);
@@ -23,10 +24,10 @@ import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cart
     @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
     @if (erroAcao()) { <p class="aviso aviso--erro" role="alert">{{ erroAcao() }}</p> }
     <app-estado esqueleto="tabela" [carregando]="usuarios.isLoading()" [erro]="erro()" [vazio]="usuarios.hasValue() && !usuarios.value().length" />
-    @if (usuarios.value()?.length) {
+    @if (valorDe(usuarios)?.length) {
       <div class="tabela"><table class="simples">
         <thead><tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Situação</th><th></th></tr></thead>
-        <tbody>@for (u of usuarios.value(); track u.id) {
+        <tbody>@for (u of valorDe(usuarios) ?? []; track u.id) {
           <tr>
             <td>{{ u.nome }}</td><td class="mono">{{ u.email }}</td><td>{{ nomeDoCargo(u.cargo) }}</td>
             <td [class.vermelho]="!u.ativo || u.esperarAte">{{ situacao(u) }}</td>
@@ -42,6 +43,7 @@ import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cart
   `,
 })
 export class ListaUsuarios {
+  protected readonly valorDe = valorDe;
   private readonly servico = inject(Usuarios);
   protected readonly usuarios = rxResource({ stream: () => this.servico.listar() });
   protected readonly erro = computed(() => (this.usuarios.error() ? mensagemDeErro(this.usuarios.error()) : null));

@@ -68,12 +68,12 @@
   }
 } @else {
   <section class="cartao">
-    <header><h2>Últimos 30 dias</h2><span class="nota">{{ feitas.value()?.length ?? 0 }} classificações</span></header>
+    <header><h2>Últimos 30 dias</h2><span class="nota">{{ valorDe(feitas)?.length ?? 0 }} classificações</span></header>
     <app-estado [carregando]="feitas.isLoading()" [erro]="erroFeitas()" [vazio]="feitas.hasValue() && !feitas.value().length" textoVazio="Nenhuma classificação nos últimos 30 dias." />
-    @if (feitas.value()?.length) {
+    @if (valorDe(feitas)?.length) {
       <div class="tabela"><table class="simples">
         <thead><tr><th>Quando</th><th class="num">Peça</th><th>Espécie</th><th>Como</th></tr></thead>
-        <tbody>@for (c of feitas.value(); track c.id) {
+        <tbody>@for (c of valorDe(feitas) ?? []; track c.id) {
           <tr><td>{{ dataHora(c.data) }}</td><td class="num">{{ c.idDormente }}</td><td>{{ c.especie }}</td><td>{{ nomeMetodo[c.metodo] ?? c.metodo }}</td></tr>
         }</tbody>
       </table></div>

@@ -6,13 +6,14 @@ import { Tema } from './nucleo/layout/tema/tema';
 import { Abertura, AberturaTela } from './nucleo/layout/abertura/abertura';
 import { EsqueletoInicio, TEMPO_DO_ESQUELETO_DO_LOGIN_MS } from './nucleo/layout/inicio/esqueleto-inicio';
 import { NO_APP } from './nucleo/ao-vivo/trabalho-da-noite';
+import { CaixaDeToasts } from './nucleo/toasts/caixa-de-toasts';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, AberturaTela, EsqueletoInicio],
+  imports: [RouterOutlet, AberturaTela, EsqueletoInicio, CaixaDeToasts],
   template: `
     @if (abrindo(); as tipo) { <app-esqueleto-inicio [tipo]="tipo" /> }
-    <router-outlet /><app-abertura />
+    <router-outlet /><app-abertura /><app-caixa-de-toasts />
   `,
 })
 export class App {

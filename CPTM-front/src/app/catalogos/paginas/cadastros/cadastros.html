@@ -37,7 +37,7 @@
     <section class="cartao">
       <div class="tabela"><table class="simples">
         <thead><tr><th>Nome</th><th>Papel</th><th class="so-computador">CNPJ</th><th>Situação</th><th></th></tr></thead>
-        <tbody>@if (empresas.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (e of empresas.value() ?? []; track e.id) {
+        <tbody>@if (empresas.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (e of valorDe(empresas) ?? []; track e.id) {
           <tr><td>{{ e.nome }}</td><td>{{ e.papel | legivel }}</td><td class="mono so-computador">{{ e.cnpj ?? '—' }}</td><td [class.vermelho]="!e.ativo">{{ e.ativo ? 'Ativa' : 'Inativa' }}</td>
             <td style="text-align:right">
               @if (e.papel === 'Fornecedor') { <button mat-button type="button" (click)="abrirPadroes(e.id)" [attr.aria-expanded]="padroesDe() === e.id">Padrões ({{ ativos(e) }})</button> }
@@ -84,7 +84,7 @@
     <section class="cartao">
       <div class="tabela"><table class="simples">
         <thead><tr><th>Contrato</th><th>Ata</th><th>Fornecedor</th><th>Vigência</th></tr></thead>
-        <tbody>@if (contratos.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (c of contratos.value() ?? []; track c.id) {
+        <tbody>@if (contratos.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (c of valorDe(contratos) ?? []; track c.id) {
           <tr><td class="mono">{{ c.numeroContrato }}</td><td class="mono">{{ c.numeroAta }}</td><td>{{ c.empresa }}</td><td>{{ data(c.vigenciaInicio) }} a {{ data(c.vigenciaFim) }}</td></tr>
         }</tbody>
       </table></div>
@@ -108,9 +108,9 @@
       <header><h2>Novo trecho</h2><span class="nota">a classe que o trecho aceita vale para a troca</span></header>
       <div class="campos">
         <mat-form-field appearance="outline"><mat-label>De</mat-label>
-          <mat-select [(ngModel)]="trecho.idEstacaoInicio">@for (e of estacoes.value() ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
+          <mat-select [(ngModel)]="trecho.idEstacaoInicio">@for (e of valorDe(estacoes) ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Até</mat-label>
-          <mat-select [(ngModel)]="trecho.idEstacaoFim">@for (e of estacoes.value() ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
+          <mat-select [(ngModel)]="trecho.idEstacaoFim">@for (e of valorDe(estacoes) ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Classe exigida</mat-label>
           <mat-select [(ngModel)]="trecho.classeExigida"><mat-option [value]="1">1ª classe</mat-option><mat-option [value]="2">aceita 2ª classe</mat-option></mat-select></mat-form-field>
       </div>
@@ -119,11 +119,11 @@
     <section class="cartao">
       <div class="tabela"><table class="simples">
         <thead><tr><th>Estação</th><th>Linha</th><th class="num">Km</th><th class="num">Ordem</th></tr></thead>
-        <tbody>@if (estacoes.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (e of estacoes.value() ?? []; track e.id) { <tr><td>{{ e.nome }}</td><td>{{ e.linha }}</td><td class="num">{{ km(e.km) }}</td><td class="num">{{ e.ordem }}</td></tr> }</tbody>
+        <tbody>@if (estacoes.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (e of valorDe(estacoes) ?? []; track e.id) { <tr><td>{{ e.nome }}</td><td>{{ e.linha }}</td><td class="num">{{ km(e.km) }}</td><td class="num">{{ e.ordem }}</td></tr> }</tbody>
       </table></div>
       <div class="tabela" style="margin-top:12px"><table class="simples">
         <thead><tr><th>Trecho</th><th>Classe exigida</th></tr></thead>
-        <tbody>@if (trechos.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (t of trechos.value() ?? []; track t.id) { <tr><td>{{ t.estacaoInicio }} → {{ t.estacaoFim }}</td><td>{{ t.classeExigida }}ª</td></tr> }</tbody>
+        <tbody>@if (trechos.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (t of valorDe(trechos) ?? []; track t.id) { <tr><td>{{ t.estacaoInicio }} → {{ t.estacaoFim }}</td><td>{{ t.classeExigida }}ª</td></tr> }</tbody>
       </table></div>
     </section>
   }
@@ -137,7 +137,7 @@
       <header><h2>Parâmetros do sistema</h2><span class="nota">mudou, vale para o que for feito daqui em diante</span></header>
       <div class="tabela"><table class="simples">
         <thead><tr><th>Chave</th><th>Valor</th><th class="so-computador">Alterado em</th><th></th></tr></thead>
-        <tbody>@if (parametros.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (p of parametros.value() ?? []; track p.chave) {
+        <tbody>@if (parametros.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (p of valorDe(parametros) ?? []; track p.chave) {
           <tr><td class="mono">{{ p.chave }}</td>
             <td><input class="mono campo-tabela" [ngModel]="valores[p.chave] ?? p.valor" (ngModelChange)="valores[p.chave] = $event" [attr.aria-label]="'Valor de ' + p.chave" /></td>
             <td class="so-computador">{{ dataHora(p.alteradoEm) }}</td>
@@ -165,7 +165,7 @@
     <section class="cartao">
       <div class="tabela"><table class="simples">
         <thead><tr><th>Código</th><th>Tipo</th><th>Número de série</th><th>Situação</th></tr></thead>
-        <tbody>@if (leitores.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (l of leitores.value() ?? []; track l.id) { <tr><td class="mono">{{ l.codigo }}</td><td>{{ l.tipo | legivel }}</td><td class="mono">{{ l.numeroSerie ?? '—' }}</td><td>{{ l.ativo ? 'Ativo' : 'Inativo' }}</td></tr> }
+        <tbody>@if (leitores.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (l of valorDe(leitores) ?? []; track l.id) { <tr><td class="mono">{{ l.codigo }}</td><td>{{ l.tipo | legivel }}</td><td class="mono">{{ l.numeroSerie ?? '—' }}</td><td>{{ l.ativo ? 'Ativo' : 'Inativo' }}</td></tr> }
           @empty { <tr><td colspan="4">Nenhum leitor ainda.</td></tr> }</tbody>
       </table></div>
     </section>

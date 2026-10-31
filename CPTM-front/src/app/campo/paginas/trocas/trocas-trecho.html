@@ -4,10 +4,10 @@
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
-@if (idAberta() && troca.isLoading() && !troca.value()) {
+@if (idAberta() && troca.isLoading() && !valorDe(troca)) {
   <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando a troca…" /></section>
 }
-@if (idAberta() && troca.value(); as t) {
+@if (idAberta() && valorDe(troca); as t) {
   <section class="cartao pilha">
     <header>
       <h2>Troca {{ t.id }}</h2><span class="pilula" [class.pilula--solida]="t.status === 'Feita'" [class.pilula--alerta]="t.status === 'Recusada'">{{ rotulo[t.status] }}</span>
@@ -58,10 +58,10 @@
 }
 
 <section class="cartao">
-  <header><h2>{{ titulo() }}</h2><span class="nota">{{ lista.value()?.length ?? 0 }} · toque para abrir</span></header>
+  <header><h2>{{ titulo() }}</h2><span class="nota">{{ valorDe(lista)?.length ?? 0 }} · toque para abrir</span></header>
   <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length" textoVazio="Nenhuma troca aqui." />
   <div class="cartoes-alerta">
-    @for (t of lista.value() ?? []; track t.id) {
+    @for (t of valorDe(lista) ?? []; track t.id) {
       <button type="button" class="cartao-alerta" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
         <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
         <span class="tipo">{{ rotulo[t.status] }}@if (t.codigoEntrou) { · entra {{ t.codigoEntrou }} }</span>

@@ -1,5 +1,5 @@
-@if (pedido.isLoading() && !pedido.value()) { <app-esqueleto tipo="pagina" [quantidade]="5" rotulo="Carregando o pedido…" /> }
-@if (pedido.value(); as p) {
+@if (pedido.isLoading() && !valorDe(pedido)) { <app-esqueleto tipo="pagina" [quantidade]="5" rotulo="Carregando o pedido…" /> }
+@if (valorDe(pedido); as p) {
   <section class="cartao pilha pedido-aberto" aria-live="polite">
     <header>
       <h2 class="mono">{{ p.codigo }}</h2>
@@ -20,7 +20,7 @@
               <mat-label>Contrato</mat-label>
               <mat-select formControlName="idContrato">
                 <mat-option [value]="null">Sem contrato</mat-option>
-                @for (c of contratos.value() ?? []; track c.id) { <mat-option [value]="c.id">{{ c.numeroContrato }} · ata {{ c.numeroAta }}</mat-option> }
+                @for (c of valorDe(contratos) ?? []; track c.id) { <mat-option [value]="c.id">{{ c.numeroContrato }} · ata {{ c.numeroAta }}</mat-option> }
               </mat-select>
             </mat-form-field>
           </div>
@@ -78,14 +78,14 @@
         <app-tabela-itens [itens]="itensTabela()" />
         <div class="chamada" [class.chamada--neutra]="p.segundaClasse.valido"><b>{{ p.segundaClasse.mensagem }}</b></div>
 
-        @if (notas.value()?.length) {
+        @if (valorDe(notas)?.length) {
           <div>
             <p class="lbl">Nota fiscal</p>
             <div class="tabela">
               <table class="simples">
                 <thead><tr><th>Nota</th><th>Emissão</th><th class="num">m³</th><th>Conferência</th></tr></thead>
                 <tbody>
-                  @for (n of notas.value(); track n.id) {
+                  @for (n of valorDe(notas) ?? []; track n.id) {
                     <tr><td class="mono">{{ n.numero }}</td><td>{{ data(n.dataEmissao) }}</td>
                       <td class="num">{{ m3(volumeNota(n)) }}</td>
                       <td [class.vermelho]="n.statusConferencia === 'Diverge'">{{ n.statusConferencia === 'Diverge' ? 'diverge: ' + n.divergencias.join(' ') : 'confere' }}</td></tr>
@@ -96,14 +96,14 @@
           </div>
         }
         @if (chegadas.isLoading()) { <app-esqueleto tipo="tabela" [quantidade]="2" rotulo="Carregando as cargas…" /> }
-        @if (chegadas.value()?.length) {
+        @if (valorDe(chegadas)?.length) {
           <div>
             <p class="lbl">Cargas recebidas · toque para ver o boletim (BR)</p>
             <div class="tabela">
               <table class="simples">
                 <thead><tr><th>Chegou em</th><th>Armazém</th><th class="num">Peças</th><th>Lote</th><th>Conferência</th></tr></thead>
                 <tbody>
-                  @for (c of chegadas.value(); track c.id) {
+                  @for (c of valorDe(chegadas) ?? []; track c.id) {
                     <tr class="clicavel" tabindex="0" [class.selecionada]="boletimDe() === c.id" (click)="abrirBoletim(c)" (keydown.enter)="abrirBoletim(c)">
                       <td>{{ dataHora(c.dataRecebimento) }}</td><td>{{ c.armazem }}</td><td class="num">{{ c.quantidadeRecebida }}</td>
                       <td class="mono">{{ c.lote }}</td><td [class.vermelho]="!c.confere">{{ c.confere ? 'confere' : c.divergencias.join(' ') }}</td></tr>

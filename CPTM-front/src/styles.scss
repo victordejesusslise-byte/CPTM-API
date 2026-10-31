@@ -241,3 +241,9 @@ button.perigo { --mat-button-filled-container-color: var(--vermelho); --mat-butt
   background: color-mix(in srgb, var(--tinta) 24%, transparent); animation: ybyra-para-direita 1.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) { .botao-carregando::after { animation: none; } }
+
+/* O número ao lado de "Aprovar trocas" no menu (2026-10-31). Fica aqui, e não na casca, pelo limite de tamanho do estilo do componente. */
+.menu__contador {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 8px; padding: 0 6px; border-radius: 10px;
+  background: var(--vinho); color: var(--sobre-escuro); font-size: 12px; font-weight: 700; vertical-align: middle;
+}

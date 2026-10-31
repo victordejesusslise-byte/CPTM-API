@@ -74,12 +74,12 @@
   <section class="cartao">
     <header><h2>Relatórios anteriores</h2><span class="nota">toque para abrir</span></header>
     <app-estado esqueleto="tabela" [comMarca]="false" [carregando]="relatorios.isLoading()" [erro]="erroLista()" [vazio]="relatorios.hasValue() && !relatorios.value().length" textoVazio="Nenhum relatório ainda." />
-    @if (relatorios.value()?.length) {
+    @if (valorDe(relatorios)?.length) {
       <div class="tabela">
         <table class="simples">
           <thead><tr><th>Mês</th><th>Situação</th><th class="num">Estoque</th><th>Gerado em</th></tr></thead>
           <tbody>
-            @for (r of relatorios.value(); track r.id) {
+            @for (r of valorDe(relatorios) ?? []; track r.id) {
               <tr class="clicavel" tabindex="0" [class.selecionada]="relatorio()?.id === r.id" (click)="abrir(r)" (keydown.enter)="abrir(r)">
                 <td>{{ nomeDoMes(r.mesReferencia) }}</td><td>{{ r.status | legivel }}</td><td class="num">{{ m3(r.volumeM3Estoque) }}</td><td>{{ dataHora(r.geradoEm) }}</td>
               </tr>

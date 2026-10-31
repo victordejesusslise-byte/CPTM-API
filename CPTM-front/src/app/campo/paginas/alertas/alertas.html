@@ -31,10 +31,10 @@
       </section>
     }
     <section class="cartao">
-      <header><h2>Avisos da via</h2><span class="nota">{{ avisos.value()?.length ?? 0 }} esperando vínculo · toque para abrir</span></header>
+      <header><h2>Avisos da via</h2><span class="nota">{{ valorDe(avisos)?.length ?? 0 }} esperando vínculo · toque para abrir</span></header>
       <div class="cartoes-alerta">
         @if (avisos.isLoading()) { <app-esqueleto tipo="lista" [quantidade]="3" rotulo="Carregando os avisos…" /> }
-        @for (av of avisos.value() ?? []; track av.idLeitura) {
+        @for (av of valorDe(avisos) ?? []; track av.idLeitura) {
           <button type="button" class="cartao-alerta urgente" [class.selecionado]="avisoAberto()?.idLeitura === av.idLeitura" (click)="abrirAviso(av)">
             <span class="topo-alerta"><b class="mono">{{ av.tag }}</b><span class="mono nota">{{ av.km !== null ? 'km ' + km(av.km) : '' }}</span></span>
             <span class="nota">{{ dataHora(av.data) }}@if (av.observacao) { · {{ av.observacao }} }</span>
@@ -57,10 +57,10 @@
   </section>
   }
 } @else {
-  @if (idAberto() && alerta.isLoading() && !alerta.value()) {
+  @if (idAberto() && alerta.isLoading() && !valorDe(alerta)) {
     <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando o alerta…" /></section>
   }
-  @if (alerta.value(); as a) {
+  @if (valorDe(alerta); as a) {
     @if (idAberto()) {
       <section class="cartao pilha alerta-aberto">
         <header>
@@ -113,7 +113,7 @@
   <section class="cartao">
     <header>
       <h2>{{ titulo() }}</h2>
-      <span class="nota">{{ lista.value()?.length ?? 0 }} · toque para abrir</span>
+      <span class="nota">{{ valorDe(lista)?.length ?? 0 }} · toque para abrir</span>
     </header>
     <div class="seg filtro-status" role="group" aria-label="Quais alertas">
       <button type="button" [attr.aria-pressed]="so() === 'abertos'" (click)="so.set('abertos')">Abertos</button>
@@ -121,7 +121,7 @@
     </div>
     <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length" textoVazio="Nenhum alerta aqui." />
     <div class="cartoes-alerta">
-      @for (a of lista.value() ?? []; track a.id) {
+      @for (a of valorDe(lista) ?? []; track a.id) {
         <button type="button" class="cartao-alerta" [class.urgente]="a.status === 'Aberto'" [class.selecionado]="idAberto() === a.id" (click)="abrir(a)">
           <span class="topo-alerta"><b class="mono">{{ a.tag ?? 'sem tag' }}</b><span class="mono nota">{{ a.km !== null ? 'km ' + km(a.km) : '' }}</span></span>
           <span class="tipo" [class.vermelho]="a.status === 'Aberto'">{{ rotuloTipo(a) }}</span>

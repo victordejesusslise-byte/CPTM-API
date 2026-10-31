@@ -11,6 +11,7 @@ import { Catalogos } from '../../servicos/catalogos';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /** Um padrão de medida no formulário (largura e altura em metros; sem espécie, vale para todas). */
 const novoPadrao = () => ({ idEspecie: null as number | null, larguraM: null as number | null, alturaM: null as number | null });
@@ -27,6 +28,7 @@ const TITULOS: Record<Aba, string> = { empresas: 'Empresas', contratos: 'Contrat
   templateUrl: './cadastros.html',
 })
 export class Cadastros {
+  protected readonly valorDe = valorDe;
   readonly aba = input<Aba>('empresas');
   private readonly api = inject(CadastrosApi);
   protected readonly titulo = computed(() => TITULOS[this.aba()]);
@@ -39,7 +41,7 @@ export class Cadastros {
   protected readonly leitores = rxResource({ params: () => (this.aba() === 'leitores' ? true : undefined), stream: () => this.catalogos.leitores() });
   protected readonly leitor = { idTipoLeitor: 1, codigo: '', numeroSerie: '' };
   protected readonly tiposLeitor = TIPOS_LEITOR;
-  protected readonly fornecedores = computed(() => (this.empresas.value() ?? []).filter((e) => e.papel === 'Fornecedor'));
+  protected readonly fornecedores = computed(() => (valorDe(this.empresas) ?? []).filter((e) => e.papel === 'Fornecedor'));
   protected readonly data = data;
   protected readonly dataHora = dataHora;
   protected readonly km = km;

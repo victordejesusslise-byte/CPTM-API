@@ -6,6 +6,7 @@ import { Esqueleto } from '../../compartilhado/componentes/esqueleto/esqueleto';
 import { Laudos, TipoLaudo } from '../servicos/laudos';
 import { FolhaLaudo } from './folha-laudo';
 import { LaudoAberto } from './laudo-aberto';
+import { valorDe } from '../../compartilhado/utilitarios/recurso';
 
 const CHAVE_ABERTO = 'ybyra.laudo-previa-aberta';
 
@@ -24,13 +25,13 @@ const lerAberto = (): boolean => {
   imports: [BOTOES, FolhaLaudo, LaudoAberto, Esqueleto],
   template: `
     <button type="button" class="cabeca" [attr.aria-expanded]="aberta()" (click)="alternar()">
-      <span>{{ documento.value() ? documento.value()!.titulo + ' · ' + documento.value()!.codigo : 'Laudo' }}</span>
+      <span>{{ valorDe(documento) ? valorDe(documento)!.titulo + ' · ' + valorDe(documento)!.codigo : 'Laudo' }}</span>
       <svg class="seta" [class.seta--aberta]="aberta()" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
         <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </button>
     @if (aberta()) {
-      @if (documento.value(); as d) {
+      @if (valorDe(documento); as d) {
         <div class="folha-previa" role="button" tabindex="0" aria-label="Abrir o laudo" (click)="aberto.abrir()" (keydown.enter)="aberto.abrir()">
           <app-folha-laudo [documento]="d" />
         </div>
@@ -60,6 +61,7 @@ const lerAberto = (): boolean => {
   `,
 })
 export class PreviaLaudo {
+  protected readonly valorDe = valorDe;
   readonly tipo = input.required<TipoLaudo>();
   readonly id = input.required<number>();
   /** Mostra o botão Fechar (nas listas, a prévia abre embaixo do item tocado). */

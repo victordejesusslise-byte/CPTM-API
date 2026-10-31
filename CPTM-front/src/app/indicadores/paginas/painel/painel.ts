@@ -12,6 +12,7 @@ import { Apresentacao } from '../../../apresentacao/servicos/apresentacao';
 import { Indicadores } from '../../servicos/indicadores';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { BOTOES } from '../../../compartilhado/ui';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /** A primeira tela: atalhos do cargo e os indicadores. O que pede atenção vem em vermelho, em destaque e primeiro, com o botão para a tela onde se verifica. */
 @Component({
@@ -21,6 +22,7 @@ import { BOTOES } from '../../../compartilhado/ui';
   styleUrl: './painel.scss',
 })
 export class Painel {
+  protected readonly valorDe = valorDe;
   /** O que fazer hoje (atalhos) ou Acompanhamento (indicadores): vem do data da rota */
   readonly aba = input<'hoje' | 'sequencia' | 'numeros'>('hoje');
   private readonly apresentacao = inject(Apresentacao);
@@ -34,9 +36,9 @@ export class Painel {
   protected readonly erro = computed(() => (this.indicadores.error() ? mensagemDeErro(this.indicadores.error()) : null));
   protected readonly erroFluxo = computed(() => (this.fluxo.error() ? mensagemDeErro(this.fluxo.error()) : null));
   /** Os que pedem atenção primeiro: em destaque no "O que fazer hoje" e no alto do Acompanhamento. */
-  protected readonly vermelhos = computed(() => (this.indicadores.value() ?? []).filter((i) => i.vermelho));
+  protected readonly vermelhos = computed(() => (valorDe(this.indicadores) ?? []).filter((i) => i.vermelho));
   protected readonly noVermelho = computed(() => this.vermelhos().length);
-  protected readonly ordenados = computed(() => [...(this.indicadores.value() ?? [])].sort((a, b) => Number(b.vermelho) - Number(a.vermelho)));
+  protected readonly ordenados = computed(() => [...(valorDe(this.indicadores) ?? [])].sort((a, b) => Number(b.vermelho) - Number(a.vermelho)));
   private readonly router = inject(Router);
 
   /** A tela para verificar o indicador, se o cargo pode abri-la (a mesma regra do data.cargos da rota). */

@@ -8,6 +8,7 @@ import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 type Aba = 'noite' | 'anteriores' | 'numeros';
 const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: 'Passagens anteriores', numeros: 'Números do período' };
@@ -22,21 +23,22 @@ const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: '
   templateUrl: './passagem.html',
 })
 export class Passagem {
+  protected readonly valorDe = valorDe;
   readonly aba = input<Aba>('noite');
   private readonly api = inject(Passagens);
   protected readonly titulo = computed(() => TITULOS[this.aba()]);
   protected readonly lista = rxResource({ stream: () => this.api.ultimas(30) });
   protected readonly erro = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly escolhida = signal<number | null>(null);
-  protected readonly idAberta = computed(() => (this.aba() === 'numeros' ? null : (this.escolhida() ?? (this.aba() === 'noite' ? (this.lista.value()?.[0]?.id ?? null) : null))));
+  protected readonly idAberta = computed(() => (this.aba() === 'numeros' ? null : (this.escolhida() ?? (this.aba() === 'noite' ? (valorDe(this.lista)?.[0]?.id ?? null) : null))));
   protected readonly detalhe = rxResource({ params: () => this.idAberta() ?? undefined, stream: ({ params }) => (params ? this.api.buscar(params) : of(null)) });
   protected readonly so = signal<'problemas' | 'todas'>('problemas');
   protected readonly leituras = computed(() => {
-    const l = this.detalhe.value()?.leituras ?? [];
+    const l = valorDe(this.detalhe)?.leituras ?? [];
     return this.so() === 'todas' ? l : l.filter((x) => !x.leitura || x.foraDePosicao || x.rachaduraSuspeita || x.idDormente === null);
   });
   protected readonly soma = computed(() => {
-    const l = this.lista.value() ?? [];
+    const l = valorDe(this.lista) ?? [];
     const leituras = l.reduce((a, p) => a + p.leituras, 0);
     return {
       passagens: l.length, leituras,
