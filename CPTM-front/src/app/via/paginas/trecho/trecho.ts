@@ -89,9 +89,9 @@ import { valorDe } from '../../../compartilhado/utilitarios/recurso';
   styles: `
     .legenda { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 8px; }
     .mapa-trecho { display: flex; align-items: flex-end; gap: 2px; height: 180px; padding: 8px; overflow-x: auto;
-      border: 1px solid var(--linha); border-radius: 4px; background: var(--superficie); }
+      border: 1px solid var(--linha); border-radius: var(--raio); background: var(--superficie); }
     .mapa-trecho__faixa { flex: 1 0 22px; min-width: 22px; height: 100%; display: flex; align-items: flex-end; padding: 0; cursor: pointer;
-      border: 0; border-bottom: 2px solid var(--linha-2); background: transparent; }
+      border: 0; border-bottom: 2px solid var(--linha-2); border-radius: 6px 6px 0 0; background: transparent; }
     .mapa-trecho__faixa:hover, .mapa-trecho__faixa.ativa { background: var(--superficie-3); }
     .mapa-trecho__faixa:focus-visible { outline: 2px solid var(--anel); }
     .mapa-trecho__pilha { width: 100%; display: flex; flex-direction: column-reverse; }
