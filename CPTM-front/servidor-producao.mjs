@@ -1,5 +1,6 @@
 // Serve a versão de produção do front (dist/cptm-front/browser) com os cabeçalhos de segurança. Só o Node, sem dependência nenhuma.
-// npm run producao: só neste PC (http://localhost:4200) · npm run producao-celular: aberto para o Wi-Fi (http://SEU-IP:4200)
+// npm run producao: aberto para a rede (http://localhost:4200 no PC e http://SEU-IP:4200 nos outros aparelhos, Victor, 2026-10-31)
+// Só neste PC, sem o --rede: node servidor-producao.mjs (depois do ng build).
 // Segurança (Victor, 2026-10-23): sem código-fonte legível, sem as ferramentas de depuração, com a política de conteúdo (CSP).
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
