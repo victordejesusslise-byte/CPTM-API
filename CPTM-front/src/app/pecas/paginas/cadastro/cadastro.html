@@ -7,13 +7,13 @@
 <div class="campos">
   <mat-form-field appearance="outline">
     <mat-label>Pedido</mat-label>
-    <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value); idChegada.set(null); feixe.set(null)">
+    <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value); idChegada.set(null); feixe.set(null)"><app-busca-opcoes />
       @for (p of comChegada(); track p.id) { <mat-option [value]="p.id">{{ p.codigo }} · {{ p.empresa }}</mat-option> }
     </mat-select>
   </mat-form-field>
   <mat-form-field appearance="outline">
     <mat-label>Chegada</mat-label>
-    <mat-select [value]="idChegada()" (selectionChange)="idChegada.set($event.value); feixe.set(null)" [disabled]="!idPedido()">
+    <mat-select [value]="idChegada()" (selectionChange)="idChegada.set($event.value); feixe.set(null)" [disabled]="!idPedido()"><app-busca-opcoes />
       @for (c of valorDe(chegadas) ?? []; track c.id) { <mat-option [value]="c.id">Lote {{ c.lote }} · {{ c.quantidadeRecebida }} peças</mat-option> }
     </mat-select>
   </mat-form-field>

@@ -12,14 +12,14 @@
     <div class="campos aba">
       <mat-form-field appearance="outline">
         <mat-label>Armazém</mat-label>
-        <mat-select [value]="filtro().idArmazem" (selectionChange)="mudarFiltro('idArmazem', $event.value)">
+        <mat-select [value]="filtro().idArmazem" (selectionChange)="mudarFiltro('idArmazem', $event.value)"><app-busca-opcoes />
           <mat-option [value]="null">Todos</mat-option>
           @for (a of valorDe(armazens) ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }} · {{ a.pecas }} peças</mat-option> }
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Tamanho</mat-label>
-        <mat-select [value]="filtro().idTamanho" (selectionChange)="mudarFiltro('idTamanho', $event.value)">
+        <mat-select [value]="filtro().idTamanho" (selectionChange)="mudarFiltro('idTamanho', $event.value)"><app-busca-opcoes />
           <mat-option [value]="null">Todos</mat-option>
           @for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }
         </mat-select>
@@ -55,7 +55,7 @@
           <p class="rotulo">{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª · {{ p.armazem }} · pilha {{ p.pilha ?? 'nenhuma' }} · {{ p.situacao | legivel }} <app-nota [nota]="p.nota" /></p>
           <mat-form-field appearance="outline">
             <mat-label>Pilha</mat-label>
-            <mat-select [value]="idPilha()" (selectionChange)="idPilha.set($event.value)">
+            <mat-select [value]="idPilha()" (selectionChange)="idPilha.set($event.value)"><app-busca-opcoes />
               @if (!p.idPilha) { <mat-option [value]="null">A API escolhe a pilha certa</mat-option> }
               @for (pl of pilhasDaPeca(); track pl.id) {
                 <mat-option [value]="pl.id">{{ pl.codigo }} · {{ pl.setor }} · {{ metros(pl.comprimentoM) }} · {{ pl.classe }}ª · {{ pl.pecas }} peças</mat-option>
@@ -103,7 +103,7 @@
           @if (!c.concluidaEm) {
             <mat-form-field appearance="outline">
               <mat-label>Pilha que está sendo lida</mat-label>
-              <mat-select [value]="pilhaConferida()" (selectionChange)="pilhaConferida.set($event.value)">
+              <mat-select [value]="pilhaConferida()" (selectionChange)="pilhaConferida.set($event.value)"><app-busca-opcoes />
                 @for (pl of pilhasDaConferencia(); track pl.id) { <mat-option [value]="pl.id">{{ pl.codigo }} · {{ pl.pecas }} peças</mat-option> }
               </mat-select>
             </mat-form-field>
@@ -126,7 +126,7 @@
       } @else {
         <mat-form-field appearance="outline">
           <mat-label>Armazém</mat-label>
-          <mat-select [value]="idArmazemConferencia()" (selectionChange)="idArmazemConferencia.set($event.value)">
+          <mat-select [value]="idArmazemConferencia()" (selectionChange)="idArmazemConferencia.set($event.value)"><app-busca-opcoes />
             @for (a of valorDe(armazens) ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }}</mat-option> }
           </mat-select>
         </mat-form-field>

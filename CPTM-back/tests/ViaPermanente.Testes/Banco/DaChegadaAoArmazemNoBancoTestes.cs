@@ -91,12 +91,32 @@ public class DaChegadaAoArmazemNoBancoTestes : IAsyncLifetime
         }, idUsuario);
     }
 
-    private VerificarPecaDto Verificacao(string tag, ResultadoVerificacao resultado, string? motivo = null, string? foto = null, int tagsVistas = 1) => new()
+    private VerificarPecaDto Verificacao(string tag, ResultadoVerificacao resultado, string? motivo = null, string? foto = null, int tagsVistas = 1,
+        AtaqueBiologicoVerificacao ataque = AtaqueBiologicoVerificacao.Nenhum, RachaduraVerificacao? rachadura = null) => new()
     {
         Leitura = new LeituraDto { Tag = tag, TagsVistas = tagsVistas, IdLeitor = idLeitor, IdModo = 1 },
-        AtaqueBiologico = AtaqueBiologicoVerificacao.Nenhum, Rachadura = resultado == ResultadoVerificacao.Reprovada ? RachaduraVerificacao.Grave : RachaduraVerificacao.Nenhuma,
+        AtaqueBiologico = ataque,
+        Rachadura = rachadura ?? (resultado == ResultadoVerificacao.Reprovada ? RachaduraVerificacao.Grave : RachaduraVerificacao.Nenhuma),
         PlacaAntirrachante = true, PlacaConfere = true, Resultado = resultado, Motivo = motivo, FotoArquivo = foto
     };
+
+    /// <summary>Victor, 2026-10-31: com ataque biológico ou rachadura (qualquer grau), a peça é reprovada; aprovar com defeito é recusado, para evitar erro humano.</summary>
+    [Fact]
+    public async Task Peca_com_ataque_ou_rachadura_nao_e_aprovada()
+    {
+        var feixe = (await Chegar()).Feixes[0];
+        var peca = (await CadastrarComModulo(feixe.Id)).Peca!;
+
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(() =>
+            Qualidade().Verificar(peca.Id, Verificacao(peca.Tag!, ResultadoVerificacao.Aprovada, ataque: AtaqueBiologicoVerificacao.Suspeito), idUsuario));
+        Assert.Contains("reprovada", erro.Message);
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() =>
+            Qualidade().Verificar(peca.Id, Verificacao(peca.Tag!, ResultadoVerificacao.Aprovada, rachadura: RachaduraVerificacao.Leve), idUsuario));
+
+        var ruim = await Qualidade().Verificar(peca.Id,
+            Verificacao(peca.Tag!, ResultadoVerificacao.Reprovada, "Rachadura leve", "fotos/p3.jpg", rachadura: RachaduraVerificacao.Leve), idUsuario);
+        Assert.Equal("Reprovada", ruim!.Situacao);
+    }
 
     [Fact]
     public async Task Chegada_cria_o_lote_e_confere_ou_diverge()

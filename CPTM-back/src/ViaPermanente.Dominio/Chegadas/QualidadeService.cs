@@ -20,6 +20,10 @@ public class QualidadeService(IPecaRepository pecas, LeituraService leituras, Pe
         var reprovada = dto.Resultado == ResultadoVerificacao.Reprovada;
         if (reprovada && (string.IsNullOrWhiteSpace(dto.Motivo) || string.IsNullOrWhiteSpace(dto.FotoArquivo)))
             throw new RegraDeNegocioException("A peça reprovada precisa de motivo e foto.");
+        // Com ataque biológico ou rachadura, de qualquer grau, a peça é reprovada (Victor, 2026-10-31: evitar erro humano). A tela já
+        // muda o resultado sozinha; o servidor confere de novo, porque não confia só na tela.
+        if (!reprovada && (dto.AtaqueBiologico != AtaqueBiologicoVerificacao.Nenhum || dto.Rachadura != RachaduraVerificacao.Nenhuma))
+            throw new RegraDeNegocioException("Peça com ataque biológico ou rachadura é reprovada: marque Reprovada, com o motivo e a foto.");
         var tag = await pecas.TagAtiva(idDormente)
             ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
         if (await pecas.Verificacao(idDormente) is { } feita)

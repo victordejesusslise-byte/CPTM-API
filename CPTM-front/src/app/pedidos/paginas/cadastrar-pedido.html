@@ -10,7 +10,7 @@
     <div class="campos">
       <mat-form-field appearance="outline">
         <mat-label>Fornecedor</mat-label>
-        <mat-select formControlName="idEmpresa">
+        <mat-select formControlName="idEmpresa"><app-busca-opcoes />
           @for (f of valorDe(fornecedores) ?? []; track f.id) {
             @if (f.ativo) { <mat-option [value]="f.id">{{ f.nome }}</mat-option> }
           }
@@ -34,7 +34,7 @@
       @if (valorDe(contratos)?.length) {
         <mat-form-field appearance="outline">
           <mat-label>Contrato</mat-label>
-          <mat-select formControlName="idContrato">
+          <mat-select formControlName="idContrato"><app-busca-opcoes />
             @for (c of valorDe(contratos) ?? []; track c.id) { <mat-option [value]="c.id">{{ c.numeroContrato }} · ata {{ c.numeroAta }}</mat-option> }
           </mat-select>
           @if (contrato(); as c) { <mat-hint>vigência {{ data(c.vigenciaInicio) }} a {{ data(c.vigenciaFim) }}</mat-hint> }

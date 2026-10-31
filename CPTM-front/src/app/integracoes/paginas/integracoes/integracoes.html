@@ -41,7 +41,7 @@
       @if (ehSupervisor) {
         <div class="campos">
           <mat-form-field appearance="outline"><mat-label>Tamanho</mat-label>
-            <mat-select [(ngModel)]="novo.idTamanho">@for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }</mat-select></mat-form-field>
+            <mat-select [(ngModel)]="novo.idTamanho"><app-busca-opcoes />@for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }</mat-select></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Classe</mat-label>
             <mat-select [(ngModel)]="novo.classe"><mat-option [value]="1">1ª classe</mat-option><mat-option [value]="2">2ª classe</mat-option></mat-select></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Código no ERP</mat-label><input matInput class="mono" [(ngModel)]="novo.codigoErp" /></mat-form-field>

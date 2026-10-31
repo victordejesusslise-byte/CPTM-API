@@ -20,7 +20,7 @@
 } @else {
   <mat-form-field appearance="outline">
     <mat-label>Pedido</mat-label>
-    <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value)">
+    <mat-select [value]="idPedido()" (selectionChange)="idPedido.set($event.value)"><app-busca-opcoes />
       @for (p of abertos(); track p.id) {
         <mat-option [value]="p.id">{{ p.codigo }} · {{ p.empresa }} · {{ p.situacao | legivel }}</mat-option>
       }
@@ -32,14 +32,14 @@
       <div class="campos">
         <mat-form-field appearance="outline">
           <mat-label>Nota fiscal</mat-label>
-          <mat-select formControlName="idNota">
+          <mat-select formControlName="idNota"><app-busca-opcoes />
             <mat-option [value]="null">Sem nota ainda</mat-option>
             @for (n of valorDe(notas) ?? []; track n.id) { <mat-option [value]="n.id">{{ n.numero }} · {{ n.statusConferencia }}</mat-option> }
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Armazém</mat-label>
-          <mat-select formControlName="idArmazem">
+          <mat-select formControlName="idArmazem"><app-busca-opcoes />
             @for (a of armazens(); track a.id) { <mat-option [value]="a.id">{{ a.nome }}</mat-option> }
           </mat-select>
           <mat-error>Escolha o armazém.</mat-error>
@@ -69,13 +69,13 @@
             <mat-form-field appearance="outline"><mat-label>Peças no feixe</mat-label><input matInput type="number" min="1" formControlName="quantidade" /></mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Espécie</mat-label>
-              <mat-select formControlName="idEspecie">
+              <mat-select formControlName="idEspecie"><app-busca-opcoes />
                 @for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Tamanho</mat-label>
-              <mat-select formControlName="idTamanho">
+              <mat-select formControlName="idTamanho"><app-busca-opcoes />
                 @for (t of tamanhos(); track t.id) { <mat-option [value]="t.id">{{ metros(t.comprimentoM) }}</mat-option> }
               </mat-select>
             </mat-form-field>

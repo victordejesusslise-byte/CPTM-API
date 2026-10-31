@@ -15,7 +15,7 @@
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput [(ngModel)]="empresa.nome" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>CNPJ (opcional)</mat-label><input matInput class="mono" [(ngModel)]="empresa.cnpj" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Papel</mat-label>
-          <mat-select [(ngModel)]="empresa.papel">@for (p of papeis; track p) { <mat-option [value]="p">{{ p }}</mat-option> }</mat-select></mat-form-field>
+          <mat-select [(ngModel)]="empresa.papel"><app-busca-opcoes />@for (p of papeis; track p) { <mat-option [value]="p">{{ p }}</mat-option> }</mat-select></mat-form-field>
       </div>
       @if (empresa.papel === 'Fornecedor') {
         <div class="padroes">
@@ -25,7 +25,7 @@
               <mat-form-field appearance="outline"><mat-label>Largura (m)</mat-label><input matInput class="mono" type="number" step="0.01" min="0.05" max="1" placeholder="0,24" [(ngModel)]="m.larguraM" /></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Altura (m)</mat-label><input matInput class="mono" type="number" step="0.01" min="0.05" max="1" placeholder="0,17" [(ngModel)]="m.alturaM" /></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Espécie</mat-label>
-                <mat-select [(ngModel)]="m.idEspecie"><mat-option [value]="null">Todas as espécies</mat-option>@for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }</mat-select></mat-form-field>
+                <mat-select [(ngModel)]="m.idEspecie"><app-busca-opcoes /><mat-option [value]="null">Todas as espécies</mat-option>@for (e of especies(); track e.id) { <mat-option [value]="e.id">{{ e.nomePopular ?? e.nomeCientifico }}</mat-option> }</mat-select></mat-form-field>
               <button type="button" class="tirar" (click)="tirarPadrao(i)" [disabled]="empresa.medidas.length === 1" [attr.aria-label]="'Tirar o padrão ' + (i + 1)">×</button>
             </div>
           }
@@ -54,7 +54,7 @@
                 <mat-form-field appearance="outline"><mat-label>Largura (m)</mat-label><input matInput class="mono" type="number" step="0.01" min="0.05" max="1" placeholder="0,24" [(ngModel)]="padrao.larguraM" /></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Altura (m)</mat-label><input matInput class="mono" type="number" step="0.01" min="0.05" max="1" placeholder="0,17" [(ngModel)]="padrao.alturaM" /></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Espécie</mat-label>
-                  <mat-select [(ngModel)]="padrao.idEspecie"><mat-option [value]="null">Todas as espécies</mat-option>@for (s of especies(); track s.id) { <mat-option [value]="s.id">{{ s.nomePopular ?? s.nomeCientifico }}</mat-option> }</mat-select></mat-form-field>
+                  <mat-select [(ngModel)]="padrao.idEspecie"><app-busca-opcoes /><mat-option [value]="null">Todas as espécies</mat-option>@for (s of especies(); track s.id) { <mat-option [value]="s.id">{{ s.nomePopular ?? s.nomeCientifico }}</mat-option> }</mat-select></mat-form-field>
                 <button mat-flat-button type="button" (click)="salvarPadrao(e.id)" [disabled]="enviando()" [appCarregando]="enviando()">Adicionar padrão</button>
               </div>
             </td></tr>
@@ -73,7 +73,7 @@
       <header><h2>Novo contrato</h2><span class="nota">o pedido escolhe o contrato pelo fornecedor</span></header>
       <div class="campos">
         <mat-form-field appearance="outline"><mat-label>Fornecedor</mat-label>
-          <mat-select [(ngModel)]="contrato.idEmpresa">@for (f of fornecedores(); track f.id) { <mat-option [value]="f.id">{{ f.nome }}</mat-option> }</mat-select></mat-form-field>
+          <mat-select [(ngModel)]="contrato.idEmpresa"><app-busca-opcoes />@for (f of fornecedores(); track f.id) { <mat-option [value]="f.id">{{ f.nome }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Número da ata</mat-label><input matInput class="mono" [(ngModel)]="contrato.numeroAta" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Número do contrato</mat-label><input matInput class="mono" [(ngModel)]="contrato.numeroContrato" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Vigência de</mat-label><input matInput type="date" [(ngModel)]="contrato.vigenciaInicio" /></mat-form-field>
@@ -108,9 +108,9 @@
       <header><h2>Novo trecho</h2><span class="nota">a classe que o trecho aceita vale para a troca</span></header>
       <div class="campos">
         <mat-form-field appearance="outline"><mat-label>De</mat-label>
-          <mat-select [(ngModel)]="trecho.idEstacaoInicio">@for (e of valorDe(estacoes) ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
+          <mat-select [(ngModel)]="trecho.idEstacaoInicio"><app-busca-opcoes />@for (e of valorDe(estacoes) ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Até</mat-label>
-          <mat-select [(ngModel)]="trecho.idEstacaoFim">@for (e of valorDe(estacoes) ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
+          <mat-select [(ngModel)]="trecho.idEstacaoFim"><app-busca-opcoes />@for (e of valorDe(estacoes) ?? []; track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Classe exigida</mat-label>
           <mat-select [(ngModel)]="trecho.classeExigida"><mat-option [value]="1">1ª classe</mat-option><mat-option [value]="2">aceita 2ª classe</mat-option></mat-select></mat-form-field>
       </div>
@@ -156,7 +156,7 @@
       <header><h2>Novo leitor</h2><span class="nota">o módulo do celular é reconhecido pelo número de série</span></header>
       <div class="campos">
         <mat-form-field appearance="outline"><mat-label>Tipo</mat-label>
-          <mat-select [(ngModel)]="leitor.idTipoLeitor">@for (t of tiposLeitor; track t.id) { <mat-option [value]="t.id">{{ t.nome }}</mat-option> }</mat-select></mat-form-field>
+          <mat-select [(ngModel)]="leitor.idTipoLeitor"><app-busca-opcoes />@for (t of tiposLeitor; track t.id) { <mat-option [value]="t.id">{{ t.nome }}</mat-option> }</mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Código</mat-label><input matInput class="mono" [(ngModel)]="leitor.codigo" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Número de série</mat-label><input matInput class="mono" [(ngModel)]="leitor.numeroSerie" /></mat-form-field>
       </div>
