@@ -7,10 +7,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Chegadas;
 
-/// <summary>Etapa 02: a chegada da carga do pedido. Quem faz: operador de pátio.</summary>
+/// <summary>Etapa 02: a chegada da carga do pedido. Quem faz: operador de pátio. O especialista só lê (as cargas e os boletins da qualidade).</summary>
 [ApiController]
 [Route("api/pedidos/{idPedido:int}/chegadas")]
-[Authorize(Roles = $"{nameof(Cargo.Supervisor)},{nameof(Cargo.OperadorPatio)}")]
+[Authorize(Roles = $"{nameof(Cargo.Supervisor)},{nameof(Cargo.OperadorPatio)},{nameof(Cargo.Especialista)}")]
 public class ChegadaHandler(ChegadaService chegadas) : ControllerBase
 {
     [HttpGet]
@@ -21,6 +21,7 @@ public class ChegadaHandler(ChegadaService chegadas) : ControllerBase
     }
 
     /// <summary>Registra a chegada com os feixes. Volta com a conferência (nota × informado × feixes, e feixes × pedido).</summary>
+    [Authorize(Roles = $"{nameof(Cargo.Supervisor)},{nameof(Cargo.OperadorPatio)}")]
     [HttpPost]
     public async Task<ActionResult<ChegadaDto>> Registrar(int idPedido, NovaChegadaDto nova)
     {

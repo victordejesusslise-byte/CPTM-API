@@ -117,6 +117,18 @@ public class SegurancaDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
         Assert.True(diferentes.Count == 0, string.Join("; ", diferentes));
     }
 
+    /// <summary>Victor, 2026-10-31: "Cargas e boletins" do especialista ficava carregando (403 na lista de pedidos). Ele lê os pedidos e as chegadas, mas não grava.</summary>
+    [Fact]
+    public async Task Especialista_le_as_cargas_mas_nao_grava_pedido_nem_chegada()
+    {
+        var especialista = api.Cliente(Cargo.Especialista);
+        Assert.Equal(HttpStatusCode.OK, (await especialista.GetAsync("/api/pedidos")).StatusCode);
+        Assert.NotEqual(HttpStatusCode.Forbidden, (await especialista.GetAsync("/api/pedidos/999999/chegadas")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await especialista.PostAsJsonAsync("/api/pedidos", new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await especialista.PostAsJsonAsync("/api/pedidos/999999/chegadas", new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await especialista.GetAsync("/api/pedidos/999999/historico")).StatusCode);
+    }
+
     [Fact]
     public async Task Cada_cargo_recebe_403_no_que_nao_e_dele()
     {
