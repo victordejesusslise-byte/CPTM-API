@@ -37,4 +37,6 @@ public class Troca
     public Guid? IdCliente { get; set; }
     /// <summary>Quando a execução chegou ao servidor. A hora do campo fica em Data.</summary>
     public DateTime? RecebidoEm { get; set; }
+    /// <summary>O lote de troca em que esta troca foi feita (origem Lote).</summary>
+    public int? IdLoteTroca { get; set; }
 }

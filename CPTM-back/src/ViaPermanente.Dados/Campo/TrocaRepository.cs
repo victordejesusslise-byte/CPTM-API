@@ -24,7 +24,7 @@ public class TrocaRepository(ViaPermanenteContext db) : ITrocaRepository
     public Task<Trecho?> BuscarTrecho(int idTrecho) => db.Set<Trecho>().AsNoTracking().FirstOrDefaultAsync(t => t.IdTrecho == idTrecho);
 
     public async Task<IReadOnlyList<RecusaTroca>> Recusas(IReadOnlyCollection<int> idsTroca)
-        => await db.Set<RecusaTroca>().AsNoTracking().Where(r => idsTroca.Contains(r.IdTroca)).OrderBy(r => r.IdRecusa).ToListAsync();
+        => await db.Set<RecusaTroca>().AsNoTracking().Where(r => r.IdTroca != null && idsTroca.Contains(r.IdTroca.Value)).OrderBy(r => r.IdRecusa).ToListAsync();
 
     public Task<int?> PilhaDaSeparacao(int idTroca, int idDormente)
         => db.Set<Movimentacao>().AsNoTracking()

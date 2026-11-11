@@ -15,7 +15,7 @@ public class ModeloDoBancoTestes
         "ALERTA", "ARMAZEM", "CLASSIFICACAO_MADEIRA", "CONFERENCIA_ARMAZEM", "CONTRATO",
         "DETECCAO_IMAGEM", "DORMENTE", "EMPRESA", "ESPECIE", "ESTACAO", "EVENTO_POSICAO", "FEIXE", "GRAVACAO_TAG",
         "INSPECAO", "INSPECAO_CORRECAO", "INTEGRACAO_LOG", "LEITOR", "LEITURA_DORMENTE", "LEITURA_OCR", "LEITURA_VIA",
-        "LOTE", "MEDIDA_FORNECEDOR", "MODELO_OCR", "MODO_LEITURA", "MOVIMENTACAO", "NOTA_FISCAL", "NOTA_FISCAL_ITEM", "OCR_CAMPO",
+        "LOTE", "LOTE_TROCA", "MEDIDA_FORNECEDOR", "MODELO_OCR", "MODO_LEITURA", "MOVIMENTACAO", "NOTA_FISCAL", "NOTA_FISCAL_ITEM", "OCR_CAMPO",
         "OFERTA_FORNECEDOR", "PARAMETRO", "PASSAGEM", "PEDIDO", "PEDIDO_HISTORICO", "PEDIDO_ITEM", "PILHA",
         "POSICAO_ATUAL", "RECEBIMENTO", "RECUSA_TROCA", "RELATORIO_AMBIENTAL", "RELATORIO_AMBIENTAL_ITEM", "RFID",
         "SENSOR", "SETOR", "TRECHO", "TROCA", "USUARIO", "VERIFICACAO_QUALIDADE",
@@ -32,7 +32,7 @@ public class ModeloDoBancoTestes
     }
 
     [Fact]
-    public void Tem_as_48_tabelas_do_cerebro()
+    public void Tem_as_49_tabelas_do_cerebro()
     {
         var tabelas = Modelo().GetEntityTypes().Select(e => e.GetTableName()).OrderBy(n => n).ToArray();
         Assert.Equal(TabelasDoCerebro.OrderBy(n => n), tabelas);
@@ -69,5 +69,25 @@ public class ModeloDoBancoTestes
     {
         var status = Modelo().FindEntityType(typeof(Troca))!.FindProperty(nameof(Troca.Status))!;
         Assert.Equal(typeof(string), status.GetValueConverter()!.ProviderClrType);
+    }
+
+    /// <summary>Lote de troca (Victor, 2026-11-11): o status do lote também vai como texto, e o envio repetido do celular entra uma vez.</summary>
+    [Fact]
+    public void Status_do_lote_gravado_como_texto()
+    {
+        var lote = Modelo().FindEntityType(typeof(LoteTroca))!;
+        Assert.Equal(typeof(string), lote.FindProperty(nameof(LoteTroca.Status))!.GetValueConverter()!.ProviderClrType);
+        Assert.True(lote.GetIndexes().Single(i => i.GetDatabaseName() == "UX_LOTE_TROCA_id_cliente").IsUnique);
+    }
+
+    /// <summary>A recusa da via é de uma troca avulsa ou de um lote inteiro, nunca dos dois.</summary>
+    [Fact]
+    public void Recusa_e_de_uma_troca_ou_de_um_lote()
+    {
+        var recusa = Modelo().FindEntityType(typeof(RecusaTroca))!;
+        Assert.True(recusa.FindProperty(nameof(RecusaTroca.IdTroca))!.IsNullable);
+        Assert.Contains(recusa.GetCheckConstraints(), c => c.Name == "CK_RECUSA_TROCA_troca_ou_lote");
+        Assert.Contains(recusa.GetForeignKeys(), f => f.PrincipalEntityType.ClrType == typeof(LoteTroca));
+        Assert.Contains(Modelo().FindEntityType(typeof(Troca))!.GetForeignKeys(), f => f.PrincipalEntityType.ClrType == typeof(LoteTroca));
     }
 }

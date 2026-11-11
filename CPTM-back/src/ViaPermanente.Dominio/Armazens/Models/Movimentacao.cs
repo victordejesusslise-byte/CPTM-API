@@ -11,6 +11,8 @@ public class Movimentacao : IRegistroDeCampo
     public int? IdPilhaOrigem { get; set; }
     public int? IdPilhaDestino { get; set; }
     public int? IdTroca { get; set; }
+    /// <summary>A peça separada para um lote de troca, devolvida dele ou que saiu nele.</summary>
+    public int? IdLoteTroca { get; set; }
     public int? IdLeitura { get; set; }
     public int IdUsuario { get; set; }
     public int? IdLeitor { get; set; }

@@ -6,7 +6,7 @@ using ViaPermanente.Dominio.Via.Models;
 
 namespace ViaPermanente.Dados.Configuracoes;
 
-/// <summary>ALERTA, INSPECAO, INSPECAO_CORRECAO, RECUSA_TROCA, TROCA e VISTORIA_ALERTA.</summary>
+/// <summary>ALERTA, INSPECAO, INSPECAO_CORRECAO, LOTE_TROCA, RECUSA_TROCA, TROCA e VISTORIA_ALERTA.</summary>
 internal static class CampoConfiguracao
 {
     public static void Aplicar(ModelBuilder mb)
@@ -34,13 +34,31 @@ internal static class CampoConfiguracao
         mb.Fk<InspecaoCorrecao, Usuario>(x => x.IdUsuario);
         mb.Fk<InspecaoCorrecao, Troca>(x => x.IdTrocaCancelada);
 
+        // Lote de troca (Victor, 2026-11-11): o pedido de várias trocas de uma vez; cada par feito na noite vira uma TROCA ligada a ele.
+        mb.Entity<LoteTroca>(e =>
+        {
+            e.HasKey(x => x.IdLoteTroca);
+            // O fechamento enviado duas vezes pelo celular entra uma vez.
+            e.HasIndex(x => x.IdCliente).IsUnique().HasFilter("[id_cliente] IS NOT NULL").HasDatabaseName("UX_LOTE_TROCA_id_cliente");
+        });
+        mb.Fk<LoteTroca, Trecho>(x => x.IdTrecho);
+        mb.Fk<LoteTroca, Usuario>(x => x.IdUsuarioPediu);
+        mb.Fk<LoteTroca, Usuario>(x => x.IdUsuarioAprovou);
+        mb.Fk<LoteTroca, Usuario>(x => x.IdUsuarioFez);
+
         mb.Entity<RecusaTroca>(e =>
         {
             e.HasKey(x => x.IdRecusa);
-            e.ToTable(t => t.HasCheckConstraint("CK_RECUSA_TROCA_manter_com_resposta",
-                "[decisao] IS NULL OR [decisao] <> 'Manter' OR [resposta] IS NOT NULL"));
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_RECUSA_TROCA_manter_com_resposta",
+                    "[decisao] IS NULL OR [decisao] <> 'Manter' OR [resposta] IS NOT NULL");
+                t.HasCheckConstraint("CK_RECUSA_TROCA_troca_ou_lote",
+                    "([id_troca] IS NOT NULL AND [id_lote_troca] IS NULL) OR ([id_troca] IS NULL AND [id_lote_troca] IS NOT NULL)");
+            });
         });
         mb.Fk<RecusaTroca, Troca>(x => x.IdTroca);
+        mb.Fk<RecusaTroca, LoteTroca>(x => x.IdLoteTroca);
         mb.Fk<RecusaTroca, Usuario>(x => x.IdUsuario);
         mb.Fk<RecusaTroca, Usuario>(x => x.IdUsuarioDecisao);
 
@@ -62,6 +80,7 @@ internal static class CampoConfiguracao
         mb.Fk<Troca, Usuario>(x => x.IdUsuarioAprovou);
         mb.Fk<Troca, Usuario>(x => x.IdUsuarioSeparou);
         mb.Fk<Troca, Usuario>(x => x.IdUsuarioFez);
+        mb.Fk<Troca, LoteTroca>(x => x.IdLoteTroca);
 
         mb.Entity<VistoriaAlerta>(e => e.HasKey(x => x.IdVistoria));
         mb.Fk<VistoriaAlerta, Alerta>(x => x.IdAlerta);

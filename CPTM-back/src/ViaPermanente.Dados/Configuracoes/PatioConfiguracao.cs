@@ -112,6 +112,7 @@ internal static class PatioConfiguracao
         mb.Fk<Movimentacao, Pilha>(x => x.IdPilhaOrigem);
         mb.Fk<Movimentacao, Pilha>(x => x.IdPilhaDestino);
         mb.Fk<Movimentacao, Troca>(x => x.IdTroca);
+        mb.Fk<Movimentacao, LoteTroca>(x => x.IdLoteTroca);
         mb.Fk<Movimentacao, LeituraDormente>(x => x.IdLeitura);
         mb.Fk<Movimentacao, Usuario>(x => x.IdUsuario);
         mb.Fk<Movimentacao, Leitor>(x => x.IdLeitor);

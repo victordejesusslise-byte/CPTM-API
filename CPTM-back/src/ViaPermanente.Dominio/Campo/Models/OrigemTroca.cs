@@ -4,5 +4,7 @@ namespace ViaPermanente.Dominio.Campo.Models;
 public enum OrigemTroca
 {
     Inspecao,
-    Requisicao
+    Requisicao,
+    /// <summary>A troca feita num lote de troca (a peça que sai só aparece na noite).</summary>
+    Lote
 }
