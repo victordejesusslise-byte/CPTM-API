@@ -95,6 +95,7 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = 0, Leitura = Lida(entra) }, patio));
         var separada = await Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = await Peca(entra), Leitura = Lida(entra) }, patio);
         Assert.Equal(("Separada", Tag(entra)), (separada!.Status, separada.TagEntrou));
+        Assert.Null((await BancoDeTeste.Pecas(db).BuscarPorId(await Peca(entra)))!.IdPilha); // saiu da pilha de verdade
         Assert.DoesNotContain((await Trocas().ListarCompativeis(pedida.Id))!, c => c.Peca.Tag == Tag(entra));
 
         var recusada = await Trocas().Recusar(pedida.Id, new RecusarTrocaDto { Motivo = "Trilho sem fixação", FotoArquivo = "fotos/recusa.jpg" }, via);

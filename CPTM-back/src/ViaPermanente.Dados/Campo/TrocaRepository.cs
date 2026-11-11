@@ -11,9 +11,10 @@ public class TrocaRepository(ViaPermanenteContext db) : ITrocaRepository
 {
     private static readonly StatusTroca[] Abertas = [StatusTroca.Pedida, StatusTroca.Aprovada, StatusTroca.AguardandoPeca, StatusTroca.Separada, StatusTroca.Recusada];
 
-    public async Task<IReadOnlyList<Troca>> Listar(StatusTroca? status = null, int? idTroca = null, int? idDormenteSaiu = null)
+    public async Task<IReadOnlyList<Troca>> Listar(StatusTroca? status = null, int? idTroca = null, int? idDormenteSaiu = null, int? idLoteTroca = null)
         => await db.Set<Troca>().AsNoTracking()
-            .Where(t => (status == null || t.Status == status) && (idTroca == null || t.IdTroca == idTroca) && (idDormenteSaiu == null || t.IdDormenteSaiu == idDormenteSaiu))
+            .Where(t => (status == null || t.Status == status) && (idTroca == null || t.IdTroca == idTroca) && (idDormenteSaiu == null || t.IdDormenteSaiu == idDormenteSaiu)
+                        && (idLoteTroca == null || t.IdLoteTroca == idLoteTroca))
             .OrderByDescending(t => t.DataPedido).ThenByDescending(t => t.IdTroca)
             .ToListAsync();
 
@@ -50,7 +51,7 @@ public class TrocaRepository(ViaPermanenteContext db) : ITrocaRepository
             db.Add(movimentacao);
         }
         foreach (var (idDormente, mudar) in m.Pecas)
-            mudar((await db.Set<Dormente>().FindAsync(idDormente))!);
+            await db.MudarPeca(idDormente, mudar);
         if (m.RecusaNova is not null) db.Add(m.RecusaNova);
         if (m.RecusaAlterada is not null) db.Update(m.RecusaAlterada);
         if (m.Correcao is not null) db.Add(m.Correcao);

@@ -5,7 +5,7 @@ namespace ViaPermanente.Dominio.Campo;
 
 public interface ITrocaRepository
 {
-    Task<IReadOnlyList<Troca>> Listar(StatusTroca? status = null, int? idTroca = null, int? idDormenteSaiu = null);
+    Task<IReadOnlyList<Troca>> Listar(StatusTroca? status = null, int? idTroca = null, int? idDormenteSaiu = null, int? idLoteTroca = null);
     /// <summary>As peças separadas para trocas abertas (não estão mais disponíveis).</summary>
     Task<IReadOnlyCollection<int>> PecasReservadas();
     Task<Trecho?> BuscarTrecho(int idTrecho);
