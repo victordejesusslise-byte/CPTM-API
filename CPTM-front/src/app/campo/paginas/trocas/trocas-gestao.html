@@ -3,6 +3,12 @@
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
+@if (pedindoLote()) { <app-pedir-lote (pedido)="lotePedido($event)" (cancelar)="fechar()" /> }
+@if (idLote() && loteAberto.isLoading() && !valorDe(loteAberto)) {
+  <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando o lote…" /></section>
+}
+@if (idLote() && valorDe(loteAberto); as l) { <app-lote-aberto [lote]="l" (mudou)="loteMudou($event)" (fechar)="fechar()" /> }
+
 @if (idAberta() && troca.isLoading() && !valorDe(troca)) {
   <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando a troca…" /></section>
 }
@@ -55,9 +61,19 @@
 }
 
 <section class="cartao">
-  <header><h2>{{ texto().titulo }}</h2><span class="nota">{{ valorDe(lista)?.length ?? 0 }} · toque para abrir</span></header>
-  <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length" textoVazio="Nenhuma troca aqui." />
+  <header><h2>{{ texto().titulo }}</h2><span class="nota">{{ quantos() }} · toque para abrir</span></header>
+  @if (ehTecnico() && aba() === 'andamento' && !pedindoLote()) {
+    <div class="acoes"><button mat-stroked-button type="button" (click)="pedirLote()">Pedir lote de troca</button></div>
+  }
+  <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !quantos()" textoVazio="Nenhuma troca aqui." />
   <div class="cartoes-alerta">
+    @for (l of valorDe(lotes) ?? []; track l.id) {
+      <button type="button" class="cartao-alerta" [class.urgente]="l.status === 'Pedido' || l.status === 'Recusado'" [class.selecionado]="idLote() === l.id" (click)="abrirLote(l)">
+        <span class="topo-alerta"><b>Lote {{ l.codigo }}</b><span class="pilula pilula--lote">Lote · {{ l.quantidadeAprovada ?? l.quantidadePedida }} peças</span></span>
+        <span class="tipo">{{ rotuloLote[l.status] }} · {{ l.trecho }} · <span class="mono">km {{ km(l.kmInicio) }} a {{ km(l.kmFim) }}</span></span>
+        <span class="nota">{{ metros(l.comprimentoM) }} · pedido em {{ dataHora(l.dataPedido) }} · laudo do lote</span>
+      </button>
+    }
     @for (t of valorDe(lista) ?? []; track t.id) {
       <button type="button" class="cartao-alerta" [class.urgente]="t.status === 'Pedida' || t.status === 'Recusada'" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
         <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>

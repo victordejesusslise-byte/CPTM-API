@@ -5,8 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { Sessao } from '../../../nucleo/sessao/sessao';
-import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
-import { TrocaDto } from '../../entidades/campo';
+import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
+import { LoteTrocaDto, StatusLoteTroca, TrocaDto } from '../../entidades/campo';
 import { StatusTroca } from '../../../compartilhado/entidades/enums';
 import { TipoLaudo } from '../../../laudos/servicos/laudos';
 import { PreviaLaudo } from '../../../laudos/componentes/previa-laudo';
@@ -16,14 +16,18 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
 import { PedidosDeTroca } from '../../../nucleo/ao-vivo/pedidos-de-troca';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
+import { LotesTroca } from '../../servicos/lotes-troca';
+import { PedirLote } from './pedir-lote';
+import { LoteAberto, ROTULO_LOTE } from './lote-aberto';
 
 type Aba = 'aprovar' | 'decididas' | 'andamento' | 'recusas' | 'feitas';
-const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[] }> = {
-  aprovar: { sobre: 'Troca · 11', titulo: 'Para aprovar', status: ['Pedida'] },
-  decididas: { sobre: 'Troca · 11', titulo: 'Decididas', status: ['Aprovada', 'AguardandoPeca', 'Reprovada'] },
-  andamento: { sobre: 'Campo', titulo: 'Trocas em andamento', status: ['Pedida', 'Aprovada', 'AguardandoPeca', 'Separada'] },
-  recusas: { sobre: 'Campo', titulo: 'Recusas da via', status: ['Recusada'] },
-  feitas: { sobre: 'Campo', titulo: 'Trocas feitas', status: ['Feita'] },
+/** Cada aba mostra as trocas avulsas e os lotes de troca do mesmo passo (Victor, 2026-11-11). */
+const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[]; lotes: StatusLoteTroca[] }> = {
+  aprovar: { sobre: 'Troca · 11', titulo: 'Para aprovar', status: ['Pedida'], lotes: ['Pedido'] },
+  decididas: { sobre: 'Troca · 11', titulo: 'Decididas', status: ['Aprovada', 'AguardandoPeca', 'Reprovada'], lotes: ['Aprovado', 'AguardandoPeca', 'Reprovado'] },
+  andamento: { sobre: 'Campo', titulo: 'Trocas em andamento', status: ['Pedida', 'Aprovada', 'AguardandoPeca', 'Separada'], lotes: ['Pedido', 'Aprovado', 'AguardandoPeca', 'Separado'] },
+  recusas: { sobre: 'Campo', titulo: 'Recusas da via', status: ['Recusada'], lotes: ['Recusado'] },
+  feitas: { sobre: 'Campo', titulo: 'Trocas feitas', status: ['Feita'], lotes: ['Feito'] },
 };
 
 /**
@@ -32,9 +36,10 @@ const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[] }
  */
 @Component({
   selector: 'app-trocas-gestao',
-  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, ResumoTroca, PreviaLaudo],
+  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, ResumoTroca, PreviaLaudo, PedirLote, LoteAberto],
   templateUrl: './trocas-gestao.html',
   styles: `
+    .pilula--lote { background: color-mix(in srgb, var(--areia) 22%, transparent); color: var(--tinta); border-color: var(--areia); }
     .laudo-previa { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--linha); }
     .laudo-previa header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px; }
     .laudo-previa h3 { margin: 0; font-size: 15px; }
@@ -45,7 +50,11 @@ export class TrocasGestao {
   protected readonly valorDe = valorDe;
   readonly aba = input<Aba>('andamento');
   readonly aberta = input<string>();
+  /** ?lote= o lote de troca aberto; ?novo=lote o técnico pedindo um lote. */
+  readonly lote = input<string>();
+  readonly novo = input<string>();
   private readonly api = inject(Trocas);
+  private readonly lotesApi = inject(LotesTroca);
   private readonly router = inject(Router);
   private readonly sessao = inject(Sessao);
 
@@ -54,6 +63,16 @@ export class TrocasGestao {
     params: () => ABAS[this.aba()].status,
     stream: ({ params }) => forkJoin(params.map((s) => this.api.listar(s))).pipe(map((l) => l.flat().sort((a, b) => b.dataPedido.localeCompare(a.dataPedido)))),
   });
+  protected readonly lotes = rxResource({
+    params: () => ABAS[this.aba()].lotes,
+    stream: ({ params }) => forkJoin(params.map((s) => this.lotesApi.listar(s))).pipe(map((l) => l.flat().sort((a, b) => b.dataPedido.localeCompare(a.dataPedido)))),
+  });
+  protected readonly quantos = computed(() => (valorDe(this.lista)?.length ?? 0) + (valorDe(this.lotes)?.length ?? 0));
+  protected readonly idLote = computed(() => (this.lote() ? Number(this.lote()) : null));
+  protected readonly loteAberto = rxResource({ params: () => this.idLote() ?? undefined, stream: ({ params }) => this.lotesApi.buscar(params) });
+  protected readonly pedindoLote = computed(() => this.novo() === 'lote' && this.sessao.temCargo('Tecnico'));
+  protected readonly rotuloLote = ROTULO_LOTE;
+  protected readonly metros = metros;
   protected readonly erroLista = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly idAberta = computed(() => (this.aberta() ? Number(this.aberta()) : null));
   protected readonly troca = rxResource({ params: () => this.idAberta() ?? undefined, stream: ({ params }) => (params ? this.api.buscar(params) : of(null)) });
@@ -88,6 +107,32 @@ export class TrocasGestao {
 
   protected fechar(): void {
     this.router.navigate([], { queryParams: {} });
+  }
+
+  protected abrirLote(l: LoteTrocaDto): void {
+    this.mensagem.set(null);
+    this.erro.set(null);
+    this.router.navigate([], { queryParams: { lote: l.id } });
+  }
+
+  protected pedirLote(): void {
+    this.mensagem.set(null);
+    this.router.navigate([], { queryParams: { novo: 'lote' } });
+  }
+
+  /** O lote pedido já abre, com o caminho: ele vai para Aprovar trocas. */
+  protected lotePedido(l: LoteTrocaDto): void {
+    this.mensagem.set(`Lote ${l.codigo} pedido. Ele está em Campo › Aprovar trocas, esperando quem aprova.`);
+    this.lotes.reload();
+    void this.pedidos.contar();
+    this.router.navigate([], { queryParams: { lote: l.id } });
+  }
+
+  protected loteMudou(mensagem: string): void {
+    this.mensagem.set(mensagem);
+    this.loteAberto.reload();
+    this.lotes.reload();
+    void this.pedidos.contar();
   }
 
   protected decidir(t: TrocaDto, aprovar: boolean): void {
