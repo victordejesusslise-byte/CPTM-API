@@ -4,7 +4,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
-import { CompativelDto, TrocaDto } from '../../entidades/campo';
+import { CompativelDto, LoteTrocaDto, StatusLoteTroca, TrocaDto } from '../../entidades/campo';
+import { LotesTroca } from '../../servicos/lotes-troca';
+import { ROTULO_LOTE } from './lote-aberto';
+import { SepararLote } from './separar-lote';
 import { MetodoCaptura, StatusTroca } from '../../../compartilhado/entidades/enums';
 import { Trocas } from '../../servicos/trocas';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
@@ -14,23 +17,50 @@ import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 type Aba = 'fila' | 'separadas';
-const ABAS: Record<Aba, { titulo: string; status: StatusTroca[] }> = {
-  fila: { titulo: 'Trocas para separar', status: ['Aprovada', 'AguardandoPeca'] },
-  separadas: { titulo: 'Separadas, esperando a via', status: ['Separada'] },
+/** Os lotes de troca (Victor, 2026-11-11): para separar, os aprovados que ainda não têm todas as peças; separados, os que já têm alguma. */
+const ABAS: Record<Aba, { titulo: string; status: StatusTroca[]; lotes: StatusLoteTroca[] }> = {
+  fila: { titulo: 'Trocas para separar', status: ['Aprovada', 'AguardandoPeca'], lotes: ['Aprovado', 'AguardandoPeca', 'Separado'] },
+  separadas: { titulo: 'Separadas, esperando a via', status: ['Separada'], lotes: ['Separado'] },
 };
 
 /** Separar peça (protótipo YBYRA, etapa 12): o pátio separa uma peça compatível; o sistema sugere a da frente da pilha. */
 @Component({
   selector: 'app-separar-peca',
-  imports: [Esqueleto, FORMULARIO, Estado, LeituraTag, ResumoTroca],
+  imports: [Esqueleto, FORMULARIO, Estado, LeituraTag, ResumoTroca, SepararLote],
   templateUrl: './separar-peca.html',
 })
 export class SepararPeca {
   protected readonly valorDe = valorDe;
   readonly aba = input<Aba>('fila');
   readonly aberta = input<string>();
+  /** ?lote= o lote de troca aberto. */
+  readonly lote = input<string>();
   private readonly api = inject(Trocas);
+  private readonly lotesApi = inject(LotesTroca);
   private readonly router = inject(Router);
+
+  protected readonly lotes = rxResource({
+    params: () => ABAS[this.aba()].lotes,
+    stream: ({ params }) => forkJoin(params.map((s) => this.lotesApi.listar(s))).pipe(map((l) => l.flat())),
+  });
+  protected readonly lotesVisiveis = computed(() => (valorDe(this.lotes) ?? []).filter((l) =>
+    this.aba() === 'fila' ? l.separadas.length < (l.quantidadeAprovada ?? 0) : l.separadas.length > 0));
+  protected readonly quantos = computed(() => (valorDe(this.lista)?.length ?? 0) + this.lotesVisiveis().length);
+  protected readonly idLote = computed(() => (this.lote() ? Number(this.lote()) : null));
+  protected readonly loteAberto = rxResource({ params: () => this.idLote() ?? undefined, stream: ({ params }) => this.lotesApi.buscar(params) });
+  protected readonly rotuloLote = ROTULO_LOTE;
+
+  protected abrirLote(l: LoteTrocaDto): void {
+    this.mensagem.set(null);
+    this.erro.set(null);
+    this.router.navigate([], { queryParams: { lote: l.id } });
+  }
+
+  protected loteMudou(mensagem: string): void {
+    this.mensagem.set(mensagem);
+    this.loteAberto.reload();
+    this.lotes.reload();
+  }
 
   protected readonly titulo = computed(() => ABAS[this.aba()].titulo);
   protected readonly lista = rxResource({
