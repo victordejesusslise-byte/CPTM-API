@@ -17,7 +17,7 @@ namespace ViaPermanente.Dominio.Campo;
 public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspecaoRepository inspecoes, IParametroRepository parametros,
     ICatalogoRepository catalogo, LeituraService leituras, PecaService consulta)
 {
-    public const string ChaveQuemAprova = "troca_quem_aprova";
+    public const string ChaveQuemAprova = QuemAprovaTroca.Chave;
     private static readonly StatusTroca[] Abertas = [StatusTroca.Pedida, StatusTroca.Aprovada, StatusTroca.AguardandoPeca, StatusTroca.Separada, StatusTroca.Recusada];
 
     public async Task<TrocaDto> Pedir(NovaTrocaDto dto, int idUsuario)
@@ -61,10 +61,7 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         var troca = await Buscar(idTroca);
         if (troca is null)
             return null;
-        var quemAprova = ((await parametros.Buscar(ChaveQuemAprova))?.Valor ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (!quemAprova.Contains(cargo.ToString(), StringComparer.OrdinalIgnoreCase))
-            throw new RegraDeNegocioException($"Quem aprova a troca: {string.Join(", ", quemAprova)} (parâmetro {ChaveQuemAprova}).");
+        QuemAprovaTroca.Conferir((await parametros.Buscar(ChaveQuemAprova))?.Valor, cargo);
         if (troca.Status != StatusTroca.Pedida)
             throw new RegraDeNegocioException("Só a troca pedida é aprovada ou reprovada.");
         if (!dto.Aprovar && string.IsNullOrWhiteSpace(dto.Motivo))
@@ -289,19 +286,9 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
     {
         var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
         var classeExigida = troca.IdTrecho is int idTrecho && await trocas.BuscarTrecho(idTrecho) is { } trecho ? trecho.ClasseExigida : saiu.Classe;
-        var reservadas = await trocas.PecasReservadas();
+        var fora = (await trocas.PecasReservadas()).Append(saiu.Id).ToHashSet();
         var armazens = (await catalogo.ListarArmazens()).ToDictionary(a => a.IdArmazem, a => a.Km);
-        var km = troca.Km ?? saiu.KmProjeto;
-        var hoje = DateTime.Now;
-
-        var lista = (await consulta.Estoque())
-            .Where(p => p.IdPilha is not null && !reservadas.Contains(p.Id) && p.Id != saiu.Id
-                        && CompatibilidadeTroca.Serve(p.IdTamanho, p.Classe, saiu.IdTamanho, classeExigida))
-            .Select(p => (Peca: p, Distancia: km is decimal k && armazens.GetValueOrDefault(p.IdArmazem) is decimal ka ? Math.Abs(ka - k) : (decimal?)null))
-            .OrderBy(x => x.Distancia ?? decimal.MaxValue).ThenBy(x => x.Peca.EntradaArmazemEm ?? DateTime.MaxValue).ThenBy(x => x.Peca.Id)
-            .ToList();
-        return lista.Select((x, i) => new CompativelDto(x.Peca, x.Distancia,
-            x.Peca.EntradaArmazemEm is DateTime e ? (int)(hoje - e).TotalDays : 0, i == 0)).ToList();
+        return CompatibilidadeTroca.Ordenar(await consulta.Estoque(), saiu.IdTamanho, classeExigida, troca.Km ?? saiu.KmProjeto, armazens, fora, DateTime.Now);
     }
 
     private async Task<IReadOnlyList<TrocaDto>> Montar(IReadOnlyList<Troca> lista)
