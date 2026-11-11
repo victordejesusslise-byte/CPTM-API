@@ -8,12 +8,12 @@ import { Sessao } from '../sessao/sessao';
 import { GUARDADO, reduzirFoto } from './guardado';
 import { Rede } from './rede';
 
-/** O que vai pela fila: a troca feita, a recusa, a inspeção e a vistoria (tudo o que se faz no campo sem rede). */
-export type TipoRegistro = 'troca' | 'recusa' | 'inspecao' | 'vistoria';
+/** O que vai pela fila: a troca feita, a recusa, a inspeção, a vistoria e o lote de troca fechado ou recusado (tudo o que se faz no campo sem rede). */
+export type TipoRegistro = 'troca' | 'recusa' | 'inspecao' | 'vistoria' | 'lote' | 'recusa-lote';
 
 export interface NovoRegistro {
   tipo: TipoRegistro;
-  /** A troca (troca e recusa), a peça (inspeção) ou o alerta (vistoria). */
+  /** A troca (troca e recusa), a peça (inspeção), o alerta (vistoria) ou o lote de troca (lote e recusa-lote). */
   alvo: number;
   /** O registro como a API pede, sem a foto, o ID do celular e a hora (a fila põe). */
   corpo: Record<string, unknown>;
@@ -32,6 +32,10 @@ export interface ItemFila extends NovoRegistro {
   foto: string;
   /** O caminho da foto no servidor, depois que ela subiu (no reenvio não sobe de novo). */
   arquivo?: string;
+  /** O lote de troca: uma foto por dormente (a primeira é também `foto`), cada uma vai no par da mesma posição. */
+  fotos?: string[];
+  /** Os caminhos das fotos do lote no servidor, na ordem dos pares, conforme sobem. */
+  arquivos?: string[];
   tentativas: number;
   /** Por que o servidor recusou (Não enviados). */
   motivo?: string;
@@ -45,7 +49,15 @@ const DESTINO: Record<TipoRegistro, { foto: (alvo: number) => string; registro: 
   recusa: { foto: (id) => `/trocas/${id}/foto`, registro: (id) => `/trocas/${id}/recusa` },
   inspecao: { foto: (id) => `/dormentes/${id}/fotos/inspecao`, registro: () => '/inspecoes' },
   vistoria: { foto: (id) => `/alertas/${id}/foto`, registro: (id) => `/alertas/${id}/vistoria` },
+  lote: { foto: (id) => `/lotes-troca/${id}/foto`, registro: (id) => `/lotes-troca/${id}/fechamento` },
+  'recusa-lote': { foto: (id) => `/lotes-troca/${id}/foto`, registro: (id) => `/lotes-troca/${id}/recusa` },
 };
+
+/** O corpo que vai para a API: no lote, cada foto vai no par da mesma posição; nos outros, a foto vai em fotoArquivo. */
+const corpoComFotos = (item: ItemFila, arquivos: string[]): Record<string, unknown> =>
+  item.fotos
+    ? { ...item.corpo, pares: (item.corpo['pares'] as Record<string, unknown>[]).map((par, i) => ({ ...par, fotoArquivo: arquivos[i] })) }
+    : { ...item.corpo, fotoArquivo: arquivos[0] };
 
 /**
  * A fila sem internet (app Android, Etapa 6, 2026-10-24): a troca, a recusa, a inspeção e a vistoria ficam guardadas no celular
@@ -84,13 +96,16 @@ export class Fila {
    * Guarda o registro com a foto e já tenta mandar. Enviado: o servidor recebeu (com a resposta dele). Guardado: sem rede, sobe depois.
    * Recusado: o servidor não aceitou; a tela mostra o motivo e o registro sai da fila (quem está na frente corrige e manda de novo).
    */
-  async registrar(novo: NovoRegistro, foto: Blob): Promise<ResultadoRegistro> {
+  async registrar(novo: NovoRegistro, foto: Blob | Blob[]): Promise<ResultadoRegistro> {
     await this.carregada;
     const idUsuario = this.sessao.usuario()?.id;
     if (!idUsuario) return { estado: 'recusado', motivo: 'Entre de novo para registrar.' };
     const id = novoIdCliente();
-    const item: ItemFila = { ...novo, id, idUsuario, criadoEm: new Date().toISOString(), foto: `${id}.jpg`, tentativas: 0 };
-    await this.guardado.gravarFoto(item.foto, await reduzirFoto(foto));
+    const varias = Array.isArray(foto) ? foto : null;
+    const fotos = varias ? varias.map((_, i) => `${id}-${i + 1}.jpg`) : undefined;
+    const item: ItemFila = { ...novo, id, idUsuario, criadoEm: new Date().toISOString(), foto: fotos?.[0] ?? `${id}.jpg`, fotos, tentativas: 0 };
+    if (varias) for (const [i, f] of varias.entries()) await this.guardado.gravarFoto(fotos![i], await reduzirFoto(f));
+    else await this.guardado.gravarFoto(item.foto, await reduzirFoto(foto as Blob));
     this.itens.update((l) => [...l, item]);
     await this.salvar();
     await this.enviarTudo();
@@ -128,8 +143,12 @@ export class Fila {
   async descartar(item: ItemFila): Promise<void> {
     if (item.idUsuario !== this.sessao.usuario()?.id) return;
     this.naoEnviados.update((l) => l.filter((i) => i.id !== item.id));
-    await this.guardado.apagarFoto(item.foto);
+    await this.apagarFotos(item);
     await this.salvar();
+  }
+
+  private async apagarFotos(item: ItemFila): Promise<void> {
+    for (const nome of item.fotos ?? [item.foto]) await this.guardado.apagarFoto(nome);
   }
 
   /** Volta o registro de "Não enviados" para a fila (no fim) e tenta mandar. */
@@ -144,21 +163,26 @@ export class Fila {
   private async enviarUm(item: ItemFila): Promise<'ok' | 'recusado' | 'parar'> {
     const destino = DESTINO[item.tipo];
     try {
-      if (!item.arquivo) {
-        const foto = await this.guardado.lerFoto(item.foto);
+      // Cada foto sobe uma vez: no reenvio, as que já subiram não sobem de novo.
+      const nomes = item.fotos ?? [item.foto];
+      const arquivos = item.fotos ? (item.arquivos ??= []) : item.arquivo ? [item.arquivo] : [];
+      for (const [i, nome] of nomes.entries()) {
+        if (arquivos[i]) continue;
+        const foto = await this.guardado.lerFoto(nome);
         if (!foto) return await this.recusar(item, 'A foto se perdeu antes do envio. Registre de novo.');
         const corpo = new FormData();
-        corpo.append('foto', foto, item.foto);
+        corpo.append('foto', foto, nome);
         const { arquivo } = await firstValueFrom(this.http.post<{ arquivo: string }>(ambiente.api + destino.foto(item.alvo), corpo));
-        item.arquivo = arquivo;
+        arquivos[i] = arquivo;
+        if (!item.fotos) item.arquivo = arquivo;
         await this.salvar();
       }
       const resposta = await firstValueFrom(
-        this.http.post(ambiente.api + destino.registro(item.alvo), { ...item.corpo, fotoArquivo: item.arquivo, idCliente: item.id, registradoEm: item.criadoEm }),
+        this.http.post(ambiente.api + destino.registro(item.alvo), { ...corpoComFotos(item, arquivos), idCliente: item.id, registradoEm: item.criadoEm }),
       );
       this.respostas.set(item.id, resposta);
       this.itens.update((l) => l.filter((i) => i.id !== item.id));
-      await this.guardado.apagarFoto(item.foto);
+      await this.apagarFotos(item);
       await this.salvar();
       return 'ok';
     } catch (e) {

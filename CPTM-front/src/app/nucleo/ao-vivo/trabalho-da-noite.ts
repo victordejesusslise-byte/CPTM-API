@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import type { HubConnection } from '@microsoft/signalr';
 import { firstValueFrom } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
-import { AlertaDto, TrocaDto } from '../../campo/entidades/campo';
+import { AlertaDto, LoteTrocaDto, StatusLoteTroca, TrocaDto } from '../../campo/entidades/campo';
 import { StatusTroca } from '../../compartilhado/entidades/enums';
 import { PecaDto } from '../../pecas/entidades/peca';
 import { PassagemDto } from '../../via/servicos/passagens';
@@ -22,6 +22,8 @@ export interface PlanoCampoDto {
   trocas: TrocaDto[];
   alertas: AlertaDto[];
   pecas: PecaDto[];
+  /** Os lotes de troca da noite, com a faixa e as separadas (a via confere sem rede). */
+  lotes?: LoteTrocaDto[] | null;
 }
 
 /** O pacote do operador da via (GET /api/campo/operador?dias=): os trechos, os alertas, as trocas e as passagens dos últimos dias. */
@@ -118,6 +120,12 @@ export class TrabalhoDaNoite {
   troca(id: number): TrocaDto | null {
     return this.todasAsTrocas().find((t) => t.id === id) ?? null;
   }
+  lotes(status: StatusLoteTroca[]): LoteTrocaDto[] {
+    return (this.plano()?.lotes ?? []).filter((l) => status.includes(l.status));
+  }
+  lote(id: number): LoteTrocaDto | null {
+    return this.plano()?.lotes?.find((l) => l.id === id) ?? null;
+  }
   alertas(origem: AlertaDto['origem'], status: AlertaDto['status'] | null = null): AlertaDto[] {
     return this.todosOsAlertas().filter((a) => a.origem === origem && (!status || a.status === status));
   }
@@ -182,7 +190,7 @@ export class TrabalhoDaNoite {
       // tenta voltar por uns 2 minutos: aguenta o servidor reiniciando (por exemplo, para anunciar uma versão nova do app)
       .withAutomaticReconnect([0, 2000, 5000, 10000, 20000, 30000, 60000])
       .build();
-    for (const evento of ['trocaNoPlano', 'alertaNovo', 'alertaFechado']) conexao.on(evento, () => void this.atualizar());
+    for (const evento of ['trocaNoPlano', 'loteNoPlano', 'alertaNovo', 'alertaFechado']) conexao.on(evento, () => void this.atualizar());
     conexao.on('trocaUrgente', () => {
       this.urgente.set('Chegou uma troca urgente para esta noite. Confira em "A trocar".');
       void this.atualizar();
