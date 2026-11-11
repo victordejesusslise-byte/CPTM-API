@@ -244,6 +244,20 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
     /// <summary>As trocas avulsas abertas (pedidas, aprovadas, aguardando peça, separadas ou recusadas).</summary>
     internal static bool Aberta(Troca troca) => Abertas.Contains(troca.Status);
 
+    /// <summary>
+    /// O lote de troca trocou a peça deste pedido avulso aberto: o avulso é cancelado como "Feita no lote LT-N" e a peça separada para ele,
+    /// se houver, volta à pilha (Uma troca aberta por peça).
+    /// </summary>
+    internal async Task<MudancasDaTroca> FechadaPeloLote(Troca troca, string codigoDoLote, int idUsuario, DateTime agora)
+    {
+        var mudancas = troca.IdDormenteEntrou is int idEntrou && troca.Status == StatusTroca.Separada
+            ? Devolver(troca, idEntrou, idUsuario, agora, await trocas.PilhaDaSeparacao(troca.IdTroca, idEntrou))
+            : new MudancasDaTroca();
+        troca.Status = StatusTroca.Cancelada;
+        troca.Cancelamento = $"Feita no lote {codigoDoLote}";
+        return mudancas;
+    }
+
     /// <summary>Usado pela correção da inspeção: cancela a troca aberta e devolve a peça separada, se houver.</summary>
     internal async Task<MudancasDaTroca?> Cancelamento(int idInspecao, int idUsuario, string motivo)
     {
