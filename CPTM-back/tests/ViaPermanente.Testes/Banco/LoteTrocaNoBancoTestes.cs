@@ -305,6 +305,37 @@ public class LoteTrocaNoBancoTestes : IAsyncLifetime
             (await new PlanoCampoService(BancoDeTeste.Trocas(db), BancoDeTeste.Alertas(db), BancoDeTeste.Pecas(db), Lotes()).Montar(meioDia.AddDays(1))).Lotes!.Select(l => l.Id).Order());
     }
 
+    /// <summary>Um laudo para o lote inteiro (Victor, 2026-11-11): a liberação depois de aprovado e o laudo do lote, que cresce a cada passo.</summary>
+    [Fact]
+    public async Task Laudos_do_lote()
+    {
+        var pdf = new PdfCapturado();
+        var pedido = await Lotes().Pedir(Novo(2), tecnico);
+        db.ChangeTracker.Clear();
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => BancoDeTeste.Laudos(db, pdf).LiberacaoLote(pedido.Id)); // ainda não aprovado
+
+        await Lotes().Decidir(pedido.Id, new DecisaoLoteTrocaDto { Aprovar = true }, Cargo.Supervisor, supervisor);
+        foreach (var c in (await Lotes().ListarCompativeis(pedido.Id))!.Take(2).ToList())
+            await Lotes().Separar(pedido.Id, new SepararTrocaDto { IdDormente = c.Peca.Id, Leitura = new() { Tag = c.Peca.Tag } }, patio);
+        var separado = (await Lotes().BuscarPorId(pedido.Id))!;
+        db.ChangeTracker.Clear();
+        var lb = (await BancoDeTeste.Laudos(db, pdf).LiberacaoLote(pedido.Id))!;
+        Assert.Equal("LB-LT0001.pdf", lb.Nome);
+        Assert.Contains(separado.Separadas[0].Tag!, pdf.Texto);
+
+        var feito = (await Lotes().Fechar(pedido.Id, new FecharLoteTrocaDto { Pares = [Par(2, separado.Separadas[0], "lotes/1/um.jpg")], Equipe = "Turma de Via 3" }, via))!;
+        db.ChangeTracker.Clear();
+        var documento = (await BancoDeTeste.Laudos(db, pdf).Documento("lote", pedido.Id))!;
+        Assert.Equal("LD-LT0001-v4", documento.Codigo); // pedido, aprovado, separado, feito
+        Assert.Contains(documento.Secoes, s => s.Titulo == "Passos" && s.Tabela!.Linhas.Count == 4);
+        Assert.Contains(documento.Secoes, s => s.Titulo == "Trocas" && s.Tabela!.Linhas.Single()[0] == feito.Trocas[0].CodigoSaiu);
+        Assert.Contains(documento.Secoes, s => s.Titulo == "Devolvidas ao armazém" && s.Tabela!.Linhas.Count == 1);
+        Assert.Contains(documento.Secoes, s => s.Titulo == "Fotos" && s.Fotos!.Single().Caminho == "lotes/1/um.jpg");
+        Assert.Equal("LB-LT0001", (await BancoDeTeste.Laudos(db, pdf).Documento("liberacao-lote", pedido.Id))!.Codigo);
+        Assert.Contains((await BancoDeTeste.Laudos(db, pdf).Documento("troca", feito.Trocas[0].Id))!.Secoes.SelectMany(s => s.Campos), c => c.Rotulo == "Lote" && c.Valor == "LT-0001");
+        Assert.Null(await BancoDeTeste.Laudos(db, pdf).Documento("lote", 999_999));
+    }
+
     [Fact]
     public async Task Tag_que_nao_responde_vai_pelo_id_da_faixa()
     {

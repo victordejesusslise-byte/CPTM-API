@@ -330,7 +330,7 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
                 t.IdUsuarioSeparou, t.DataSeparacao, t.IdUsuarioFez, t.Data, t.Equipe, t.FotoArquivo, t.Cancelamento,
                 (int)((t.Data ?? agora) - t.DataPedido).TotalDays,
                 r is null ? null : new RecusaDto(r.IdRecusa, r.Data, r.IdUsuario, r.Motivo, r.Descricao, r.FotoArquivo,
-                    r.Decisao?.ToString(), r.IdUsuarioDecisao, r.DataDecisao, r.Resposta), t.NoiteDoPlano, t.Urgente);
+                    r.Decisao?.ToString(), r.IdUsuarioDecisao, r.DataDecisao, r.Resposta), t.NoiteDoPlano, t.Urgente, t.IdLoteTroca);
         }).ToList();
     }
 

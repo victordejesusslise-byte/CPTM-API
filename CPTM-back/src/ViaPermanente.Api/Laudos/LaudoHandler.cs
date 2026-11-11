@@ -26,6 +26,14 @@ public class LaudoHandler(LaudoService laudos) : ControllerBase
     [HttpGet("troca/{idTroca:int}")]
     public async Task<IActionResult> Troca(int idTroca) => Pdf(await laudos.LaudoTroca(idTroca));
 
+    /// <summary>LB do lote de troca, depois da aprovação.</summary>
+    [HttpGet("liberacao-lote/{idLote:int}")]
+    public async Task<IActionResult> LiberacaoLote(int idLote) => Pdf(await laudos.LiberacaoLote(idLote));
+
+    /// <summary>LD do lote de troca: o lote inteiro, com uma foto por dormente trocado.</summary>
+    [HttpGet("lote/{idLote:int}")]
+    public async Task<IActionResult> Lote(int idLote) => Pdf(await laudos.LaudoLote(idLote));
+
     /// <summary>O laudo como documento (título, código, seções e tabelas), para a tela mostrar antes de baixar o PDF.</summary>
     [HttpGet("{tipo}/{id:int}/documento")]
     public async Task<ActionResult<DocumentoPdf>> Documento(string tipo, int id) => await laudos.Documento(tipo, id) is { } d ? d : NotFound();

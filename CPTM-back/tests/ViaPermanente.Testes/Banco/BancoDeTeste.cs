@@ -43,7 +43,7 @@ internal static class BancoDeTeste
 
     public static LaudoService Laudos(ViaPermanenteContext db, ViaPermanente.Dominio.Laudos.IDocumentoPdfRepository pdf) => new(pdf, new PecaRepository(db), new HistoricoRepository(db),
         new UsuarioRepository(db), new TrocaRepository(db), new ChegadaService(new ChegadaRepository(db), new PedidoRepository(db), new NotaFiscalRepository(db), new CatalogoRepository(db), new LeituraOcrRepository(db)),
-        Pecas(db), Inspecoes(db), Alertas(db), Trocas(db));
+        Pecas(db), Inspecoes(db), Alertas(db), Trocas(db), lotes: Lotes(db));
 
     /// <summary>Um padrão de medida (0,24 × 0,17 m, para todas as espécies) para o fornecedor; devolve o id.</summary>
     public static async Task<int> Padrao(ViaPermanenteContext db, int idEmpresa)

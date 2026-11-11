@@ -22,7 +22,7 @@ namespace ViaPermanente.Dominio.Laudos;
 /// </summary>
 public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IHistoricoRepository historicos, IUsuarioRepository usuarios,
     ITrocaRepository trocasRepo, ChegadaService chegadas, PecaService consulta, InspecaoService inspecoes, AlertaService alertas, TrocaService trocas,
-    IFotoRepository? fotos = null)
+    IFotoRepository? fotos = null, LoteTrocaService? lotes = null)
 {
     /// <summary>A foto para o laudo, com a imagem lida da pasta das fotos (nula se o arquivo não está no servidor).</summary>
     private FotoPdf Foto(string legenda, string caminho)
@@ -146,11 +146,13 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             passos.Add(new[] { "Feita", Nome(nomes, troca.IdUsuarioFez), Data(troca.Data), $"equipe {troca.Equipe}" });
         var versao = passos.Count + recusas.Count;
         var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
+        var campos = new List<CampoPdf> { new("Situação", troca.Status), new("Dias desde o pedido", troca.DiasDesdeOPedido.ToString()) };
+        if (troca.IdLoteTroca is int idLote)
+            campos.Add(new("Lote", LoteTrocaService.Codigo(idLote))); // a troca feita num lote de troca: o laudo do lote tem as outras
         var secoes = new List<SecaoPdf>
         {
             SecaoPeca(saiu, "Peça que sai"),
-            new("Passos", [new("Situação", troca.Status), new("Dias desde o pedido", troca.DiasDesdeOPedido.ToString())],
-                new TabelaPdf(["Passo", "Quem", "Quando", "Detalhe"], passos)),
+            new("Passos", campos, new TabelaPdf(["Passo", "Quem", "Quando", "Detalhe"], passos)),
             new("Recusas da via", [], new TabelaPdf(["Data", "Quem", "Motivo", "Decisão do técnico"],
                 recusas.Select(r => (IReadOnlyList<string>)[Data(r.Data), Nome(nomes, r.IdUsuario), r.Motivo,
                     r.Decisao is null ? "aguardando" : $"{r.Decisao}{(r.Resposta is null ? "" : $": {r.Resposta}")}"]).ToList()))
@@ -166,6 +168,80 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             secoes.Add(SecaoAlerta(alerta));
         secoes.Add(await SecaoVistorias(troca.IdDormenteSaiu, nomes));
         return new DocumentoPdf("Laudo da troca", $"LD-{idTroca:0000}-v{versao}", $"{saiu.Codigo} · km {Km(troca.Km)}", DateTime.Now, secoes);
+    }
+
+    // ---------- lote de troca (Victor, 2026-11-11: um laudo para o lote inteiro) ----------
+
+    private static string CodigoDoLote(int idLote) => LoteTrocaService.Codigo(idLote).Replace("-", "");
+
+    private static SecaoPdf SecaoLote(LoteTrocaDto l) => new("Lote",
+    [
+        new("Trecho", $"{l.Trecho} · {l.ClasseExigida}ª classe"), new("Faixa", $"km {Km(l.KmInicio)} a {Km(l.KmFim)}"),
+        new("Comprimento", FormatoHelper.Metros(l.ComprimentoM)), new("Motivo", l.Motivo),
+        new("Pedidas", l.QuantidadePedida.ToString()), new("Aprovadas", l.QuantidadeAprovada?.ToString() ?? "—"),
+        new("Por que menos", l.MotivoMenos ?? "—"), new("Situação", l.Status)
+    ]);
+
+    /// <summary>A ordem de troca do lote para a via, depois da aprovação: o lote, quem pediu e aprovou, e as peças separadas.</summary>
+    private async Task<DocumentoPdf?> DocumentoLiberacaoLote(int idLote)
+    {
+        if (lotes is null || await lotes.BuscarPorId(idLote) is not { } lote)
+            return null;
+        if (lote.Status is "Pedido" or "Reprovado")
+            throw new RegraDeNegocioException("A liberação sai depois que o lote é aprovado.");
+        var nomes = await Nomes();
+        return new DocumentoPdf("Liberação do lote de troca", $"LB-{CodigoDoLote(idLote)}", $"{lote.Codigo} · {lote.Trecho} · km {Km(lote.KmInicio)} a {Km(lote.KmFim)}", DateTime.Now,
+        [
+            SecaoLote(lote),
+            new("Pedido e aprovação",
+            [
+                new("Pedido por", $"{Nome(nomes, lote.IdUsuarioPediu)} em {Data(lote.DataPedido)}"),
+                new("Aprovado por", lote.IdUsuarioAprovou is int a ? $"{Nome(nomes, a)} em {Data(lote.DataAprovacao)}" : "—"),
+                new("Noite do plano", lote.NoiteDoPlano?.ToString("dd/MM/yyyy") ?? "—")
+            ]),
+            new("Peças separadas", [], new TabelaPdf(["Peça", "Tag"],
+                lote.Separadas.Concat(lote.Trocas.Select(t => new PecaDoLoteDto(t.IdDormenteEntrou ?? 0, t.CodigoEntrou ?? "", t.TagEntrou, null, lote.IdTamanho, null)))
+                    .Select(p => (IReadOnlyList<string>)[p.Codigo, p.Tag ?? "—"]).ToList()))
+        ]);
+    }
+
+    /// <summary>O laudo do lote: cresce a cada passo (pedido, aprovado, separado, feito) e a versão sobe junto; uma foto por dormente trocado.</summary>
+    private async Task<DocumentoPdf?> DocumentoLote(int idLote)
+    {
+        if (lotes is null || await lotes.BuscarPorId(idLote) is not { } lote)
+            return null;
+        var nomes = await Nomes();
+        var passos = new List<IReadOnlyList<string>> { new[] { "Pedido", Nome(nomes, lote.IdUsuarioPediu), Data(lote.DataPedido), $"{lote.QuantidadePedida} peças" } };
+        if (lote.DataAprovacao is not null)
+            passos.Add(new[] { lote.MotivoReprovacao is null ? "Aprovado" : "Reprovado", Nome(nomes, lote.IdUsuarioAprovou), Data(lote.DataAprovacao),
+                lote.MotivoReprovacao ?? $"{lote.QuantidadeAprovada} peças" });
+        var separadas = lote.Separadas.Count + lote.Trocas.Count + lote.Devolvidas.Count;
+        if (separadas > 0)
+        {
+            var primeira = lote.Trocas.Where(t => t.DataSeparacao is not null).MinBy(t => t.DataSeparacao);
+            passos.Add(new[] { "Separado", Nome(nomes, primeira?.IdUsuarioSeparou), Data(primeira?.DataSeparacao), $"{separadas} peças lidas" });
+        }
+        if (lote.Data is not null)
+            passos.Add(new[] { "Feito", Nome(nomes, lote.IdUsuarioFez), Data(lote.Data), $"{lote.Trocas.Count} trocas, {lote.Devolvidas.Count} devolvidas · equipe {lote.Equipe}" });
+        var recusas = lote.UltimaRecusa is null ? 0 : 1;
+        var secoes = new List<SecaoPdf>
+        {
+            SecaoLote(lote),
+            new("Passos", [], new TabelaPdf(["Passo", "Quem", "Quando", "Detalhe"], passos)),
+            new("Trocas", [new("Conferidas", "pela tag da peça que sai e da que entra")], new TabelaPdf(["Saiu", "Entrou", "Km", "Hora", "Foto"],
+                lote.Trocas.Select((t, i) => (IReadOnlyList<string>)[t.CodigoSaiu ?? "", t.CodigoEntrou ?? "", Km(t.Km), Data(t.Data), (i + 1).ToString()]).ToList())),
+            new("Devolvidas ao armazém", [], new TabelaPdf(["Peça", "Pilha"], lote.Devolvidas.Select(p => (IReadOnlyList<string>)[p.Codigo, p.Pilha ?? "—"]).ToList()))
+        };
+        if (lote.UltimaRecusa is { } r)
+            secoes.Add(new("Recusa da via", [new("Data", Data(r.Data)), new("Quem", Nome(nomes, r.IdUsuario)), new("Motivo", r.Motivo),
+                new("Decisão do técnico", r.Decisao is null ? "aguardando" : $"{r.Decisao}{(r.Resposta is null ? "" : $": {r.Resposta}")}")]));
+        var fotosDoLote = lote.Trocas.Where(t => !string.IsNullOrWhiteSpace(t.FotoArquivo))
+            .Select((t, i) => Foto($"{i + 1} · {t.CodigoEntrou} no lugar de {t.CodigoSaiu} · {Data(t.Data)}", t.FotoArquivo!)).ToList();
+        if (lote.UltimaRecusa is { FotoArquivo: var fotoRecusa } recusa && !string.IsNullOrWhiteSpace(fotoRecusa))
+            fotosDoLote.Add(Foto($"Recusa da via · {Data(recusa.Data)} · {recusa.Motivo}", fotoRecusa));
+        if (fotosDoLote.Count > 0)
+            secoes.Add(new SecaoPdf("Fotos", [], null, fotosDoLote));
+        return new DocumentoPdf("Laudo da troca · lote", $"LD-{CodigoDoLote(idLote)}-v{passos.Count + recusas}", $"{lote.Codigo} · {lote.Trecho}", DateTime.Now, secoes);
     }
 
     // ---------- seções comuns ----------
@@ -202,8 +278,15 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
         "inspecao" => DocumentoInspecao(id),
         "liberacao" => DocumentoLiberacao(id),
         "troca" => DocumentoTroca(id),
+        "liberacao-lote" => DocumentoLiberacaoLote(id),
+        "lote" => DocumentoLote(id),
         _ => throw new RegraDeNegocioException($"Não há laudo do tipo {tipo}.")
     };
+
+    /// <summary>LB do lote de troca, em PDF.</summary>
+    public async Task<ArquivoDto?> LiberacaoLote(int idLote) => await DocumentoLiberacaoLote(idLote) is { } d ? Arquivo(d) : null;
+    /// <summary>LD do lote de troca, em PDF.</summary>
+    public async Task<ArquivoDto?> LaudoLote(int idLote) => await DocumentoLote(idLote) is { } d ? Arquivo(d) : null;
 
     /// <summary>BR: boletim de recebimento de uma chegada, em PDF.</summary>
     public async Task<ArquivoDto?> BoletimRecebimento(int idRecebimento) => await DocumentoBoletim(idRecebimento) is { } d ? Arquivo(d) : null;
