@@ -3,6 +3,7 @@ using ViaPermanente.Dados;
 using ViaPermanente.Dados.Apresentacao;
 using ViaPermanente.Dados.Pessoas;
 using ViaPermanente.Dominio.Apresentacao;
+using ViaPermanente.Dominio.Armazens.Models;
 using ViaPermanente.Dominio.Campo;
 using ViaPermanente.Dominio.Campo.Dtos;
 using ViaPermanente.Dominio.Campo.Models;
@@ -126,5 +127,116 @@ public class LoteTrocaNoBancoTestes : IAsyncLifetime
 
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Separar(lote.Id, new SepararTrocaDto { IdDormente = c.Id, Leitura = new() { Tag = c.Tag } }, patio));
         Assert.DoesNotContain((await Lotes().ListarCompativeis(lote.Id))!, c => c.Peca.Id == separado.Separadas[0].Id);
+    }
+
+    // ---------- fechar o lote ----------
+
+    /// <summary>O lote aprovado com as primeiras peças compatíveis já separadas.</summary>
+    private async Task<LoteTrocaDto> Separado(int aprovadas, int separar, NovoLoteTrocaDto? pedido = null)
+    {
+        var lote = await Lotes().Pedir(pedido ?? Novo(aprovadas), tecnico);
+        lote = (await Lotes().Decidir(lote.Id, new DecisaoLoteTrocaDto { Aprovar = true }, Cargo.Supervisor, supervisor))!;
+        foreach (var c in (await Lotes().ListarCompativeis(lote.Id))!.Take(separar).ToList())
+            lote = (await Lotes().Separar(lote.Id, new SepararTrocaDto { IdDormente = c.Peca.Id, Leitura = new() { Tag = c.Peca.Tag } }, patio))!;
+        return lote;
+    }
+
+    private static ParDoLoteDto Par(int saiu, PecaDoLoteDto entra, string foto = "lotes/1/a.jpg")
+        => new() { LeituraSaiu = Lida(saiu), LeituraEntrou = new() { Tag = entra.Tag }, FotoArquivo = foto };
+
+    private static FecharLoteTrocaDto Fechamento(params ParDoLoteDto[] pares) => new() { Pares = [.. pares], Equipe = "Turma de Via 3" };
+
+    [Fact]
+    public async Task Fecha_o_lote_e_cada_par_vira_uma_troca()
+    {
+        var lote = await Separado(2, 2);
+        var (entra, sobra) = (lote.Separadas[0], lote.Separadas[1]);
+        var pilha = (await db.Set<Dormente>().AsNoTracking().SingleAsync(d => d.IdDormente == sobra.Id)).IdPilha; // nula: está separada
+
+        var feito = (await Lotes().Fechar(lote.Id, Fechamento(Par(2, entra)), via))!;
+
+        Assert.Equal(("Feito", "Turma de Via 3", (int?)via), (feito.Status, feito.Equipe, feito.IdUsuarioFez));
+        var troca = Assert.Single(feito.Trocas);
+        Assert.Equal(("Feita", "Lote", await Peca(2), (int?)entra.Id), (troca.Status, troca.Origem, troca.IdDormenteSaiu, troca.IdDormenteEntrou));
+        Assert.Equal(lote.Id, (await db.Set<Troca>().AsNoTracking().SingleAsync(t => t.IdTroca == troca.Id)).IdLoteTroca);
+        Assert.Empty(feito.Separadas);
+        Assert.Equal([sobra.Id], feito.Devolvidas.Select(p => p.Id));
+        Assert.Null(pilha);
+        Assert.Equal("A01", (await BancoDeTeste.Pecas(db).BuscarPorId(sobra.Id))!.Pilha); // a sobra voltou para a pilha
+        var (nova, velha) = (await BancoDeTeste.Pecas(db).BuscarPorId(entra.Id), await BancoDeTeste.Pecas(db).BuscarPorId(await Peca(2)));
+        Assert.Equal(("NaVia", (int?)idTrecho, 219.402m, (int?)null), (nova!.Situacao, nova.IdTrecho, nova.KmProjeto, nova.IdPilha));
+        Assert.Equal("Retirada", velha!.Situacao);
+        Assert.Equal(["Separada", "Saida"], await db.Set<Movimentacao>().AsNoTracking().Where(m => m.IdDormente == entra.Id && m.IdLoteTroca == lote.Id)
+            .OrderBy(m => m.IdMovimentacao).Select(m => m.Tipo.ToString()).ToListAsync());
+    }
+
+    [Fact]
+    public async Task Fechar_confere_id_por_id()
+    {
+        var lote = await Separado(2, 2);
+        var (s1, s2) = (lote.Separadas[0], lote.Separadas[1]);
+        var naoSeparada = (await Lotes().ListarCompativeis(lote.Id))![0].Peca;
+        var errados = new[]
+        {
+            Fechamento(Par(2, new PecaDoLoteDto(naoSeparada.Id, naoSeparada.Codigo, naoSeparada.Tag, null, idTamanho, null))), // a que entra não foi separada
+            Fechamento(Par(2, s1), Par(2, s2)),                                                                                  // a mesma peça sai duas vezes
+            Fechamento(Par(2, s1), Par(3, s1)),                                                                                  // a mesma peça entra duas vezes
+            Fechamento(Par(2, s1), Par(3, s2), Par(4, s1)),                                                                      // mais pares que os aprovados
+            Fechamento(Par(2, s1, foto: " ")),                                                                                   // sem foto
+            Fechamento(new ParDoLoteDto { LeituraSaiu = new() { Tag = "BR9999999999" }, LeituraEntrou = new() { Tag = s1.Tag }, FotoArquivo = "f.jpg" }), // tag de peça nenhuma
+            new FecharLoteTrocaDto { Pares = [Par(2, s1)], Equipe = " " },                                                       // sem equipe
+            Fechamento(),                                                                                                        // nada trocado
+        };
+        foreach (var errado in errados)
+            await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, errado, via));
+
+        // fora da faixa: o lote só vai do km 219,400 ao 219,402, e a peça 3 está no 219,403
+        var estreito = await Separado(1, 1, new NovoLoteTrocaDto { IdTrecho = idTrecho, KmInicio = 219.400m, KmFim = 219.402m, Quantidade = 1, IdTamanho = idTamanho, Motivo = "Podre" });
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(estreito.Id, Fechamento(Par(3, estreito.Separadas[0])), via));
+
+        var nada = (await Lotes().BuscarPorId(lote.Id))!;
+        Assert.Equal(("Separado", 0, 2), (nada.Status, nada.Trocas.Count, nada.Separadas.Count)); // nada foi gravado
+    }
+
+    [Fact]
+    public async Task Avulso_aberto_fecha_como_feito_no_lote()
+    {
+        TrocaService Avulsas() { db.ChangeTracker.Clear(); return BancoDeTeste.Trocas(db); }
+        var avulso = await Avulsas().Pedir(new NovaTrocaDto { IdDormente = await Peca(2), Motivo = "Dormente rachado" }, tecnico);
+        await Avulsas().Decidir(avulso.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Supervisor, supervisor);
+        var paraOAvulso = (await Avulsas().ListarCompativeis(avulso.Id))![0].Peca;
+        await Avulsas().Separar(avulso.Id, new SepararTrocaDto { IdDormente = paraOAvulso.Id, Leitura = new() { Tag = paraOAvulso.Tag } }, patio);
+
+        var lote = await Separado(1, 1);
+        Assert.Equal([await Peca(2)], (await Lotes().BuscarPorId(lote.Id))!.AvulsasAbertas.Select(p => p.Id));
+        await Lotes().Fechar(lote.Id, Fechamento(Par(2, lote.Separadas[0])), via);
+
+        var fechado = (await Avulsas().BuscarPorId(avulso.Id))!;
+        Assert.Equal(("Cancelada", "Feita no lote LT-0001"), (fechado.Status, fechado.Cancelamento));
+        Assert.Equal("A01", (await BancoDeTeste.Pecas(db).BuscarPorId(paraOAvulso.Id))!.Pilha); // a peça separada para o avulso voltou
+    }
+
+    [Fact]
+    public async Task Lote_mandado_duas_vezes_entra_uma()
+    {
+        var lote = await Separado(1, 1);
+        var fechamento = new FecharLoteTrocaDto { Pares = [Par(2, lote.Separadas[0])], Equipe = "Turma de Via 3", IdCliente = Guid.NewGuid(), RegistradoEm = DateTime.Now.AddHours(-3) };
+        Assert.Equal("Feito", (await Lotes().Fechar(lote.Id, fechamento, via))!.Status);
+        Assert.Equal("Feito", (await Lotes().Fechar(lote.Id, fechamento, via))!.Status);
+        Assert.Single(await db.Set<Troca>().AsNoTracking().Where(t => t.IdLoteTroca == lote.Id).ToListAsync());
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, new FecharLoteTrocaDto { Pares = fechamento.Pares, Equipe = "Outra", IdCliente = Guid.NewGuid() }, via));
+    }
+
+    [Fact]
+    public async Task Tag_que_nao_responde_vai_pelo_id_da_faixa()
+    {
+        var lote = await Separado(1, 1);
+        var foraDaFaixa = (await Lotes().ListarCompativeis(lote.Id))![0].Peca.Id;
+        ParDoLoteDto SemTag(int idSaiu) => new() { TagSaiuNaoResponde = true, IdDormenteSaiu = idSaiu, LeituraEntrou = new() { Tag = lote.Separadas[0].Tag }, FotoArquivo = "f.jpg" };
+
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, Fechamento(SemTag(foraDaFaixa)), via));
+        var feito = (await Lotes().Fechar(lote.Id, Fechamento(SemTag(await Peca(3))), via))!;
+        Assert.Equal(await Peca(3), Assert.Single(feito.Trocas).IdDormenteSaiu);
+        Assert.Contains(await db.Set<LeituraDormente>().AsNoTracking().Where(l => l.IdDormente == feito.Trocas[0].IdDormenteSaiu).ToListAsync(), l => !l.Leitura);
     }
 }
