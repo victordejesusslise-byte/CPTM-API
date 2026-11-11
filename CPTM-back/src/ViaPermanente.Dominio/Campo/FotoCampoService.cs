@@ -10,10 +10,20 @@ namespace ViaPermanente.Dominio.Campo;
 /// inspeção e a da vistoria. O celular manda a foto primeiro e depois o registro com o caminho que ela devolve, também quando
 /// guardou tudo sem rede. Ficam na pasta das fotos, fora do banco.
 /// </summary>
-public class FotoCampoService(IFotoRepository fotos, ITrocaRepository trocas, IAlertaRepository alertas, IPecaRepository pecas)
+public class FotoCampoService(IFotoRepository fotos, ITrocaRepository trocas, IAlertaRepository alertas, IPecaRepository pecas, ILoteTrocaRepository? lotes = null)
 {
     // Separada: antes de fazer ou recusar. Feita e Recusada: o celular mandou de novo depois de a rede cair.
     private static readonly StatusTroca[] TrocaAceitaFoto = [StatusTroca.Separada, StatusTroca.Feita, StatusTroca.Recusada];
+    private static readonly StatusLoteTroca[] LoteAceitaFoto = [StatusLoteTroca.Separado, StatusLoteTroca.Feito, StatusLoteTroca.Recusado];
+
+    /// <summary>Uma foto de um dormente do lote (a peça nova no lugar) ou a da recusa do lote; nulo se o lote não existe.</summary>
+    public async Task<string?> DoLote(int idLote, byte[] conteudo, string extensao)
+    {
+        var lote = lotes is null ? null : (await lotes.Listar(idLote: idLote)).FirstOrDefault();
+        if (lote is null) return null;
+        if (!LoteAceitaFoto.Contains(lote.Status)) throw new RegraDeNegocioException("A foto do lote é tirada na via, com as peças separadas.");
+        return fotos.Salvar(conteudo, $"lotes/{idLote}", FotoPecaService.ExtensaoDaFoto(conteudo, extensao));
+    }
 
     /// <summary>Guarda a foto da troca e devolve o caminho; nulo se a troca não existe.</summary>
     public async Task<string?> DaTroca(int idTroca, byte[] conteudo, string extensao)
