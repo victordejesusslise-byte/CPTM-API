@@ -238,6 +238,12 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
 
     public async Task<TrocaDto?> BuscarPorId(int idTroca) => (await Montar(await trocas.Listar(idTroca: idTroca))).FirstOrDefault();
 
+    /// <summary>As trocas feitas num lote de troca (uma por dormente trocado).</summary>
+    public async Task<IReadOnlyList<TrocaDto>> DoLote(int idLote) => await Montar(await trocas.Listar(idLoteTroca: idLote));
+
+    /// <summary>As trocas avulsas abertas (pedidas, aprovadas, aguardando peça, separadas ou recusadas).</summary>
+    internal static bool Aberta(Troca troca) => Abertas.Contains(troca.Status);
+
     /// <summary>Usado pela correção da inspeção: cancela a troca aberta e devolve a peça separada, se houver.</summary>
     internal async Task<MudancasDaTroca?> Cancelamento(int idInspecao, int idUsuario, string motivo)
     {

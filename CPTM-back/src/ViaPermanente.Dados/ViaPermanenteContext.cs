@@ -69,6 +69,17 @@ public class ViaPermanenteContext(DbContextOptions<ViaPermanenteContext> options
         }
     }
 
+    /// <summary>
+    /// Muda a peça a partir do que está no banco. A gravação anterior pode ter deixado só a chave dela no contexto (MarcarPecasAlteradas):
+    /// mudar essa cópia vazia para o mesmo valor (por exemplo, tirar da pilha) não seria gravado, e a peça ficaria onde estava.
+    /// </summary>
+    internal async Task MudarPeca(int idDormente, Action<Dormente> mudar)
+    {
+        var peca = (await Set<Dormente>().FindAsync(idDormente))!;
+        await Entry(peca).ReloadAsync();
+        mudar(peca);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         CatalogosConfiguracao.Aplicar(modelBuilder);

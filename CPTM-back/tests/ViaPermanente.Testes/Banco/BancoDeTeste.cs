@@ -32,6 +32,10 @@ internal static class BancoDeTeste
     public static TrocaService Trocas(ViaPermanenteContext db) => new(new TrocaRepository(db), new PecaRepository(db), new InspecaoRepository(db),
         new ParametroRepository(db), new CatalogoRepository(db), new LeituraService(new PecaRepository(db)), Pecas(db));
 
+    public static LoteTrocaService Lotes(ViaPermanenteContext db) => new(new LoteTrocaRepository(db), new TrocaRepository(db), new PecaRepository(db),
+        new ParametroRepository(db), new CatalogoRepository(db), new ViaPermanente.Dados.Via.TrechoMapaRepository(db), new LeituraService(new PecaRepository(db)),
+        Pecas(db), Trocas(db));
+
     public static InspecaoService Inspecoes(ViaPermanenteContext db) => new(new InspecaoRepository(db), new AlertaRepository(db), new PecaRepository(db),
         new LeituraService(new PecaRepository(db)), new TrocaRepository(db), Trocas(db));
 
