@@ -227,6 +227,66 @@ public class LoteTrocaNoBancoTestes : IAsyncLifetime
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, new FecharLoteTrocaDto { Pares = fechamento.Pares, Equipe = "Outra", IdCliente = Guid.NewGuid() }, via));
     }
 
+    // ---------- recusa e foto ----------
+
+    [Fact]
+    public async Task Recusa_do_lote_volta_para_o_tecnico()
+    {
+        var lote = await Separado(2, 2);
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Recusar(lote.Id, new RecusarTrocaDto { Motivo = " ", FotoArquivo = "f.jpg" }, via));
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Recusar(lote.Id, new RecusarTrocaDto { Motivo = "Interdição cancelada", FotoArquivo = "" }, via));
+
+        var recusa = new RecusarTrocaDto { Motivo = "Interdição cancelada", FotoArquivo = "lotes/1/r.jpg", IdCliente = Guid.NewGuid() };
+        var recusado = (await Lotes().Recusar(lote.Id, recusa, via))!;
+        Assert.Equal(("Recusado", "Interdição cancelada", 2), (recusado.Status, recusado.UltimaRecusa!.Motivo, recusado.Separadas.Count));
+        Assert.Equal("Recusado", (await Lotes().Recusar(lote.Id, recusa, via))!.Status); // mandada duas vezes: entra uma
+        Assert.Single(await db.Set<RecusaTroca>().AsNoTracking().Where(r => r.IdLoteTroca == lote.Id).ToListAsync());
+
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().DecidirRecusa(lote.Id, new DecidirRecusaDto { Decisao = DecisaoRecusa.Manter }, tecnico));
+        var mantido = (await Lotes().DecidirRecusa(lote.Id, new DecidirRecusaDto { Decisao = DecisaoRecusa.Manter, Resposta = "Fica para quinta" }, tecnico))!;
+        Assert.Equal(("Separado", "Manter", 2), (mantido.Status, mantido.UltimaRecusa!.Decisao, mantido.Separadas.Count));
+
+        await Lotes().Recusar(lote.Id, new RecusarTrocaDto { Motivo = "Chuva forte", FotoArquivo = "lotes/1/r2.jpg" }, via);
+        var cancelado = (await Lotes().DecidirRecusa(lote.Id, new DecidirRecusaDto { Decisao = DecisaoRecusa.Aceitar }, tecnico))!;
+        Assert.Equal(("Cancelado", 0, 2), (cancelado.Status, cancelado.Separadas.Count, cancelado.Devolvidas.Count));
+        Assert.Contains("Chuva forte", cancelado.Cancelamento);
+        Assert.All(cancelado.Devolvidas, p => Assert.Equal("A01", p.Pilha));
+    }
+
+    [Fact]
+    public async Task Lote_no_plano_travado_nao_e_cancelado()
+    {
+        var lote = await Separado(1, 1);
+        // O plano desta noite já fechou (corte à meia-noite) e o lote está nele.
+        await db.Set<Parametro>().Where(p => p.Chave == PlanoDaNoite.ChaveHorario).ExecuteUpdateAsync(s => s.SetProperty(p => p.Valor, "00:00"));
+        DateOnly? noite = PlanoDaNoite.NoiteAtual(DateTime.Now);
+        await db.Set<Dominio.Campo.Models.LoteTroca>().Where(l => l.IdLoteTroca == lote.Id).ExecuteUpdateAsync(s => s.SetProperty(l => l.NoiteDoPlano, noite));
+        await Lotes().Recusar(lote.Id, new RecusarTrocaDto { Motivo = "Trem parado no trecho", FotoArquivo = "f.jpg" }, via);
+
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().DecidirRecusa(lote.Id, new DecidirRecusaDto { Decisao = DecisaoRecusa.Aceitar }, tecnico));
+        Assert.Equal("Separado", (await Lotes().DecidirRecusa(lote.Id, new DecidirRecusaDto { Decisao = DecisaoRecusa.Manter, Resposta = "Volta amanhã" }, tecnico))!.Status);
+    }
+
+    [Fact]
+    public async Task Foto_do_lote_so_na_via()
+    {
+        var pasta = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "ybyra-fotos-" + Guid.NewGuid())).FullName;
+        var fotos = new FotoCampoService(new ViaPermanente.Dados.Laudos.FotoRepository(pasta), new ViaPermanente.Dados.Campo.TrocaRepository(db),
+            new ViaPermanente.Dados.Campo.AlertaRepository(db), new ViaPermanente.Dados.Pecas.PecaRepository(db), new ViaPermanente.Dados.Campo.LoteTrocaRepository(db));
+        try
+        {
+            var pedido = await Lotes().Pedir(Novo(1), tecnico);
+            await Assert.ThrowsAsync<RegraDeNegocioException>(() => fotos.DoLote(pedido.Id, [1, 2, 3], ".jpg"));
+            Assert.Null(await fotos.DoLote(999_999, [1, 2, 3], ".jpg"));
+            var lote = await Separado(1, 1);
+            Assert.StartsWith($"lotes/{lote.Id}/", await fotos.DoLote(lote.Id, [1, 2, 3], ".jpg"));
+        }
+        finally
+        {
+            Directory.Delete(pasta, true);
+        }
+    }
+
     [Fact]
     public async Task Tag_que_nao_responde_vai_pelo_id_da_faixa()
     {

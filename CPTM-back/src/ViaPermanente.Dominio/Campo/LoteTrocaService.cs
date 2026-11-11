@@ -227,6 +227,70 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
         return await BuscarPorId(idLote);
     }
 
+    /// <summary>A via não conseguiu trocar nada (por exemplo, a interdição caiu): recusa o lote com motivo e foto, como a recusa da troca. As peças continuam separadas.</summary>
+    public async Task<LoteTrocaDto?> Recusar(int idLote, RecusarTrocaDto dto, int idUsuario)
+    {
+        var lote = await Buscar(idLote);
+        if (lote is null)
+            return null;
+        if (dto.IdCliente is Guid idCliente && (await lotes.Recusas(idLote)).Any(r => r.IdCliente == idCliente))
+            return await BuscarPorId(idLote);
+        if (lote.Status != StatusLoteTroca.Separado)
+            throw new RegraDeNegocioException("Só o lote com as peças separadas é recusado.");
+        if (string.IsNullOrWhiteSpace(dto.Motivo) || string.IsNullOrWhiteSpace(dto.FotoArquivo))
+            throw new RegraDeNegocioException("A recusa exige motivo e foto.");
+
+        var agora = DateTime.Now;
+        var noCampo = HoraDoCampo.De(dto.RegistradoEm, agora);
+        lote.Status = StatusLoteTroca.Recusado;
+        await lotes.Gravar(new MudancasDoLote
+        {
+            LoteAlterado = lote,
+            RecusaNova = new RecusaTroca
+            {
+                IdUsuario = idUsuario, Data = noCampo, Motivo = dto.Motivo.Trim(), Descricao = Limpo(dto.Descricao), FotoArquivo = dto.FotoArquivo.Trim(),
+                IdCliente = dto.IdCliente, RegistradoEm = noCampo, RecebidoEm = agora
+            }
+        });
+        return await BuscarPorId(idLote);
+    }
+
+    /// <summary>
+    /// O técnico responde à recusa do lote: mantém (com resposta; o lote volta para separado, com as mesmas peças) ou aceita (o lote é cancelado
+    /// e as separadas voltam para a pilha). O lote no plano desta noite, depois do corte, não é cancelado até a manhã.
+    /// </summary>
+    public async Task<LoteTrocaDto?> DecidirRecusa(int idLote, DecidirRecusaDto dto, int idUsuario)
+    {
+        var lote = await Buscar(idLote);
+        if (lote is null)
+            return null;
+        if (lote.Status != StatusLoteTroca.Recusado)
+            throw new RegraDeNegocioException("O lote não está recusado.");
+        if (dto.Decisao == DecisaoRecusa.Manter && string.IsNullOrWhiteSpace(dto.Resposta))
+            throw new RegraDeNegocioException("Para manter o lote, responda à recusa.");
+        if (dto.Decisao != DecisaoRecusa.Manter && PlanoDaNoite.Travada(lote.NoiteDoPlano, DateTime.Now, await Corte()))
+            throw new RegraDeNegocioException("Este lote está no plano desta noite; ele pode ser cancelado amanhã.");
+
+        var agora = DateTime.Now;
+        var recusa = (await lotes.Recusas(idLote)).Last();
+        recusa.Decisao = dto.Decisao;
+        recusa.IdUsuarioDecisao = idUsuario;
+        recusa.DataDecisao = agora;
+        recusa.Resposta = Limpo(dto.Resposta);
+        var mudancas = new MudancasDoLote { LoteAlterado = lote, RecusaAlterada = recusa };
+        if (dto.Decisao == DecisaoRecusa.Manter)
+            lote.Status = StatusLoteTroca.Separado;
+        else
+        {
+            lote.Status = StatusLoteTroca.Cancelado;
+            lote.Cancelamento = $"Recusa aceita pelo técnico: {recusa.Motivo}";
+            foreach (var separada in Separadas(await lotes.Movimentacoes(idLote)))
+                Devolver(mudancas, separada, idUsuario, agora);
+        }
+        await lotes.Gravar(mudancas);
+        return await BuscarPorId(idLote);
+    }
+
     public async Task<IReadOnlyList<LoteTrocaDto>> Listar(StatusLoteTroca? status) => await Montar(await lotes.Listar(status), aberto: false);
 
     /// <summary>O lote aberto: com as peças na via dentro da faixa e as que têm pedido avulso aberto.</summary>
