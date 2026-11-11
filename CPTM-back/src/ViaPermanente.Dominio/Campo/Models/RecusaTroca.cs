@@ -1,11 +1,12 @@
 using ViaPermanente.Dominio.Comum;
 namespace ViaPermanente.Dominio.Campo.Models;
 
-/// <summary>RECUSA_TROCA: uma linha por volta; o status da troca acompanha a última recusa.</summary>
+/// <summary>RECUSA_TROCA: uma linha por volta; o status da troca (ou do lote) acompanha a última recusa. É de uma troca ou de um lote, nunca dos dois.</summary>
 public class RecusaTroca : IRegistroDeCampo
 {
     public int IdRecusa { get; set; }
-    public int IdTroca { get; set; }
+    public int? IdTroca { get; set; }
+    public int? IdLoteTroca { get; set; }
     public int IdUsuario { get; set; }
     public DateTime Data { get; set; }
     public string Motivo { get; set; } = "";

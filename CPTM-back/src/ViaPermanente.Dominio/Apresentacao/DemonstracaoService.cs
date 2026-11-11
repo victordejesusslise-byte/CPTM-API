@@ -184,7 +184,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             var trocas = await repo.Ids<Troca, int>(t => dorm.Contains(t.IdDormenteSaiu) || (t.IdDormenteEntrou != null && dorm.Contains(t.IdDormenteEntrou.Value)) || (t.IdInspecao != null && inspecoes.Contains(t.IdInspecao.Value)), t => t.IdTroca);
             var rfids = await repo.Ids<Rfid, int>(r => dorm.Contains(r.IdDormente), r => r.IdRfid);
 
-            apagados += await repo.Apagar<RecusaTroca>(r => trocas.Contains(r.IdTroca));
+            apagados += await repo.Apagar<RecusaTroca>(r => r.IdTroca != null && trocas.Contains(r.IdTroca.Value));
             apagados += await repo.Apagar<InspecaoCorrecao>(c => inspecoes.Contains(c.IdInspecao) || (c.IdTrocaCancelada != null && trocas.Contains(c.IdTrocaCancelada.Value)));
             apagados += await repo.Apagar<Movimentacao>(m => dorm.Contains(m.IdDormente) || (m.IdTroca != null && trocas.Contains(m.IdTroca.Value)));
             apagados += trocasApagadas = await repo.Apagar<Troca>(t => trocas.Contains(t.IdTroca));

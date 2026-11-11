@@ -349,6 +349,10 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("int")
                         .HasColumnName("id_leitura");
 
+                    b.Property<int?>("IdLoteTroca")
+                        .HasColumnType("int")
+                        .HasColumnName("id_lote_troca");
+
                     b.Property<int?>("IdPilhaDestino")
                         .HasColumnType("int")
                         .HasColumnName("id_pilha_destino");
@@ -390,6 +394,8 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasIndex("IdLeitor");
 
                     b.HasIndex("IdLeitura");
+
+                    b.HasIndex("IdLoteTroca");
 
                     b.HasIndex("IdPilhaDestino");
 
@@ -1101,6 +1107,139 @@ namespace ViaPermanente.Dados.Migrations
                     b.ToTable("INSPECAO_CORRECAO");
                 });
 
+            modelBuilder.Entity("ViaPermanente.Dominio.Campo.Models.LoteTroca", b =>
+                {
+                    b.Property<int>("IdLoteTroca")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id_lote_troca");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdLoteTroca"));
+
+                    b.Property<string>("Cancelamento")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("cancelamento");
+
+                    b.Property<DateTime?>("Data")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("data");
+
+                    b.Property<DateTime?>("DataAprovacao")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("data_aprovacao");
+
+                    b.Property<DateTime>("DataPedido")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("data_pedido");
+
+                    b.Property<string>("Equipe")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("equipe");
+
+                    b.Property<Guid?>("IdCliente")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id_cliente");
+
+                    b.Property<int>("IdTamanho")
+                        .HasColumnType("int")
+                        .HasColumnName("id_tamanho");
+
+                    b.Property<int>("IdTrecho")
+                        .HasColumnType("int")
+                        .HasColumnName("id_trecho");
+
+                    b.Property<int?>("IdUsuarioAprovou")
+                        .HasColumnType("int")
+                        .HasColumnName("id_usuario_aprovou");
+
+                    b.Property<int?>("IdUsuarioFez")
+                        .HasColumnType("int")
+                        .HasColumnName("id_usuario_fez");
+
+                    b.Property<int>("IdUsuarioPediu")
+                        .HasColumnType("int")
+                        .HasColumnName("id_usuario_pediu");
+
+                    b.Property<decimal>("KmFim")
+                        .HasPrecision(9, 3)
+                        .HasColumnType("decimal(9,3)")
+                        .HasColumnName("km_fim");
+
+                    b.Property<decimal>("KmInicio")
+                        .HasPrecision(9, 3)
+                        .HasColumnType("decimal(9,3)")
+                        .HasColumnName("km_inicio");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("motivo");
+
+                    b.Property<string>("MotivoMenos")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("motivo_menos");
+
+                    b.Property<string>("MotivoReprovacao")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("motivo_reprovacao");
+
+                    b.Property<DateOnly?>("NoiteDoPlano")
+                        .HasColumnType("date")
+                        .HasColumnName("noite_do_plano");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("observacao");
+
+                    b.Property<int?>("QuantidadeAprovada")
+                        .HasColumnType("int")
+                        .HasColumnName("quantidade_aprovada");
+
+                    b.Property<int>("QuantidadePedida")
+                        .HasColumnType("int")
+                        .HasColumnName("quantidade_pedida");
+
+                    b.Property<DateTime?>("RecebidoEm")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("recebido_em");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<bool>("Urgente")
+                        .HasColumnType("bit")
+                        .HasColumnName("urgente");
+
+                    b.HasKey("IdLoteTroca");
+
+                    b.HasIndex("IdCliente")
+                        .IsUnique()
+                        .HasDatabaseName("UX_LOTE_TROCA_id_cliente")
+                        .HasFilter("[id_cliente] IS NOT NULL");
+
+                    b.HasIndex("IdTrecho");
+
+                    b.HasIndex("IdUsuarioAprovou");
+
+                    b.HasIndex("IdUsuarioFez");
+
+                    b.HasIndex("IdUsuarioPediu");
+
+                    b.ToTable("LOTE_TROCA", t =>
+                        {
+                            t.HasCheckConstraint("CK_LOTE_TROCA_id_tamanho", "[id_tamanho] IN (1, 2, 3, 4)");
+                        });
+                });
+
             modelBuilder.Entity("ViaPermanente.Dominio.Campo.Models.RecusaTroca", b =>
                 {
                     b.Property<int>("IdRecusa")
@@ -1138,7 +1277,11 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id_cliente");
 
-                    b.Property<int>("IdTroca")
+                    b.Property<int?>("IdLoteTroca")
+                        .HasColumnType("int")
+                        .HasColumnName("id_lote_troca");
+
+                    b.Property<int?>("IdTroca")
                         .HasColumnType("int")
                         .HasColumnName("id_troca");
 
@@ -1175,6 +1318,8 @@ namespace ViaPermanente.Dados.Migrations
                         .IsUnique()
                         .HasFilter("[id_cliente] IS NOT NULL");
 
+                    b.HasIndex("IdLoteTroca");
+
                     b.HasIndex("IdTroca");
 
                     b.HasIndex("IdUsuario");
@@ -1184,6 +1329,8 @@ namespace ViaPermanente.Dados.Migrations
                     b.ToTable("RECUSA_TROCA", t =>
                         {
                             t.HasCheckConstraint("CK_RECUSA_TROCA_manter_com_resposta", "[decisao] IS NULL OR [decisao] <> 'Manter' OR [resposta] IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_RECUSA_TROCA_troca_ou_lote", "([id_troca] IS NOT NULL AND [id_lote_troca] IS NULL) OR ([id_troca] IS NULL AND [id_lote_troca] IS NOT NULL)");
                         });
                 });
 
@@ -1242,6 +1389,10 @@ namespace ViaPermanente.Dados.Migrations
                     b.Property<int?>("IdInspecao")
                         .HasColumnType("int")
                         .HasColumnName("id_inspecao");
+
+                    b.Property<int?>("IdLoteTroca")
+                        .HasColumnType("int")
+                        .HasColumnName("id_lote_troca");
 
                     b.Property<int?>("IdTrecho")
                         .HasColumnType("int")
@@ -1327,6 +1478,8 @@ namespace ViaPermanente.Dados.Migrations
                         .HasFilter("[status] IN ('Pedida', 'Aprovada', 'AguardandoPeca', 'Separada', 'Recusada')");
 
                     b.HasIndex("IdInspecao");
+
+                    b.HasIndex("IdLoteTroca");
 
                     b.HasIndex("IdTrecho");
 
@@ -3707,6 +3860,11 @@ namespace ViaPermanente.Dados.Migrations
                         .HasForeignKey("IdLeitura")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ViaPermanente.Dominio.Campo.Models.LoteTroca", null)
+                        .WithMany()
+                        .HasForeignKey("IdLoteTroca")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ViaPermanente.Dominio.Armazens.Models.Pilha", null)
                         .WithMany()
                         .HasForeignKey("IdPilhaDestino")
@@ -3801,13 +3959,42 @@ namespace ViaPermanente.Dados.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ViaPermanente.Dominio.Campo.Models.LoteTroca", b =>
+                {
+                    b.HasOne("ViaPermanente.Dominio.Via.Models.Trecho", null)
+                        .WithMany()
+                        .HasForeignKey("IdTrecho")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("IdUsuarioAprovou")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("IdUsuarioFez")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("IdUsuarioPediu")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ViaPermanente.Dominio.Campo.Models.RecusaTroca", b =>
                 {
+                    b.HasOne("ViaPermanente.Dominio.Campo.Models.LoteTroca", null)
+                        .WithMany()
+                        .HasForeignKey("IdLoteTroca")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ViaPermanente.Dominio.Campo.Models.Troca", null)
                         .WithMany()
                         .HasForeignKey("IdTroca")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
                         .WithMany()
@@ -3837,6 +4024,11 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasOne("ViaPermanente.Dominio.Campo.Models.Inspecao", null)
                         .WithMany()
                         .HasForeignKey("IdInspecao")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ViaPermanente.Dominio.Campo.Models.LoteTroca", null)
+                        .WithMany()
+                        .HasForeignKey("IdLoteTroca")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ViaPermanente.Dominio.Via.Models.Trecho", null)
