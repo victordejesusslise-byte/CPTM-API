@@ -3,7 +3,7 @@ import { DestroyRef, Injectable, computed, effect, inject, signal, untracked } f
 import type { HubConnection } from '@microsoft/signalr';
 import { firstValueFrom } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
-import { TrocaDto } from '../../campo/entidades/campo';
+import { LoteTrocaDto, TrocaDto } from '../../campo/entidades/campo';
 import { Sessao } from '../sessao/sessao';
 
 const HUB = ambiente.api.replace(/\/api$/, '') + '/hub/campo';
@@ -22,6 +22,8 @@ export class PedidosDeTroca {
   readonly quantas = signal(0);
   /** O pedido que acabou de chegar ao vivo (o aviso fica até a pessoa fechar). */
   readonly chegou = signal<number | null>(null);
+  /** O lote de troca que acabou de chegar ao vivo. */
+  readonly chegouLote = signal<number | null>(null);
   private conexao?: HubConnection;
 
   constructor() {
@@ -42,12 +44,15 @@ export class PedidosDeTroca {
     });
   }
 
-  /** Conta de novo (ao entrar, ao vivo e depois de pedir ou decidir). Sem rede, fica o número que estava. */
+  /** Conta de novo (ao entrar, ao vivo e depois de pedir ou decidir): as trocas e os lotes de troca pedidos. Sem rede, fica o número que estava. */
   async contar(): Promise<void> {
     if (!this.aprova()) return;
     try {
-      const pedidas = await firstValueFrom(this.http.get<TrocaDto[]>(`${ambiente.api}/trocas`, { params: { status: 'Pedida' } }));
-      this.quantas.set(pedidas.length);
+      const [pedidas, lotes] = await Promise.all([
+        firstValueFrom(this.http.get<TrocaDto[]>(`${ambiente.api}/trocas`, { params: { status: 'Pedida' } })),
+        firstValueFrom(this.http.get<LoteTrocaDto[]>(`${ambiente.api}/lotes-troca`, { params: { status: 'Pedido' } })),
+      ]);
+      this.quantas.set(pedidas.length + lotes.length);
     } catch {
       /* fica o número que estava */
     }
@@ -64,8 +69,12 @@ export class PedidosDeTroca {
       this.chegou.set(aviso?.id ?? null);
       void this.contar();
     });
+    conexao.on('lotePedido', (aviso: { id: number }) => {
+      this.chegouLote.set(aviso?.id ?? null);
+      void this.contar();
+    });
     // aprovada, reprovada ou cancelada em outro lugar: o número muda
-    for (const evento of ['trocaNoPlano', 'trocaUrgente']) conexao.on(evento, () => void this.contar());
+    for (const evento of ['trocaNoPlano', 'trocaUrgente', 'loteNoPlano']) conexao.on(evento, () => void this.contar());
     conexao.onreconnected(() => void this.contar());
     this.conexao = conexao;
     try {

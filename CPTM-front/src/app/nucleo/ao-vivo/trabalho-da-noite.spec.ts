@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TrocaDto } from '../../campo/entidades/campo';
+import { LoteTrocaDto, TrocaDto } from '../../campo/entidades/campo';
 import { PecaDto } from '../../pecas/entidades/peca';
 import { GUARDADO } from '../fila/guardado';
 import { Rede } from '../fila/rede';
@@ -25,6 +25,17 @@ describe('TrabalhoDaNoite (o plano guardado no celular)', () => {
   };
 
   beforeEach(() => online.set(true));
+
+  it('sem rede, os lotes de troca da noite vêm do plano guardado (com a faixa e as separadas)', () => {
+    const { trabalho } = abrir(false);
+    const separado = { id: 3, status: 'Separado', pecasDaFaixa: [{ id: 2 }], separadas: [{ id: 9 }] } as unknown as LoteTrocaDto;
+    trabalho.plano.set({ ...plano, lotes: [separado, { id: 4, status: 'Aprovado' } as LoteTrocaDto] });
+    expect(trabalho.lotes(['Separado'])).toEqual([separado]);
+    expect(trabalho.lote(3)?.pecasDaFaixa).toHaveLength(1);
+    expect(trabalho.lote(99)).toBeNull();
+    trabalho.plano.set(plano); // plano antigo, de antes dos lotes
+    expect(trabalho.lotes(['Separado'])).toEqual([]);
+  });
 
   it('compara as versões número a número', () => {
     expect(versaoMaisNova('0.1.12', '0.1.9')).toBe(true);

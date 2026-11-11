@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
 
-export type TipoLaudo = 'recebimento' | 'inspecao' | 'liberacao' | 'troca';
+export type TipoLaudo = 'recebimento' | 'inspecao' | 'liberacao' | 'troca' | 'liberacao-lote' | 'lote';
 
 /** O laudo como documento: o mesmo conteúdo do PDF, para a tela desenhar antes de baixar. */
 export interface DocumentoLaudoDto {

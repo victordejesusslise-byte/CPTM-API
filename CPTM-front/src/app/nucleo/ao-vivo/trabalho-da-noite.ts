@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import type { HubConnection } from '@microsoft/signalr';
 import { firstValueFrom } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
-import { AlertaDto, TrocaDto } from '../../campo/entidades/campo';
+import { AlertaDto, LoteTrocaDto, StatusLoteTroca, TrocaDto } from '../../campo/entidades/campo';
 import { StatusTroca } from '../../compartilhado/entidades/enums';
 import { PecaDto } from '../../pecas/entidades/peca';
 import { GUARDADO } from '../fila/guardado';
@@ -20,6 +20,8 @@ export interface PlanoCampoDto {
   trocas: TrocaDto[];
   alertas: AlertaDto[];
   pecas: PecaDto[];
+  /** Os lotes de troca da noite, com a faixa e as separadas (a via confere sem rede). */
+  lotes?: LoteTrocaDto[] | null;
 }
 
 export interface VersaoDoApp {
@@ -83,6 +85,12 @@ export class TrabalhoDaNoite {
   troca(id: number): TrocaDto | null {
     return this.plano()?.trocas.find((t) => t.id === id) ?? null;
   }
+  lotes(status: StatusLoteTroca[]): LoteTrocaDto[] {
+    return (this.plano()?.lotes ?? []).filter((l) => status.includes(l.status));
+  }
+  lote(id: number): LoteTrocaDto | null {
+    return this.plano()?.lotes?.find((l) => l.id === id) ?? null;
+  }
   alertas(origem: AlertaDto['origem']): AlertaDto[] {
     return (this.plano()?.alertas ?? []).filter((a) => a.origem === origem);
   }
@@ -120,7 +128,7 @@ export class TrabalhoDaNoite {
       .withUrl(HUB, { accessTokenFactory: () => this.sessao.token() ?? '', withCredentials: false })
       .withAutomaticReconnect()
       .build();
-    for (const evento of ['trocaNoPlano', 'alertaNovo', 'alertaFechado']) conexao.on(evento, () => void this.atualizar());
+    for (const evento of ['trocaNoPlano', 'loteNoPlano', 'alertaNovo', 'alertaFechado']) conexao.on(evento, () => void this.atualizar());
     conexao.on('trocaUrgente', () => {
       this.urgente.set('Chegou uma troca urgente para esta noite. Confira em "A trocar".');
       void this.atualizar();

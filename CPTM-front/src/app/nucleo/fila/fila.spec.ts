@@ -107,6 +107,44 @@ describe('Fila (sem internet)', () => {
     expect(fila.naoEnviados()).toEqual([]);
   });
 
+  describe('o lote de troca (uma foto por dormente)', () => {
+    const fotoDoLote = `${ambiente.api}/lotes-troca/3/foto`;
+    const fechamento = `${ambiente.api}/lotes-troca/3/fechamento`;
+    const lote: NovoRegistro = {
+      tipo: 'lote', alvo: 3, rotulo: 'Lote LT-0003',
+      corpo: { equipe: 'Turma 3', pares: [{ leituraEntrou: { tag: 'A' } }, { leituraEntrou: { tag: 'B' } }] },
+    };
+
+    it('o lote sobe uma foto por par e manda os caminhos nos pares', async () => {
+      const fila = abrir();
+      const r = fila.registrar(lote, [imagem(), imagem()]);
+      (await pedido(fotoDoLote)).flush({ arquivo: 'lotes/3/a.jpg' });
+      (await pedido(fotoDoLote)).flush({ arquivo: 'lotes/3/b.jpg' });
+      const registro = await pedido(fechamento);
+      expect(registro.request.body.pares.map((p: { fotoArquivo: string }) => p.fotoArquivo)).toEqual(['lotes/3/a.jpg', 'lotes/3/b.jpg']);
+      expect(registro.request.body).toMatchObject({ equipe: 'Turma 3' });
+      expect(registro.request.body.fotoArquivo).toBeUndefined();
+      expect(registro.request.body.idCliente).toMatch(/^[0-9a-f-]{36}$/);
+      registro.flush({ id: 3, status: 'Feito' });
+      expect(await r).toEqual({ estado: 'enviado', resposta: { id: 3, status: 'Feito' } });
+      expect(fila.itens()).toEqual([]);
+    });
+
+    it('o lote recusado pelo servidor vai para Não enviados com as fotos', async () => {
+      online.set(false);
+      const fila = abrir();
+      await fila.registrar(lote, [imagem(), imagem()]);
+      online.set(true);
+      TestBed.tick();
+      (await pedido(fotoDoLote)).flush({ arquivo: 'lotes/3/a.jpg' });
+      (await pedido(fotoDoLote)).flush({ arquivo: 'lotes/3/b.jpg' });
+      (await pedido(fechamento)).flush(recusa, { status: 400, statusText: 'Bad Request' });
+      await vi.waitFor(() => expect(fila.naoEnviados()).toHaveLength(1));
+      expect(fila.naoEnviados()[0]).toMatchObject({ rotulo: 'Lote LT-0003', arquivos: ['lotes/3/a.jpg', 'lotes/3/b.jpg'] });
+      expect(fila.naoEnviados()[0].fotos).toHaveLength(2);
+    });
+  });
+
   it('só sobem os registros de quem está logado', async () => {
     preparar();
     const outro = { ...troca, id: 'outro', idUsuario: 99, criadoEm: new Date().toISOString(), foto: 'outro.jpg', tentativas: 0 };
