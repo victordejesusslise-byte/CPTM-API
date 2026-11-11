@@ -80,6 +80,7 @@ builder.Services.AddScoped<IVarreduraRepository, VarreduraRepository>();
 builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
 builder.Services.AddScoped<IInspecaoRepository, InspecaoRepository>();
 builder.Services.AddScoped<ITrocaRepository, TrocaRepository>();
+builder.Services.AddScoped<ILoteTrocaRepository, LoteTrocaRepository>();
 builder.Services.AddScoped<IRelatorioAmbientalRepository, RelatorioAmbientalRepository>();
 builder.Services.AddScoped<IParticaoRepository, ParticaoRepository>();
 builder.Services.AddScoped<IArmazemRepository, ArmazemRepository>();
@@ -117,6 +118,7 @@ builder.Services.AddScoped<VarreduraService>();
 builder.Services.AddScoped<AlertaService>();
 builder.Services.AddScoped<InspecaoService>();
 builder.Services.AddScoped<TrocaService>();
+builder.Services.AddScoped<LoteTrocaService>();
 builder.Services.AddScoped<FotoCampoService>();
 builder.Services.AddScoped<PlanoCampoService>();
 // O ao vivo do campo: o celular logado recebe os avisos do trabalho da noite (CampoHub em /hub/campo).

@@ -27,6 +27,7 @@ public class SegurancaDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
     {
         ["POST api/auth/sair"] = "cada um encerra a própria sessão",
         ["POST api/trocas/{id:int}/decisao"] = "o cargo que aprova é um parâmetro (troca.quem_aprova); o serviço confere",
+        ["POST api/lotes-troca/{id:int}/decisao"] = "o lote de troca segue o mesmo parâmetro de quem aprova a troca; o serviço confere",
         ["POST hub/campo/negotiate"] = "o ao vivo só escuta: o celular logado recebe os avisos do trabalho da noite, nada é gravado",
         ["POST hub/campo"] = "o ao vivo só escuta (o mesmo canal, pelo transporte que não é WebSocket)",
         ["DELETE hub/campo"] = "o ao vivo só escuta (fecha o canal)"
@@ -105,6 +106,12 @@ public class SegurancaDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
             ["POST api/trocas/{id:int}/separacao"] = ["OperadorPatio"],
             ["POST api/trocas/{id:int}/execucao"] = ["OperadorVia"],
             ["POST api/trocas/{id:int}/foto"] = ["OperadorVia"],
+            ["POST api/lotes-troca"] = ["Tecnico"],
+            ["POST api/lotes-troca/{id:int}/separacao"] = ["OperadorPatio"],
+            ["POST api/lotes-troca/{id:int}/foto"] = ["OperadorVia"],
+            ["POST api/lotes-troca/{id:int}/fechamento"] = ["OperadorVia"],
+            ["POST api/lotes-troca/{id:int}/recusa"] = ["OperadorVia"],
+            ["POST api/lotes-troca/{id:int}/recusa/decisao"] = ["Tecnico"],
             ["POST api/alertas/{id:int}/foto"] = ["Tecnico", "OperadorVia"],
             ["POST api/dormentes/{id:int}/fotos/inspecao"] = ["Tecnico"],
             ["POST api/pedidos"] = ["OperadorPatio", "Supervisor"],

@@ -287,6 +287,24 @@ public class LoteTrocaNoBancoTestes : IAsyncLifetime
         }
     }
 
+    /// <summary>O lote aprovado da noite vai para o celular com a faixa e as separadas, para a via trocar e conferir sem rede.</summary>
+    [Fact]
+    public async Task Lote_aprovado_entra_no_plano_da_noite()
+    {
+        var (hoje, amanha) = (await Separado(2, 1), await Separado(1, 0));
+        await Lotes().Pedir(Novo(1), tecnico); // só pedido: não entra
+        var meioDia = DateTime.Today.AddHours(12);
+        DateOnly? estaNoite = DateOnly.FromDateTime(meioDia), outraNoite = DateOnly.FromDateTime(meioDia).AddDays(1);
+        await db.Set<Dominio.Campo.Models.LoteTroca>().Where(l => l.IdLoteTroca == hoje.Id).ExecuteUpdateAsync(s => s.SetProperty(l => l.NoiteDoPlano, estaNoite));
+        await db.Set<Dominio.Campo.Models.LoteTroca>().Where(l => l.IdLoteTroca == amanha.Id).ExecuteUpdateAsync(s => s.SetProperty(l => l.NoiteDoPlano, outraNoite));
+
+        var plano = await new PlanoCampoService(BancoDeTeste.Trocas(db), BancoDeTeste.Alertas(db), BancoDeTeste.Pecas(db), Lotes()).Montar(meioDia);
+        var noPlano = Assert.Single(plano.Lotes!);
+        Assert.Equal((hoje.Id, 3, 1), (noPlano.Id, noPlano.PecasDaFaixa.Count, noPlano.Separadas.Count));
+        Assert.Equal(new[] { hoje.Id, amanha.Id }.Order(),
+            (await new PlanoCampoService(BancoDeTeste.Trocas(db), BancoDeTeste.Alertas(db), BancoDeTeste.Pecas(db), Lotes()).Montar(meioDia.AddDays(1))).Lotes!.Select(l => l.Id).Order());
+    }
+
     [Fact]
     public async Task Tag_que_nao_responde_vai_pelo_id_da_faixa()
     {

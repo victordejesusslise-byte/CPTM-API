@@ -22,11 +22,17 @@ public class AvisoAoVivo(IHubContext<CampoHub> hub, ILogger<AvisoAoVivo> log)
     public const string TrocaPedida = "trocaPedida";
     public const string AlertaNovo = "alertaNovo";
     public const string AlertaFechado = "alertaFechado";
+    /// <summary>O técnico pediu um lote de troca: o aviso para quem aprova (Victor, 2026-11-11).</summary>
+    public const string LotePedido = "lotePedido";
+    public const string LoteNoPlano = "loteNoPlano";
 
     /// <summary>A troca mudou (aprovada, separada, feita, recusada, cancelada). Aprovada como urgente vai como urgente.</summary>
     public Task Troca(TrocaDto? troca) => troca is null
         ? Task.CompletedTask
         : Avisar(troca.Urgente && troca.Status == "Aprovada" ? TrocaUrgente : TrocaNoPlano, troca.Id);
+
+    /// <summary>O lote mudou (aprovado, separado, feito, recusado, cancelado): o celular baixa o plano de novo.</summary>
+    public Task Lote(LoteTrocaDto? lote) => lote is null ? Task.CompletedTask : Avisar(LoteNoPlano, lote.Id);
 
     public async Task Avisar(string evento, int? id)
     {

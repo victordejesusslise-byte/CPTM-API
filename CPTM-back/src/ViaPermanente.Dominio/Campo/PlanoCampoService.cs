@@ -10,9 +10,23 @@ namespace ViaPermanente.Dominio.Campo;
 /// noites anteriores que ainda não foram feitas), os alertas abertos e as peças deles (Etapa 7: a inspeção sem rede abre por elas).
 /// Vai a lista inteira, que é pequena: o celular troca a dele por esta.
 /// </summary>
-public class PlanoCampoService(TrocaService trocas, AlertaService alertas, PecaService pecas)
+public class PlanoCampoService(TrocaService trocas, AlertaService alertas, PecaService pecas, LoteTrocaService? lotes = null)
 {
     private static readonly StatusTroca[] NoPlano = [StatusTroca.Aprovada, StatusTroca.AguardandoPeca, StatusTroca.Separada];
+    private static readonly StatusLoteTroca[] LoteNoPlano = [StatusLoteTroca.Aprovado, StatusLoteTroca.AguardandoPeca, StatusLoteTroca.Separado];
+
+    /// <summary>Os lotes de troca da noite (e os de noites anteriores ainda não feitos), abertos: com a faixa e as separadas, para a via conferir sem rede.</summary>
+    private async Task<IReadOnlyList<LoteTrocaDto>> Lotes(DateOnly noite)
+    {
+        if (lotes is null)
+            return [];
+        var daNoite = new List<LoteTrocaDto>();
+        foreach (var status in LoteNoPlano)
+            foreach (var lote in (await lotes.Listar(status)).Where(l => l.NoiteDoPlano is null || l.NoiteDoPlano <= noite))
+                if (await lotes.BuscarPorId(lote.Id) is { } aberto)
+                    daNoite.Add(aberto);
+        return daNoite.OrderBy(l => l.IdTrecho).ThenBy(l => l.KmInicio).ToList();
+    }
 
     public async Task<PlanoCampoDto> Montar(DateTime agora)
     {
@@ -25,6 +39,6 @@ public class PlanoCampoService(TrocaService trocas, AlertaService alertas, PecaS
         foreach (var id in daNoite.Select(t => t.IdDormenteSaiu).Concat(abertos.Where(a => a.IdDormente is not null).Select(a => a.IdDormente!.Value)).Distinct())
             if (await pecas.BuscarPorId(id) is { } peca)
                 daPeca.Add(peca);
-        return new PlanoCampoDto(noite, agora, daNoite.OrderBy(t => t.IdTrecho).ThenBy(t => t.Km).ToList(), abertos, daPeca);
+        return new PlanoCampoDto(noite, agora, daNoite.OrderBy(t => t.IdTrecho).ThenBy(t => t.Km).ToList(), abertos, daPeca, await Lotes(noite));
     }
 }
