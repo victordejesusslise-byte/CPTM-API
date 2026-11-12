@@ -225,7 +225,7 @@ export class TrocarLote {
       fotos.push(f);
     }
     await this.enviar({
-      tipo: 'lote', alvo: this.lote().id, resumo: this.lote(), rotulo: `Lote ${this.lote().codigo}`,
+      tipo: 'lote', alvo: this.lote().id, rotulo: `Lote ${this.lote().codigo}`,
       corpo: {
         equipe: this.equipe().trim(),
         pares: pares.map((p) => ({
@@ -242,7 +242,7 @@ export class TrocarLote {
       return;
     }
     await this.enviar({
-      tipo: 'recusa-lote', alvo: this.lote().id, resumo: this.lote(), rotulo: `Recusa do lote ${this.lote().codigo}`,
+      tipo: 'recusa-lote', alvo: this.lote().id, rotulo: `Recusa do lote ${this.lote().codigo}`,
       corpo: { motivo: this.motivo().trim(), descricao: this.descricao().trim() || null },
     }, this.foto()!, 'Recusa do lote enviada ao técnico.', 'Sem rede: a recusa ficou guardada no celular e sobe sozinha quando a rede voltar.');
   }

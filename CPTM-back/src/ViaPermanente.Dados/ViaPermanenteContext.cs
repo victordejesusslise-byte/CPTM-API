@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ViaPermanente.Dados.Configuracoes;
 using ViaPermanente.Dados.Helpers;
 using ViaPermanente.Dominio.Comum;
+using ViaPermanente.Dominio.Pecas.Models;
 
 namespace ViaPermanente.Dados;
 
