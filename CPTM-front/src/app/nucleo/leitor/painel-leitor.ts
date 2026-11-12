@@ -2,7 +2,9 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Catalogos } from '../../catalogos/servicos/catalogos';
 import { ChaveModulo } from './leitor';
-import { Cenario, LeitorSimulado } from './leitor-simulado';
+import { Cenario, LEITOR, LeitorSimulado } from './leitor-simulado';
+import { LeitorUsb } from './leitor-usb';
+import { Pecas } from '../../pecas/servicos/pecas';
 
 /**
  * O painel do módulo simulado (até o de verdade existir): conectar no USB-C, a chave A/N/V e as etiquetas por perto (só a peça,
@@ -12,6 +14,36 @@ import { Cenario, LeitorSimulado } from './leitor-simulado';
   selector: 'app-painel-leitor',
   imports: [FormsModule],
   template: `
+    @if (usb; as m) {
+      <button type="button" class="modulo" (click)="aberto.set(!aberto())" [attr.aria-expanded]="aberto()" aria-controls="painel-leitor">
+        <span class="modulo__ponto" [class.modulo__ponto--ligado]="m.conectado()" aria-hidden="true"></span>
+        Módulo · {{ m.conectado() ? 'N' : 'desconectado' }}
+      </button>
+      @if (aberto()) {
+        <section id="painel-leitor" class="painel" aria-label="Módulo RFID no USB-C">
+          <header class="painel__topo">
+            <strong>Módulo RFID</strong><span class="painel__rotulo">USB-C · protótipo NFC</span>
+            <button type="button" class="painel__fechar" (click)="aberto.set(false)" aria-label="Fechar o painel do módulo">×</button>
+          </header>
+          <p class="painel__linha"><span class="modulo__ponto" [class.modulo__ponto--ligado]="m.conectado()" aria-hidden="true"></span>
+            @if (m.conectado()) { Conectado · {{ m.firmware() }} } @else { Desconectado }</p>
+          <p class="painel__rotulo">Lê de perto, na distância normal (sem potência nem sinal no protótipo).</p>
+          <div class="painel__cenarios">
+            <button type="button" (click)="conectarUsb(m)" [disabled]="m.ocupado()">{{ m.conectado() ? 'Conectar de novo' : 'Conectar' }}</button>
+            <button type="button" (click)="identificar(m)" [disabled]="m.ocupado()">Identificar etiqueta</button>
+          </div>
+          @if (motivo()) { <p class="painel__aviso" role="alert">{{ motivo() }}</p> }
+          @if (m.etiqueta(); as e) {
+            <ul class="painel__vistas">
+              <li><span>UID</span><span class="mono">{{ e.uid }}</span></li>
+              <li><span>Etiqueta</span><span>{{ e.tipo }}</span></li>
+              <li><span>Número YBYRA</span><span class="mono">{{ e.id ?? 'sem número' }}</span></li>
+              <li><span>Peça</span><span class="mono">{{ peca() ?? (e.id ? 'sem cadastro' : '—') }}</span></li>
+            </ul>
+          }
+        </section>
+      }
+    } @else {
     <button type="button" class="modulo" (click)="alternar()" [attr.aria-expanded]="aberto()" aria-controls="painel-leitor">
       <span class="modulo__ponto" [class.modulo__ponto--ligado]="leitor.conectado()" aria-hidden="true"></span>
       Módulo · {{ leitor.chave() }}
@@ -49,6 +81,7 @@ import { Cenario, LeitorSimulado } from './leitor-simulado';
         </ul>
       </section>
     }
+    }
   `,
   styles: `
     :host { position: fixed; right: 12px; bottom: calc(12px + var(--fundo-seguro)); z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
@@ -75,7 +108,29 @@ import { Cenario, LeitorSimulado } from './leitor-simulado';
 })
 export class PainelLeitor {
   protected readonly leitor = inject(LeitorSimulado);
+  /** No app, o módulo de verdade no USB-C: o painel mostra a conexão, o firmware e identifica a etiqueta (UID, tipo, número e a peça). */
+  protected readonly usb = ((l) => (l instanceof LeitorUsb ? l : null))(inject(LEITOR));
+  protected readonly motivo = signal<string | null>(null);
+  protected readonly peca = signal<string | null>(null);
+  private readonly pecas = inject(Pecas);
   private readonly catalogos = inject(Catalogos);
+
+  protected async conectarUsb(m: LeitorUsb): Promise<void> {
+    this.motivo.set(null);
+    await m.conectar();
+    if (!m.conectado()) this.motivo.set('O módulo não respondeu. Confira o cabo USB-C e autorize o acesso quando o Android perguntar.');
+  }
+
+  protected async identificar(m: LeitorUsb): Promise<void> {
+    this.motivo.set(null);
+    this.peca.set(null);
+    const r = await m.identificar();
+    if ('motivo' in r) {
+      this.motivo.set(r.motivo);
+      return;
+    }
+    if (r.id) this.pecas.porTag(r.id).subscribe({ next: (p) => this.peca.set(p.codigo), error: () => this.peca.set(null) });
+  }
   protected readonly aberto = signal(false);
   protected readonly tag = signal('');
   protected readonly semTag = signal(false);

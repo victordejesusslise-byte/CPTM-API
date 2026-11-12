@@ -23,6 +23,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- O módulo RFID ligado no USB-C abre o YBYRA (e, marcando "sempre", o acesso já fica autorizado). -->
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/modulo_rfid_usb" />
+
         </activity>
 
         <provider
@@ -39,4 +47,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- O módulo RFID no USB-C: o celular faz de USB Host (não é obrigatório para instalar). -->
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
 </manifest>
