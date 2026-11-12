@@ -4,6 +4,8 @@
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
+@if (idLote() && loteVisivel(); as l) { <app-trocar-lote [lote]="l" (mudou)="loteMudou($event)" (fechar)="fechar()" /> }
+
 @if (idAberta() && troca.isLoading() && !valorDe(troca)) {
   <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando a troca…" /></section>
 }
@@ -58,9 +60,16 @@
 }
 
 <section class="cartao">
-  <header><h2>{{ titulo() }}</h2><span class="nota">{{ valorDe(lista)?.length ?? 0 }} · toque para abrir</span></header>
-  <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length" textoVazio="Nenhuma troca aqui." />
+  <header><h2>{{ titulo() }}</h2><span class="nota">{{ (valorDe(lista)?.length ?? 0) + lotesVisiveis().length }} · toque para abrir</span></header>
+  <app-estado [carregando]="lista.isLoading()" [erro]="erroLista()" [vazio]="lista.hasValue() && !lista.value().length && !lotesVisiveis().length" textoVazio="Nenhuma troca aqui." />
   <div class="cartoes-alerta">
+    @for (l of lotesVisiveis(); track l.id) {
+      <button type="button" class="cartao-alerta" [class.selecionado]="idLote() === l.id" (click)="abrirLote(l)">
+        <span class="topo-alerta"><b>Lote {{ l.codigo }}</b><span class="pilula">Lote · {{ l.quantidadeAprovada }} peças</span></span>
+        <span class="tipo">{{ l.trecho }} · <span class="mono">km {{ km(l.kmInicio) }} a {{ km(l.kmFim) }}</span></span>
+        <span class="nota">{{ l.separadas.length }} separadas · {{ metros(l.comprimentoM) }}</span>
+      </button>
+    }
     @for (t of valorDe(lista) ?? []; track t.id) {
       <button type="button" class="cartao-alerta" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
         <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
