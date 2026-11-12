@@ -75,10 +75,10 @@ export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'sai
   selector: 'app-trocar-lote',
   imports: [FormsModule, FORMULARIO, LeituraTag],
   styles: `
-    .conferida { margin: -10px 0 6px; color: var(--nota-bom); }
+    .conferida { margin: -10px 0 6px; color: var(--nota-bom-texto); }
     .lbl { margin: 12px 0 6px; }
     .obrig { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; }
-    .obrig .feita { color: var(--nota-bom); white-space: nowrap; }
+    .obrig .feita { color: var(--nota-bom-texto); white-space: nowrap; }
     .obrig > button, .obrig .nota { flex: none; white-space: nowrap; }
   `,
   template: `
