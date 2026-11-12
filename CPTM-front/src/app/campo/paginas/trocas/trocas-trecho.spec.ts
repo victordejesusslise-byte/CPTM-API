@@ -7,15 +7,16 @@ import { entrarComo } from '../../../compartilhado/testes/sessao-de-teste';
 import { GUARDADO } from '../../../nucleo/fila/guardado';
 import { Fila } from '../../../nucleo/fila/fila';
 import { Rede } from '../../../nucleo/fila/rede';
-import { TrocaDto } from '../../entidades/campo';
+import { LoteTrocaDto, TrocaDto } from '../../entidades/campo';
 import { TrocasTrecho } from './trocas-trecho';
+import { LOTE_SEPARADO } from './trocar-lote.spec';
 
 const troca = (id: number, status: TrocaDto['status'] = 'Separada') =>
   ({ id, status, codigoSaiu: `DM-E01-L08-00${id}`, idDormenteSaiu: id, km: 213.1, diasDesdeOPedido: 1 }) as TrocaDto;
 
 describe('Trocas do trecho com a fila', () => {
   // Sem rede: a fila não manda, e a troca feita no celular fica esperando.
-  const abrir = async (aba: 'trocar' | 'feitas', status: string, daApi: TrocaDto[]) => {
+  const abrir = async (aba: 'trocar' | 'feitas', status: string, daApi: TrocaDto[], lotes: LoteTrocaDto[] = [], naFilaDoLote = false) => {
     localStorage.clear();
     entrarComo('OperadorVia');
     TestBed.configureTestingModule({
@@ -23,13 +24,15 @@ describe('Trocas do trecho com a fila', () => {
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: Rede, useValue: { online: signal(false) } }],
     });
     const naFila = { tipo: 'troca', alvo: 10, corpo: {}, rotulo: 'Troca da peça DM-E01-L08-0010', resumo: troca(10), id: 'x', idUsuario: 1, criadoEm: new Date().toISOString(), foto: 'x.jpg', tentativas: 0 };
-    await TestBed.inject(GUARDADO).gravar('ybyra.fila', JSON.stringify({ itens: [naFila], naoEnviados: [] }));
-    await vi.waitFor(() => expect(TestBed.inject(Fila).itens()).toHaveLength(1));
+    const loteNaFila = { ...naFila, tipo: 'lote', alvo: 3, id: 'y', rotulo: 'Lote LT-0003' };
+    await TestBed.inject(GUARDADO).gravar('ybyra.fila', JSON.stringify({ itens: naFilaDoLote ? [naFila, loteNaFila] : [naFila], naoEnviados: [] }));
+    await vi.waitFor(() => expect(TestBed.inject(Fila).itens()).toHaveLength(naFilaDoLote ? 2 : 1));
     const fixture = TestBed.createComponent(TrocasTrecho);
     fixture.componentRef.setInput('aba', aba);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     http.expectOne((r) => r.url.endsWith('/trocas') && r.params.get('status') === status).flush(daApi);
+    http.match((r) => r.url.endsWith('/lotes-troca')).forEach((r) => r.flush(lotes));
     await fixture.whenStable();
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
@@ -40,6 +43,16 @@ describe('Trocas do trecho com a fila', () => {
     const tela = await abrir('trocar', 'Separada', [troca(10), troca(11)]);
     expect(cartoes(tela)).toHaveLength(1);
     expect(cartoes(tela)[0]).toContain('DM-E01-L08-0011');
+  });
+
+  it('o lote separado aparece em "A trocar" (Victor, 2026-11-11)', async () => {
+    const tela = await abrir('trocar', 'Separada', [], [LOTE_SEPARADO]);
+    expect(cartoes(tela).find((c) => c.includes('LT-0003'))).toContain('2 peças');
+  });
+
+  it('o lote fechado no celular sai na hora de "A trocar"', async () => {
+    const tela = await abrir('trocar', 'Separada', [], [LOTE_SEPARADO], true);
+    expect(cartoes(tela).some((c) => c.includes('LT-0003'))).toBe(false);
   });
 
   it('e aparece em "Feitas", esperando a rede', async () => {

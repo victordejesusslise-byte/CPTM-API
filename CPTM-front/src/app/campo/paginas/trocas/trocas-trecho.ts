@@ -4,11 +4,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
-import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
+import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { Fila, NovoRegistro } from '../../../nucleo/fila/fila';
 import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
 import { AvisoGuardado } from '../../../nucleo/ao-vivo/aviso-guardado';
-import { TrocaDto } from '../../entidades/campo';
+import { LoteTrocaDto, TrocaDto } from '../../entidades/campo';
+import { LotesTroca } from '../../servicos/lotes-troca';
+import { TrocarLote } from './trocar-lote';
 import { MetodoCaptura, StatusTroca } from '../../../compartilhado/entidades/enums';
 import { Trocas } from '../../servicos/trocas';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
@@ -29,13 +31,16 @@ const ABAS: Record<Aba, { titulo: string; status: StatusTroca[] }> = {
 /** Trocas do trecho (protótipo YBYRA, etapa 13): o operador da via troca a peça pela separada, ou recusa com motivo e foto. */
 @Component({
   selector: 'app-trocas-trecho',
-  imports: [AvisoGuardado, Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag, ResumoTroca],
+  imports: [AvisoGuardado, Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag, ResumoTroca, TrocarLote],
   templateUrl: './trocas-trecho.html',
 })
 export class TrocasTrecho {
   readonly aba = input<Aba>('trocar');
   readonly aberta = input<string>();
+  /** ?lote= o lote de troca aberto (Victor, 2026-11-11). */
+  readonly lote = input<string>();
   private readonly api = inject(Trocas);
+  private readonly lotesApi = inject(LotesTroca);
   private readonly fila = inject(Fila);
   private readonly trabalho = inject(TrabalhoDaNoite);
   protected readonly semRede = this.trabalho.usarGuardado;
@@ -81,6 +86,35 @@ export class TrocasTrecho {
   protected readonly rotulo = ROTULO_TROCA;
   protected readonly dataHora = dataHora;
   protected readonly km = km;
+  protected readonly metros = metros;
+
+  /** Os lotes separados, para a via trocar (sem rede, do plano guardado); o lote fechado ou recusado no celular sai da lista na hora. */
+  private readonly lotesNaFila = computed(() => new Set(this.fila.meus().filter((i) => i.tipo === 'lote' || i.tipo === 'recusa-lote').map((i) => i.alvo)));
+  protected readonly lotes = rxResource({
+    params: () => ({ trocar: this.aba() === 'trocar', guardado: this.semRede() }),
+    stream: ({ params }) => (!params.trocar ? of([]) : params.guardado ? of(this.trabalho.lotes(['Separado'])) : this.lotesApi.listar('Separado')),
+  });
+  protected readonly lotesVisiveis = computed(() => (valorDe(this.lotes) ?? []).filter((l) => !this.lotesNaFila().has(l.id)));
+  protected readonly idLote = computed(() => (this.lote() ? Number(this.lote()) : null));
+  protected readonly loteAberto = rxResource({
+    params: () => (this.idLote() ? { id: this.idLote()!, guardado: this.semRede() } : undefined),
+    stream: ({ params }) => (params.guardado ? of(this.trabalho.lote(params.id)) : this.lotesApi.buscar(params.id)),
+  });
+  protected readonly loteVisivel = computed(() => valorDe(this.loteAberto));
+
+  protected abrirLote(l: LoteTrocaDto): void {
+    this.mensagem.set(null);
+    this.erro.set(null);
+    this.router.navigate([], { queryParams: { lote: l.id } });
+  }
+
+  /** O lote foi fechado ou recusado (enviado ou guardado na fila): volta para a lista com a mensagem. */
+  protected loteMudou(mensagem: string): void {
+    this.mensagem.set(mensagem);
+    this.fechar();
+    this.lotes.reload();
+    this.lista.reload();
+  }
 
   protected readonly acao = signal<'executar' | 'recusar' | null>(null);
   protected readonly tagSai = signal('');
