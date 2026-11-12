@@ -12,7 +12,7 @@ import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 /** A pior nota primeiro: é ela que pinta a faixa e escolhe a peça aberta na lupa. */
 const ORDEM: (string | null)[] = ['Crítico', 'Ruim', 'Regular', 'Bom', null];
-const COR: Record<string, string> = { 'Crítico': 'var(--vermelho)', Ruim: 'var(--nota-ruim)', Regular: 'var(--areia)', Bom: 'var(--nota-bom)' };
+const COR: Record<string, string> = { 'Crítico': 'var(--nota-critico)', Ruim: 'var(--nota-ruim)', Regular: 'var(--nota-regular)', Bom: 'var(--nota-bom)' };
 const cor = (nota: string | null): string => (nota && COR[nota]) || 'var(--linha-2)';
 const quantas = (f: FaixaDoTrechoDto, nota: string | null): number =>
   nota === 'Crítico' ? f.critico : nota === 'Ruim' ? f.ruim : nota === 'Regular' ? f.regular : nota === 'Bom' ? f.bom : f.semNota;

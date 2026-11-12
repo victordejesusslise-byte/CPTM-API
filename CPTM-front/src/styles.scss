@@ -23,9 +23,12 @@
   --bloco: #1E2A20; --sobre-escuro: #F1E9E0; --sobre-escuro-2: #D5C4A1; --sobre-escuro-3: #93A198;
   --sombra: 0 1px 2px rgba(30, 42, 32, .06), 0 6px 18px -12px rgba(30, 42, 32, .25);
   --anel: rgba(86, 54, 36, .35);
-  --nota-bom: #64786E;
-  /* o "Ruim": no escuro, um marrom mais claro, que aparece no fundo escuro (mapa do trecho, 2026-10-31) */
-  --nota-ruim: var(--madeira); --nota-ruim-tinta: #F1E9E0;
+  /*
+   * As notas da peça, no padrão do site de apresentação (Victor, 2026-11-12): cores testadas para daltonismo, as mesmas nos dois
+   * temas, e cada nota com um símbolo (✓ – ! ✕) para não depender só da cor. --nota-bom-texto: o verde quando é texto, não fundo.
+   */
+  --nota-bom: #2B7550; --nota-regular: #E9CB76; --nota-ruim: #D07A35; --nota-critico: #5C1424;
+  --nota-bom-texto: #2B7550;
   --fonte-titulo: 'Josefin Sans', system-ui, sans-serif;
   --fonte-texto: 'Josefin Sans', system-ui, sans-serif;
   --fonte-mono: 'IBM Plex Mono', ui-monospace, monospace;
@@ -40,8 +43,7 @@
   --bloco: #121A14; --sobre-escuro-3: #8FA197;
   --sombra: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 18px -12px rgba(0, 0, 0, .7);
   --anel: rgba(213, 196, 161, .4);
-  --nota-bom: #9DB3A6;
-  --nota-ruim: #C08457; --nota-ruim-tinta: #1E2A20;
+  --nota-bom-texto: #8FCFA6;
   --marcador: #D5C4A1;
   color-scheme: dark;
 }
@@ -132,10 +134,13 @@ details.cartao[open] summary { margin-bottom: 12px; }
 .pilula--alerta-solida { background: var(--vermelho); color: var(--vermelho-tinta); border-color: var(--vermelho); }
 .pilula--quieta { color: var(--tinta-3); border-style: dashed; }
 /* A nota única de estado da peça */
-.nota-peca--bom { color: var(--nota-bom); border-color: var(--nota-bom); }
-.nota-peca--regular { color: var(--tinta); border-color: var(--areia); background: color-mix(in srgb, var(--areia) 35%, transparent); }
-.nota-peca--ruim { color: var(--nota-ruim-tinta); border-color: var(--nota-ruim); background: var(--nota-ruim); }
-.nota-peca--critico { color: var(--vermelho-tinta); border-color: var(--vermelho); background: var(--vermelho); }
+.nota-peca { gap: 5px; &::before { font-weight: 700; } }
+.nota-peca--bom { color: #FFFFFF; border-color: var(--nota-bom); background: var(--nota-bom); &::before { content: '✓'; } }
+.nota-peca--regular { color: #1E2A20; border-color: var(--nota-regular); background: var(--nota-regular); &::before { content: '–'; } }
+.nota-peca--ruim { color: #1E2A20; border-color: var(--nota-ruim); background: var(--nota-ruim); &::before { content: '!'; } }
+.nota-peca--critico { color: #FFFFFF; border-color: var(--nota-critico); background: var(--nota-critico); &::before { content: '✕'; } }
+/* no tema escuro, um contorno claro separa a nota do fundo (como no site) */
+:root[data-theme='dark'] .nota-peca { box-shadow: 0 0 0 1px rgba(241, 233, 224, .35); }
 .seg { display: flex; border: 1px solid var(--linha-2); border-radius: var(--raio); overflow: hidden; button { flex: 1; border: 0; border-right: 1px solid var(--linha-2); background: transparent; color: var(--tinta-2); padding: 10px 8px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; min-height: 44px; &:last-child { border-right: 0; } &[aria-pressed='true'] { background: var(--tinta); color: var(--superficie); } .mono { color: inherit; opacity: .75; font-weight: 400; } } }
 .filtros { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; margin: 14px 0; .cresce { flex: 1 1 220px; } }
 .barra { height: 6px; background: var(--superficie-3); border-radius: 2px; overflow: hidden; margin-top: 5px; min-width: 70px; i { display: block; height: 100%; background: var(--tinta); } }
