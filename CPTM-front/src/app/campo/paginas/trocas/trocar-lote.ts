@@ -46,6 +46,10 @@ export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'sai
 @Component({
   selector: 'app-trocar-lote',
   imports: [FormsModule, FORMULARIO, LeituraTag],
+  styles: `
+    .conferida { margin: -10px 0 6px; color: var(--nota-bom); }
+    .lbl { margin: 12px 0 6px; }
+  `,
   template: `
     @let l = lote();
     <section class="cartao pilha">
@@ -54,7 +58,7 @@ export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'sai
         <span class="nota">{{ l.trecho }} <button mat-button type="button" (click)="fechar.emit()">Fechar</button></span>
       </header>
       @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
-      @if (ok()) { <p class="aviso aviso--ok" role="status">{{ ok() }}</p> }
+      @if (ok() && modo() === 'trocar') { <p class="aviso aviso--ok" role="status">{{ ok() }}</p> }
       <div class="totais">
         <span class="t">Aprovadas<b>{{ aprovadas() }}</b></span>
         <span class="t">Trocadas<b>{{ rascunho().length }}</b></span>
@@ -66,8 +70,8 @@ export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'sai
           @if (rascunho().length < aprovadas()) {
             <p class="lbl">Dormente {{ rascunho().length + 1 }} de {{ aprovadas() }}</p>
             @if (!saiNaoResponde()) {
-              <app-leitura-tag rotulo="Tag da peça que sai" [(tag)]="tagSai" [(metodo)]="metodoSai" />
-              @if (saiLida(); as s) { <p class="nota">✓ {{ s.codigo }} · está na via, <span class="mono">km {{ km(s.kmProjeto) }}</span>, na faixa do lote</p> }
+              <app-leitura-tag rotulo="Tag da peça que sai" [compacta]="true" [(tag)]="tagSai" [(metodo)]="metodoSai" />
+              @if (saiLida(); as s) { <p class="nota conferida">✓ {{ s.codigo }} · está na via, <span class="mono">km {{ km(s.kmProjeto) }}</span>, na faixa do lote</p> }
             } @else {
               <mat-form-field appearance="outline"><mat-label>Peça que sai (pelo km)</mat-label>
                 <mat-select [value]="idSaiEscolhida()" (selectionChange)="idSaiEscolhida.set($event.value)"><app-busca-opcoes />
@@ -75,7 +79,7 @@ export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'sai
                 </mat-select></mat-form-field>
             }
             <mat-checkbox [checked]="saiNaoResponde()" (change)="saiNaoResponde.set($event.checked)">A tag da peça que sai não responde</mat-checkbox>
-            <app-leitura-tag rotulo="Tag da peça que entra" [(tag)]="tagEntra" [(metodo)]="metodoEntra" />
+            <app-leitura-tag rotulo="Tag da peça que entra" [compacta]="true" [(tag)]="tagEntra" [(metodo)]="metodoEntra" />
             <div class="acoes">
               <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto deste dormente' }}</label>
             </div>

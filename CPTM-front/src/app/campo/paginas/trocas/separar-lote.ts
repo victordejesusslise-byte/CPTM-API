@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MetodoCaptura } from '../../../compartilhado/entidades/enums';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
@@ -16,6 +16,7 @@ import { ROTULO_LOTE } from './lote-aberto';
   styles: `
     .barra { height: 8px; border-radius: 999px; background: var(--superficie-3); overflow: hidden; margin: 10px 0 4px; }
     .barra i { display: block; height: 100%; background: var(--areia); }
+    p.nota, .lbl { margin: 8px 0; }
   `,
   template: `
     @let l = lote();
@@ -38,7 +39,7 @@ import { ROTULO_LOTE } from './lote-aberto';
         <p class="lbl">Peças que servem · {{ metros(l.comprimentoM) }}, classe que o trecho aceita · sai primeiro a mais antiga</p>
         @if (valorDe(compativeis)?.length) {
           <div class="opcoes">
-            @for (c of (valorDe(compativeis) ?? []).slice(0, 6); track c.peca.id) {
+            @for (c of (valorDe(compativeis) ?? []).slice(0, verOutras() ? 6 : 1); track c.peca.id) {
               <label class="opcao" [class.marcada]="escolhida()?.peca?.id === c.peca.id">
                 <input type="radio" name="compativel-lote" [checked]="escolhida()?.peca?.id === c.peca.id" (change)="escolhida.set(c)" />
                 <span class="mono">{{ c.peca.codigo }}</span>
@@ -47,8 +48,11 @@ import { ROTULO_LOTE } from './lote-aberto';
               </label>
             }
           </div>
+          @if (!verOutras() && (valorDe(compativeis)?.length ?? 0) > 1) {
+            <button mat-button type="button" (click)="verOutras.set(true)">Ver outras {{ (valorDe(compativeis)?.length ?? 1) - 1 }} peças que servem</button>
+          }
           @if (escolhida(); as c) {
-            <app-leitura-tag [rotulo]="'Leia a tag da peça ' + c.peca.codigo" [(tag)]="tag" [(metodo)]="metodo" (lida)="separar()" />
+            <app-leitura-tag [rotulo]="'Leia a tag da peça ' + c.peca.codigo" [compacta]="true" [(tag)]="tag" [(metodo)]="metodo" (lida)="separar()" />
             <div class="acoes"><button mat-flat-button type="button" (click)="separar()" [disabled]="enviando()" [appCarregando]="enviando()">Separar esta peça</button></div>
           }
         } @else if (compativeis.hasValue()) {
@@ -83,7 +87,12 @@ export class SepararLote {
     stream: ({ params }) => this.api.compativeis(params),
   });
 
-  readonly escolhida = signal<CompativelDto | null>(null);
+  readonly verOutras = signal(false);
+  /** A sugerida (a do armazém mais perto, que entrou primeiro) já vem escolhida; o pátio só lê a tag. */
+  readonly escolhida = linkedSignal<CompativelDto[] | undefined, CompativelDto | null>({
+    source: () => valorDe(this.compativeis),
+    computation: (lista) => lista?.find((c) => c.sugerida) ?? null,
+  });
   readonly tag = signal('');
   readonly metodo = signal<MetodoCaptura>('ModuloUhf');
   protected readonly erro = signal<string | null>(null);

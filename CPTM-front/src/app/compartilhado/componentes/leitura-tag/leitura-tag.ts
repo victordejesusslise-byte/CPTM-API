@@ -23,26 +23,29 @@ export const leitura = (tag: string, metodo: MetodoCaptura): LeituraDto => ({
   selector: 'app-leitura-tag',
   imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, BuscaNasOpcoes],
   template: `
-    <div class="leitura">
+    <div class="leitura" [class.leitura--compacta]="compacta()">
       <mat-form-field appearance="outline" class="leitura__tag">
         <mat-label>{{ rotulo() }}</mat-label>
         <input matInput class="mono" [ngModel]="tag()" (ngModelChange)="tag.set($event)" (keydown.enter)="$event.preventDefault(); lida.emit()"
           autocomplete="off" spellcheck="false" />
       </mat-form-field>
-      <mat-form-field appearance="outline" class="leitura__metodo">
-        <mat-label>Lida por</mat-label>
-        <mat-select [ngModel]="metodo()" (ngModelChange)="metodo.set($event)"><app-busca-opcoes />
-          @for (m of metodos; track m.valor) {
-            <mat-option [value]="m.valor">{{ m.rotulo }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      @if (!compacta()) {
+        <mat-form-field appearance="outline" class="leitura__metodo">
+          <mat-label>Lida por</mat-label>
+          <mat-select [ngModel]="metodo()" (ngModelChange)="metodo.set($event)"><app-busca-opcoes />
+            @for (m of metodos; track m.valor) {
+              <mat-option [value]="m.valor">{{ m.rotulo }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
       @if (metodo() === 'ModuloUhf') {
         <div class="leitura__modulo">
-          <button mat-stroked-button type="button" (click)="lerComModulo()" [disabled]="lendo()">Ler com o módulo</button>
-          @if (aviso()) { <p class="aviso aviso--erro" role="alert">{{ aviso() }}</p> }
+          <button mat-stroked-button type="button" (click)="lerComModulo()" [disabled]="lendo()">{{ compacta() ? 'Ler' : 'Ler com o módulo' }}</button>
+          @if (aviso() && !compacta()) { <p class="aviso aviso--erro" role="alert">{{ aviso() }}</p> }
         </div>
       }
+      @if (aviso() && compacta()) { <p class="aviso aviso--erro leitura__aviso" role="alert">{{ aviso() }}</p> }
     </div>
   `,
   styles: `
@@ -50,12 +53,19 @@ export const leitura = (tag: string, metodo: MetodoCaptura): LeituraDto => ({
     .leitura__modulo { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: -8px 0 12px; }
     .leitura__modulo .aviso { margin: 0; }
     @media (max-width: 560px) { .leitura { grid-template-columns: 1fr; } }
+    /* Compacta (o lote de troca, uma tag atrás da outra): o campo e o botão Ler na mesma linha, sem "Lida por". */
+    .leitura.leitura--compacta { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+    .leitura--compacta .leitura__modulo { grid-column: auto; margin: 4px 0 0; }
+    .leitura--compacta .leitura__modulo button { min-height: 52px; }
+    .leitura__aviso { grid-column: 1 / -1; margin: -8px 0 12px; }
   `,
 })
 export class LeituraTag {
   readonly tag = model('');
   readonly metodo = model<MetodoCaptura>('ModuloUhf');
   readonly rotulo = input('Tag da peça');
+  /** Só o campo e o botão Ler, sem escolher como foi lida (a leitura vai como do módulo, ou digitada se a pessoa escreveu). */
+  readonly compacta = input(false);
   readonly lida = output<void>();
   protected readonly metodos = METODOS_WEB;
   private readonly leitor = inject(LEITOR);
