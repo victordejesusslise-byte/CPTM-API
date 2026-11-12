@@ -18,7 +18,7 @@ import { PedidosDeTroca } from '../../../nucleo/ao-vivo/pedidos-de-troca';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 import { LotesTroca } from '../../servicos/lotes-troca';
 import { PedirLote } from './pedir-lote';
-import { LoteAberto, ROTULO_LOTE } from './lote-aberto';
+import { LoteAberto, ROTULO_LOTE, pecasDoLote } from './lote-aberto';
 
 type Aba = 'aprovar' | 'decididas' | 'andamento' | 'recusas' | 'feitas';
 /** Cada aba mostra as trocas avulsas e os lotes de troca do mesmo passo (Victor, 2026-11-11). */
@@ -73,6 +73,7 @@ export class TrocasGestao {
   protected readonly pedindoLote = computed(() => this.novo() === 'lote' && this.sessao.temCargo('Tecnico'));
   protected readonly rotuloLote = ROTULO_LOTE;
   protected readonly metros = metros;
+  protected readonly pecasDoLote = pecasDoLote;
   protected readonly erroLista = computed(() => (this.lista.error() ? mensagemDeErro(this.lista.error()) : null));
   protected readonly idAberta = computed(() => (this.aberta() ? Number(this.aberta()) : null));
   protected readonly troca = rxResource({ params: () => this.idAberta() ?? undefined, stream: ({ params }) => (params ? this.api.buscar(params) : of(null)) });

@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { LoteTrocaDto, PecaDoLoteDto } from '../../entidades/campo';
+import { LoteTrocaDto, ObrigatoriaDto, PecaDoLoteDto } from '../../entidades/campo';
 import { entrarComo } from '../../../compartilhado/testes/sessao-de-teste';
 import { Fila } from '../../../nucleo/fila/fila';
 import { LOTE_PEDIDO } from './lote-aberto.spec';
@@ -66,5 +66,81 @@ describe('TrocarLote (a via troca dormente por dormente e fecha o lote)', () => 
     expect(registro.corpo.pares.map((p) => [p.leituraSaiu.tag, p.leituraEntrou.tag, p.tagSaiuNaoResponde])).toEqual([['S1', 'E1', false], ['S2', 'E2', false]]);
     expect(fotos).toHaveLength(2);
     expect(t.rascunho()).toEqual([]); // enviado: o rascunho sai do celular
+  });
+
+  // ---------- as trocas avulsas já aprovadas na faixa são obrigatórias (Victor, 2026-11-12) ----------
+
+  const obrigatoria: ObrigatoriaDto = { idTroca: 7, situacao: 'Aberta', peca: peca(3, 'S3', 23.22), separada: peca(20, 'EA'), motivo: null };
+  /** Aprovou 2 e tem 1 obrigatória (a peça 3, com a peça 20 já separada no avulso): fecha com até 3. */
+  const COM_OBRIGATORIA = { ...LOTE_SEPARADO, pecasDaFaixa: [...LOTE_SEPARADO.pecasDaFaixa, peca(4, 'S4', 23.23)], obrigatorias: [obrigatoria] } as LoteTrocaDto;
+
+  it('a obrigatória soma à quantidade, a peça do avulso só entra no lugar dele e o último lugar é dela', () => {
+    expect(conferirPar(COM_OBRIGATORIA, [], { tag: 'S1' }, 'EA')).toContain('só entra no lugar');
+    expect(conferirPar(COM_OBRIGATORIA, [], { tag: 'S3' }, 'EA')).toEqual({ saiu: COM_OBRIGATORIA.pecasDaFaixa[2], entrou: obrigatoria.separada });
+    const dois = [{ saiu: COM_OBRIGATORIA.pecasDaFaixa[0], entrou: COM_OBRIGATORIA.separadas[0] }, { saiu: COM_OBRIGATORIA.pecasDaFaixa[1], entrou: COM_OBRIGATORIA.separadas[1] }];
+    expect(conferirPar(COM_OBRIGATORIA, dois, { tag: 'S4' }, 'E3')).toContain('DOR-3'); // o lugar que sobra é da obrigatória
+    expect(conferirPar(COM_OBRIGATORIA, dois, { tag: 'S4' }, 'E3', [7])).toEqual({ saiu: COM_OBRIGATORIA.pecasDaFaixa[3], entrou: COM_OBRIGATORIA.separadas[2] }); // não deu: o lugar fica livre
+    expect(conferirPar(COM_OBRIGATORIA, dois, { tag: 'S3' }, 'EA')).toEqual({ saiu: COM_OBRIGATORIA.pecasDaFaixa[2], entrou: obrigatoria.separada }); // a 3ª troca: 2 + 1
+  });
+
+  it('a peça do avulso que entrou não conta como sobra do lote', async () => {
+    localStorage.clear();
+    entrarComo('OperadorVia');
+    await TestBed.configureTestingModule({
+      imports: [TrocarLote],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Fila, useValue: { registrar: vi.fn(), meus: signal([]), itens: signal([]), enviando: signal(false) } }],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(TrocarLote);
+    fixture.componentRef.setInput('lote', COM_OBRIGATORIA);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const t = fixture.componentInstance;
+    t.tagSai.set('S3');
+    t.tagEntra.set('EA');
+    t.foto.set(new File(['a'], 'a.jpg', { type: 'image/jpeg' }));
+    await t.guardar();
+    expect(t.rascunho()).toHaveLength(1);
+    expect(t['sobram']()).toBe(3); // as 3 separadas do lote continuam, e voltam ao armazém se não forem usadas
+  });
+
+  it('sem trocar nem dizer que não deu a obrigatória, o lote não fecha; o não deu vai com motivo e foto depois das fotos dos pares', async () => {
+    localStorage.clear();
+    entrarComo('OperadorVia');
+    const registrar = vi.fn(async () => ({ estado: 'enviado' as const, resposta: {} }));
+    await TestBed.configureTestingModule({
+      imports: [TrocarLote],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Fila, useValue: { registrar, meus: signal([]), itens: signal([]), enviando: signal(false) } }],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(TrocarLote);
+    fixture.componentRef.setInput('lote', COM_OBRIGATORIA);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const t = fixture.componentInstance;
+    expect(fixture.nativeElement.textContent).toContain('DOR-3');
+
+    t.tagSai.set('S1');
+    t.tagEntra.set('E1');
+    t.foto.set(new File(['a'], 'a.jpg', { type: 'image/jpeg' }));
+    await t.guardar();
+    t.equipe.set('Turma de Via 3');
+    await t.confirmar();
+    expect(registrar).not.toHaveBeenCalled(); // faltou a obrigatória
+    expect(fixture.componentInstance['erro']()).toContain('DOR-3');
+
+    t.abrirNaoDeu(obrigatoria);
+    await t.guardarNaoDeu(); // sem motivo nem foto: não guarda
+    expect(t.naoDeu()).toHaveLength(0);
+    t.motivo.set('Preso no AMV');
+    t.foto.set(new File(['n'], 'n.jpg', { type: 'image/jpeg' }));
+    await t.guardarNaoDeu();
+    expect(t.naoDeu().map((n) => [n.idTroca, n.motivo])).toEqual([[7, 'Preso no AMV']]);
+
+    await t.confirmar();
+    expect(registrar).toHaveBeenCalledTimes(1);
+    const [registro, fotos] = registrar.mock.calls[0] as unknown as [{ corpo: { pares: unknown[]; naoDeu: { idTroca: number; motivo: string }[] } }, Blob[]];
+    expect(registro.corpo.pares).toHaveLength(1);
+    expect(registro.corpo.naoDeu.map((n) => [n.idTroca, n.motivo])).toEqual([[7, 'Preso no AMV']]);
+    expect(fotos).toHaveLength(2); // a do par e a do não deu, nessa ordem
+    expect(t.naoDeu()).toEqual([]);
   });
 });

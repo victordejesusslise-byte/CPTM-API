@@ -19,6 +19,8 @@ public class MudancasDoLote
     public List<(int IdDormente, Action<Dormente> Mudar)> Pecas { get; } = [];
     public List<Troca> AvulsasAlteradas { get; } = [];
     public RecusaTroca? RecusaNova { get; init; }
+    /// <summary>As recusas das obrigatórias que não deu para trocar no lote (da troca avulsa, não do lote).</summary>
+    public List<RecusaTroca> RecusasDeAvulsas { get; } = [];
     public RecusaTroca? RecusaAlterada { get; init; }
     public List<(int IdDormente, int IdUsuario, DateTime Data)> FecharAlertas { get; } = [];
 }

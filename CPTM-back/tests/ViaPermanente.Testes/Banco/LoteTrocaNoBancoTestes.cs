@@ -216,6 +216,98 @@ public class LoteTrocaNoBancoTestes : IAsyncLifetime
         Assert.Equal("A01", (await BancoDeTeste.Pecas(db).BuscarPorId(paraOAvulso.Id))!.Pilha); // a peça separada para o avulso voltou
     }
 
+    // ---------- as trocas avulsas já aprovadas na faixa são obrigatórias no lote (Victor, 2026-11-12) ----------
+
+    private TrocaService Trocas() { db.ChangeTracker.Clear(); return BancoDeTeste.Trocas(db); }
+
+    /// <summary>Um pedido avulso aprovado para a peça n; separado, com a primeira peça compatível.</summary>
+    private async Task<(int IdTroca, PecaDoLoteDto? Separada)> AvulsaAprovada(int n, bool separar)
+    {
+        var avulso = await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(n), Motivo = "Dormente rachado" }, tecnico);
+        await Trocas().Decidir(avulso.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Supervisor, supervisor);
+        if (!separar)
+            return (avulso.Id, null);
+        var p = (await Trocas().ListarCompativeis(avulso.Id))![0].Peca;
+        await Trocas().Separar(avulso.Id, new SepararTrocaDto { IdDormente = p.Id, Leitura = new() { Tag = p.Tag } }, patio);
+        return (avulso.Id, new PecaDoLoteDto(p.Id, p.Codigo, p.Tag, null, idTamanho, null));
+    }
+
+    [Fact]
+    public async Task Avulsa_aprovada_na_faixa_e_obrigatoria_e_soma_ao_lote()
+    {
+        var (obrigatoria, _) = await AvulsaAprovada(3, separar: false);
+        await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(4), Motivo = "Ainda sem aprovar" }, tecnico); // pedida: não obriga
+        Assert.Equal([obrigatoria], (await Lotes().Obrigatorias(idTrecho, 219.400m, 219.405m, idTamanho)).Select(o => o.IdTroca));
+        Assert.Empty(await Lotes().Obrigatorias(idTrecho, 219.400m, 219.402m, idTamanho)); // a peça 3 está no 219,403, fora desta faixa
+
+        var lote = await Separado(1, 2); // aprovou 1, e a obrigatória soma: o pátio separa até 2
+        var o = Assert.Single(lote.Obrigatorias);
+        Assert.Equal((obrigatoria, await Peca(3), "Aberta"), (o.IdTroca, o.Peca.Id, o.Situacao));
+        var naLista = (await Lotes().Listar(StatusLoteTroca.Separado)).Single(l => l.Id == lote.Id); // a lista também conta as obrigatórias
+        Assert.Equal((1, 0), (naLista.Obrigatorias.Count, naLista.PecasDaFaixa.Count));
+        var terceira = (await Lotes().ListarCompativeis(lote.Id))![0].Peca;
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Separar(lote.Id, new SepararTrocaDto { IdDormente = terceira.Id, Leitura = new() { Tag = terceira.Tag } }, patio));
+
+        var (s1, s2) = (lote.Separadas[0], lote.Separadas[1]);
+        var falta = await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, Fechamento(Par(2, s1)), via));
+        Assert.Contains("219,403", falta.Message);
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, Fechamento(Par(2, s1), Par(3, s2), Par(4, s1)), via)); // passa de 1 + 1
+
+        var feito = (await Lotes().Fechar(lote.Id, Fechamento(Par(2, s1), Par(3, s2)), via))!;
+        Assert.Equal(2, feito.Trocas.Count);
+        var avulso = (await Trocas().BuscarPorId(obrigatoria))!;
+        Assert.Equal(("Cancelada", "Feita no lote LT-0001"), (avulso.Status, avulso.Cancelamento));
+        Assert.Equal((obrigatoria, "Trocada"), (Assert.Single(feito.Obrigatorias).IdTroca, feito.Obrigatorias[0].Situacao));
+    }
+
+    [Fact]
+    public async Task Peca_separada_do_avulso_entra_no_lugar_dele()
+    {
+        var (obrigatoria, daAvulsa) = await AvulsaAprovada(3, separar: true);
+        var lote = await Separado(1, 1);
+        Assert.Equal(daAvulsa!.Id, lote.Obrigatorias[0].Separada!.Id);
+        var outra = (await Lotes().ListarCompativeis(lote.Id))![0].Peca;
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Separar(lote.Id, new SepararTrocaDto { IdDormente = outra.Id, Leitura = new() { Tag = outra.Tag } }, patio)); // 1 + 1 - 1 já separada
+
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, Fechamento(Par(2, daAvulsa), Par(3, lote.Separadas[0])), via)); // a do avulso só entra no lugar dele
+        var feito = (await Lotes().Fechar(lote.Id, Fechamento(Par(3, daAvulsa), Par(2, lote.Separadas[0])), via))!;
+
+        Assert.Equal(2, feito.Trocas.Count);
+        var nova = (await BancoDeTeste.Pecas(db).BuscarPorId(daAvulsa.Id))!;
+        Assert.Equal(("NaVia", 219.403m), (nova.Situacao, nova.KmProjeto)); // entrou na via, não voltou para a pilha
+        Assert.Equal(("Cancelada", "Feita no lote LT-0001"), ((await Trocas().BuscarPorId(obrigatoria))!.Status, (await Trocas().BuscarPorId(obrigatoria))!.Cancelamento));
+    }
+
+    [Fact]
+    public async Task Nao_deu_na_obrigatoria_volta_para_o_tecnico()
+    {
+        var (obrigatoria, daAvulsa) = await AvulsaAprovada(3, separar: true);
+        var lote = await Separado(1, 1);
+        var naoDeu = new NaoDeuDto { IdTroca = obrigatoria, Motivo = "Dormente preso no AMV", FotoArquivo = "lotes/1/nao-deu.jpg" };
+        foreach (var errado in new[]
+                 {
+                     new NaoDeuDto { IdTroca = obrigatoria, Motivo = "Preso", FotoArquivo = " " },  // sem foto
+                     new NaoDeuDto { IdTroca = obrigatoria, Motivo = " ", FotoArquivo = "f.jpg" },  // sem motivo
+                     new NaoDeuDto { IdTroca = 999_999, Motivo = "Preso", FotoArquivo = "f.jpg" },  // não é obrigatória do lote
+                 })
+            await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, Fechamento(Par(2, lote.Separadas[0])) with { NaoDeu = [errado] }, via));
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, Fechamento(Par(2, lote.Separadas[0]), Par(3, daAvulsa!)) with { NaoDeu = [naoDeu] }, via)); // trocou e não deu
+
+        var feito = (await Lotes().Fechar(lote.Id, Fechamento(Par(2, lote.Separadas[0])) with { NaoDeu = [naoDeu] }, via))!;
+
+        Assert.Equal("Feito", feito.Status);
+        var avulso = (await Trocas().BuscarPorId(obrigatoria))!;
+        Assert.Equal("Recusada", avulso.Status);
+        var recusa = Assert.Single(await db.Set<RecusaTroca>().AsNoTracking().Where(r => r.IdTroca == obrigatoria).ToListAsync());
+        Assert.Equal(("Dormente preso no AMV", "lotes/1/nao-deu.jpg", "Não deu no lote LT-0001"), (recusa.Motivo, recusa.FotoArquivo, recusa.Descricao));
+        Assert.Equal("A01", (await BancoDeTeste.Pecas(db).BuscarPorId(daAvulsa!.Id))!.Pilha); // a peça do avulso voltou, como na recusa de hoje
+        Assert.Equal(("NaoDeu", "Dormente preso no AMV"), (Assert.Single(feito.Obrigatorias).Situacao, feito.Obrigatorias[0].Motivo));
+        db.ChangeTracker.Clear();
+        var laudo = (await BancoDeTeste.Laudos(db, new PdfCapturado()).Documento("lote", lote.Id))!;
+        var linha = Assert.Single(laudo.Secoes.Single(s => s.Titulo.StartsWith("Trocas obrigatórias")).Tabela!.Linhas);
+        Assert.Equal(("219,403", "não deu: Dormente preso no AMV"), (linha[1], linha[2]));
+    }
+
     [Fact]
     public async Task Lote_mandado_duas_vezes_entra_uma()
     {

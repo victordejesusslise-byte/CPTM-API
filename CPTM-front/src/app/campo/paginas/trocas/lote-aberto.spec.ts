@@ -3,23 +3,23 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { LoteTrocaDto } from '../../entidades/campo';
 import { entrarComo } from '../../../compartilhado/testes/sessao-de-teste';
-import { LoteAberto } from './lote-aberto';
+import { LoteAberto, aSepararNoLote, pecasDoLote } from './lote-aberto';
 
 export const LOTE_PEDIDO = {
   id: 3, codigo: 'LT-0003', status: 'Pedido', idTrecho: 4, trecho: 'Brás – Tatuapé', classeExigida: 1, kmInicio: 23.1, kmFim: 23.4, idTamanho: 2, comprimentoM: 2.8,
   quantidadePedida: 12, quantidadeAprovada: null, motivo: 'Dormentes podres', observacao: null, idUsuarioPediu: 2, dataPedido: '2026-11-11T14:20:00',
   idUsuarioAprovou: null, dataAprovacao: null, motivoReprovacao: null, motivoMenos: null, noiteDoPlano: null, urgente: false, idUsuarioFez: null, data: null,
   equipe: null, cancelamento: null, separadas: [], devolvidas: [], trocas: [], pecasDaFaixa: [], ultimaRecusa: null,
-  avulsasAbertas: [{ id: 9, codigo: 'DOR-000123', tag: 'BR9', kmProjeto: 23.15, idTamanho: 2, pilha: null }],
+  avulsasAbertas: [{ id: 9, codigo: 'DOR-000123', tag: 'BR9', kmProjeto: 23.15, idTamanho: 2, pilha: null }], obrigatorias: [],
 } as LoteTrocaDto;
 
 describe('LoteAberto (quem aprova decide o lote inteiro)', () => {
-  const abrir = async () => {
+  const abrir = async (lote: LoteTrocaDto = LOTE_PEDIDO) => {
     localStorage.clear();
     entrarComo('Supervisor');
     await TestBed.configureTestingModule({ imports: [LoteAberto], providers: [provideHttpClient(), provideHttpClientTesting()] }).compileComponents();
     const fixture = TestBed.createComponent(LoteAberto);
-    fixture.componentRef.setInput('lote', LOTE_PEDIDO);
+    fixture.componentRef.setInput('lote', lote);
     const http = TestBed.inject(HttpTestingController);
     // A prévia do laudo pede o documento: responde em rodadas, antes de esperar a tela ficar parada.
     for (let rodada = 0; rodada < 3; rodada++) {
@@ -32,6 +32,24 @@ describe('LoteAberto (quem aprova decide o lote inteiro)', () => {
     const botao = (texto: string) => [...tela.querySelectorAll('button')].find((b) => b.textContent?.includes(texto))!;
     return { fixture, http, tela, botao, aberto: fixture.componentInstance };
   };
+
+  it('mostra as trocas obrigatórias da faixa, que somam à quantidade (Victor, 2026-11-12)', async () => {
+    const { tela } = await abrir({ ...LOTE_PEDIDO, obrigatorias: [{ idTroca: 7, situacao: 'Aberta' as const, peca: { id: 9, codigo: 'DOR-000123', tag: 'BR9', kmProjeto: 23.15, idTamanho: 2, pilha: null }, separada: null, motivo: null }] } as LoteTrocaDto);
+    expect(tela.textContent).toContain('Trocas obrigatórias');
+    expect(tela.textContent).toContain('12 peças + 1 obrigatória');
+    expect(tela.textContent).not.toContain('pedido avulso aberto'); // a peça dela não aparece de novo como avulso
+  });
+
+  it('as contas do lote somam as obrigatórias', () => {
+    const peca = { id: 9, codigo: 'DOR-9', tag: 'BR9', kmProjeto: 23.15, idTamanho: 2, pilha: null };
+    const lote = { ...LOTE_PEDIDO, quantidadeAprovada: 5, obrigatorias: [
+      { idTroca: 1, situacao: 'Aberta', peca, separada: null, motivo: null },
+      { idTroca: 2, situacao: 'Aberta', peca, separada: peca, motivo: null },
+      { idTroca: 3, situacao: 'Trocada', peca, separada: null, motivo: null },
+    ] } as LoteTrocaDto;
+    expect([pecasDoLote(lote), aSepararNoLote(lote)]).toEqual([7, 6]);
+    expect(pecasDoLote(LOTE_PEDIDO)).toBe(12); // sem aprovação: as pedidas
+  });
 
   it('mostra o pedido avulso aberto no trecho', async () => {
     const { tela } = await abrir();

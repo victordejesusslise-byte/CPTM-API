@@ -27,6 +27,11 @@ export interface TrocaDto {
 /** Lote de troca (Victor, 2026-11-11): várias trocas de uma vez; as peças só aparecem na noite, pela tag. */
 export type StatusLoteTroca = 'Pedido' | 'Aprovado' | 'AguardandoPeca' | 'Separado' | 'Feito' | 'Reprovado' | 'Recusado' | 'Cancelado';
 export interface PecaDoLoteDto { id: number; codigo: string; tag: string | null; kmProjeto: number | null; idTamanho: number; pilha: string | null; }
+/**
+ * Uma troca avulsa já aprovada de uma peça na faixa e no comprimento do lote (Victor, 2026-11-12): a via troca no lote ou diz que não deu.
+ * Soma à quantidade aprovada. separada: a peça que o pátio já separou para o avulso, que entra só no lugar dela.
+ */
+export interface ObrigatoriaDto { idTroca: number; situacao: 'Aberta' | 'Trocada' | 'NaoDeu'; peca: PecaDoLoteDto; separada: PecaDoLoteDto | null; motivo: string | null; }
 export interface LoteTrocaDto {
   id: number; codigo: string; status: StatusLoteTroca; idTrecho: number; trecho: string; classeExigida: number;
   kmInicio: number; kmFim: number; idTamanho: number; comprimentoM: number; quantidadePedida: number; quantidadeAprovada: number | null;
@@ -34,10 +39,13 @@ export interface LoteTrocaDto {
   motivoReprovacao: string | null; motivoMenos: string | null; noiteDoPlano: string | null; urgente: boolean; idUsuarioFez: number | null; data: string | null;
   equipe: string | null; cancelamento: string | null;
   separadas: PecaDoLoteDto[]; devolvidas: PecaDoLoteDto[]; trocas: TrocaDto[]; pecasDaFaixa: PecaDoLoteDto[]; avulsasAbertas: PecaDoLoteDto[]; ultimaRecusa: RecusaDto | null;
+  obrigatorias: ObrigatoriaDto[];
 }
 export interface NovoLoteTrocaDto { idTrecho: number; kmInicio: number; kmFim: number; quantidade: number; idTamanho: number; motivo: string; observacao?: string | null; }
 /** Um dormente trocado no lote; a foto vai pela fila, no par da mesma posição. */
 export interface ParDoLoteDto { leituraSaiu: LeituraDto | null; tagSaiuNaoResponde: boolean; idDormenteSaiu: number | null; leituraEntrou: LeituraDto; km?: number | null; registradoEm?: string; }
+/** A obrigatória do lote que a via não conseguiu trocar: motivo e foto (a foto vai pela fila, depois das dos pares). */
+export interface NaoDeuDto { idTroca: number; motivo: string; descricao?: string | null; registradoEm?: string; }
 export interface CompativelDto { peca: PecaDto; distanciaKm: number | null; idadeDias: number; sugerida: boolean; }
 export interface ExecutarTrocaDto { leituraSaiu?: LeituraDto | null; tagSaiuNaoResponde: boolean; leituraEntrou: LeituraDto; equipe: string; fotoArquivo: string; km?: number | null; idCliente?: string; registradoEm?: string; }
 export interface RecusarTrocaDto { motivo: string; descricao?: string | null; fotoArquivo: string; idCliente?: string; registradoEm?: string; }

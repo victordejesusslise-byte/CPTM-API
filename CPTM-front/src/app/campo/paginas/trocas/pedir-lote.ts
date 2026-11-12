@@ -1,5 +1,5 @@
 import { Component, inject, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Catalogos } from '../../../catalogos/servicos/catalogos';
 import { km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
@@ -39,6 +39,11 @@ import { LotesTroca } from '../../servicos/lotes-troca';
         <mat-form-field appearance="outline" class="largo"><mat-label>Motivo</mat-label><input matInput [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" placeholder="Ex.: dormentes podres entre os km 23,1 e 23,4" /></mat-form-field>
         <mat-form-field appearance="outline" class="largo"><mat-label>Observação (opcional)</mat-label><input matInput [ngModel]="observacao()" (ngModelChange)="observacao.set($event)" placeholder="Ex.: aproveitar a interdição de quinta" /></mat-form-field>
       </div>
+      @if (obrigatorias.hasValue() && obrigatorias.value().length) {
+        <div class="chamada chamada--neutra"><b>Nesta faixa já há {{ obrigatorias.value().length }} troca{{ obrigatorias.value().length > 1 ? 's' : '' }} aprovada{{ obrigatorias.value().length > 1 ? 's' : '' }}</b>:
+          @for (o of obrigatorias.value(); track o.idTroca) { <span class="mono">km {{ km(o.peca.kmProjeto) }}</span> · {{ o.peca.codigo }}{{ $last ? '.' : ';' }} }
+          Elas entram no lote como obrigatórias, além das peças que você pedir.</div>
+      }
       <div class="acoes">
         <button mat-flat-button type="button" (click)="pedir()" [disabled]="enviando()" [appCarregando]="enviando()">Pedir o lote</button>
         <button mat-stroked-button type="button" (click)="cancelar.emit()">Cancelar</button>
@@ -61,6 +66,14 @@ export class PedirLote {
   readonly quantidade = signal<number | null>(null);
   readonly idTamanho = signal<number | null>(null);
   readonly motivo = signal('');
+  /** As trocas avulsas já aprovadas na faixa escolhida: entram no lote como obrigatórias (Victor, 2026-11-12). */
+  protected readonly obrigatorias = rxResource({
+    params: () => {
+      const [idTrecho, inicio, fim, idTamanho] = [this.idTrecho(), this.kmInicio(), this.kmFim(), this.idTamanho()];
+      return idTrecho && idTamanho && inicio !== null && fim !== null && inicio <= fim ? { idTrecho, inicio, fim, idTamanho } : undefined;
+    },
+    stream: ({ params }) => this.api.obrigatorias(params.idTrecho, params.inicio, params.fim, params.idTamanho),
+  });
   readonly observacao = signal('');
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);

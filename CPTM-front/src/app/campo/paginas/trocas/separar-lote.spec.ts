@@ -18,6 +18,16 @@ describe('SepararLote (o pátio separa as peças do lote)', () => {
   };
   const compativel = { peca: { id: 7, codigo: 'DM-7', tag: 'E7', especie: 'Angelim', comprimentoM: 2.8, classe: 1, pilha: 'A01' }, distanciaKm: 1, idadeDias: 30, sugerida: true };
 
+  it('as trocas obrigatórias somam às peças a separar, menos as que já têm peça no avulso (Victor, 2026-11-12)', async () => {
+    const separada = { id: 20, codigo: 'DM-20', tag: 'EA', kmProjeto: null, idTamanho: 2, pilha: null };
+    const { fixture } = await abrir({ ...LOTE_PEDIDO, status: 'Aprovado', quantidadeAprovada: 2,
+      obrigatorias: [{ idTroca: 7, situacao: 'Aberta' as const, peca: { id: 9, codigo: 'DOR-000123', tag: 'BR9', kmProjeto: 23.15, idTamanho: 2, pilha: null }, separada: null, motivo: null }, { ...{ idTroca: 7, situacao: 'Aberta' as const, peca: { id: 9, codigo: 'DOR-000123', tag: 'BR9', kmProjeto: 23.15, idTamanho: 2, pilha: null }, separada: null, motivo: null }, idTroca: 8, separada }] } as LoteTrocaDto);
+    const texto = (fixture.nativeElement as HTMLElement).textContent!;
+    expect(texto).toContain('Separar3');
+    expect(texto).toContain('2 aprovadas + 1 das trocas obrigatórias');
+    expect(texto).toContain('DM-20 já está separada');
+  });
+
   it('separa a peça escolhida, lendo a tag dela', async () => {
     const { fixture, http, separar } = await abrir({ ...LOTE_PEDIDO, status: 'Aprovado', quantidadeAprovada: 2 } as LoteTrocaDto);
     http.expectOne('http://localhost:8045/api/lotes-troca/3/compativeis').flush([compativel]);

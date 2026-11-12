@@ -16,6 +16,7 @@ import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
+import { pecasDoLote } from './lote-aberto';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 type Aba = 'trocar' | 'recusas' | 'feitas';
@@ -63,6 +64,7 @@ export class TrocasTrecho {
   protected readonly dataHora = dataHora;
   protected readonly km = km;
   protected readonly metros = metros;
+  protected readonly pecasDoLote = pecasDoLote;
 
   /** Os lotes separados, para a via trocar (sem rede, do plano guardado); o lote fechado ou recusado no celular sai da lista na hora. */
   private readonly lotesNaFila = computed(() => new Set(this.fila.meus().filter((i) => i.tipo === 'lote' || i.tipo === 'recusa-lote').map((i) => i.alvo)));

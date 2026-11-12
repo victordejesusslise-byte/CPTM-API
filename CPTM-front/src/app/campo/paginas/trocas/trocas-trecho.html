@@ -65,7 +65,7 @@
   <div class="cartoes-alerta">
     @for (l of lotesVisiveis(); track l.id) {
       <button type="button" class="cartao-alerta" [class.selecionado]="idLote() === l.id" (click)="abrirLote(l)">
-        <span class="topo-alerta"><b>Lote {{ l.codigo }}</b><span class="pilula">Lote · {{ l.quantidadeAprovada }} peças</span></span>
+        <span class="topo-alerta"><b>Lote {{ l.codigo }}</b><span class="pilula">Lote · {{ pecasDoLote(l) }} peças</span></span>
         <span class="tipo">{{ l.trecho }} · <span class="mono">km {{ km(l.kmInicio) }} a {{ km(l.kmFim) }}</span></span>
         <span class="nota">{{ l.separadas.length }} separadas · {{ metros(l.comprimentoM) }}</span>
       </button>

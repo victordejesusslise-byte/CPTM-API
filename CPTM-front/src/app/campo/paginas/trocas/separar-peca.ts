@@ -6,7 +6,7 @@ import { forkJoin, map, of } from 'rxjs';
 import { km, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { CompativelDto, LoteTrocaDto, StatusLoteTroca, TrocaDto } from '../../entidades/campo';
 import { LotesTroca } from '../../servicos/lotes-troca';
-import { ROTULO_LOTE } from './lote-aberto';
+import { ROTULO_LOTE, aSepararNoLote } from './lote-aberto';
 import { SepararLote } from './separar-lote';
 import { MetodoCaptura, StatusTroca } from '../../../compartilhado/entidades/enums';
 import { Trocas } from '../../servicos/trocas';
@@ -44,7 +44,7 @@ export class SepararPeca {
     stream: ({ params }) => forkJoin(params.map((s) => this.lotesApi.listar(s))).pipe(map((l) => l.flat())),
   });
   protected readonly lotesVisiveis = computed(() => (valorDe(this.lotes) ?? []).filter((l) =>
-    this.aba() === 'fila' ? l.separadas.length < (l.quantidadeAprovada ?? 0) : l.separadas.length > 0));
+    this.aba() === 'fila' ? l.separadas.length < aSepararNoLote(l) : l.separadas.length > 0));
   protected readonly quantos = computed(() => (valorDe(this.lista)?.length ?? 0) + this.lotesVisiveis().length);
   protected readonly idLote = computed(() => (this.lote() ? Number(this.lote()) : null));
   protected readonly loteAberto = rxResource({ params: () => this.idLote() ?? undefined, stream: ({ params }) => this.lotesApi.buscar(params) });
@@ -77,6 +77,7 @@ export class SepararPeca {
   protected readonly rotulo = ROTULO_TROCA;
   protected readonly km = km;
   protected readonly metros = metros;
+  protected readonly aSeparar = aSepararNoLote;
 
   protected readonly escolhida = signal<CompativelDto | null>(null);
   protected readonly tag = signal('');
