@@ -3,6 +3,8 @@ import { ModoLeituraDto } from '../../catalogos/entidades/catalogo';
 import {
   ChaveModulo, Leitor, MENSAGEM_AMBIGUA, MODOS_PADRAO, ModoDoModulo, ResultadoGravacao, ResultadoLeitura, TagVista, bipe, escolherAlvo, guardarUltimaLeitura,
 } from './leitor';
+import { NO_APP } from '../ao-vivo/trabalho-da-noite';
+import { LeitorUsb } from './leitor-usb';
 
 export type Cenario = 'uma' | 'vizinhas' | 'duvida' | 'nenhuma';
 
@@ -89,5 +91,8 @@ export class LeitorSimulado implements Leitor {
   }
 }
 
-/** O leitor que as telas usam. Hoje, o simulado; o módulo de verdade (Entrega 3) entra aqui. */
-export const LEITOR = new InjectionToken<Leitor>('Leitor RFID', { providedIn: 'root', factory: () => inject(LeitorSimulado) });
+/**
+ * O leitor que as telas usam: no app, o módulo de verdade no USB-C (YBYRA-RFID-P0; sem ele, as telas pedem para conectar e digitar a tag
+ * continua valendo); no site, o simulado, para testes (Victor, 2026-11-12).
+ */
+export const LEITOR = new InjectionToken<Leitor>('Leitor RFID', { providedIn: 'root', factory: () => (inject(NO_APP) ? inject(LeitorUsb) : inject(LeitorSimulado)) });

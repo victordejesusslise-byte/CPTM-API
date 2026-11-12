@@ -28,8 +28,9 @@ export interface TagVista {
 export interface LeituraDoModulo {
   tag: string;
   idModo: number;
-  potenciaDbm: number;
-  rssiDbm: number;
+  /** Nulos no protótipo NFC (YBYRA-RFID-P0): ele lê de perto, sem potência nem sinal. */
+  potenciaDbm: number | null;
+  rssiDbm: number | null;
   tagsVistas: 1;
 }
 
