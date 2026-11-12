@@ -21,7 +21,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.nio.charset.StandardCharsets;
 
 /**
- * O módulo RFID do YBYRA no USB-C (protótipo YBYRA-RFID-P0: ESP32-C3 Super Mini com USB nativo + PN532), Victor 2026-11-12.
+ * O módulo RFID do YBYRA no USB-C (protótipo YBYRA-RFID-P0: ESP32-C3 Super Mini com USB nativo + PN532), Victor 2026-11-11.
  * Só USB: o ESP32 não usa Wi-Fi nem Bluetooth. Caminho: USB Host do Android, porta serial CDC ACM, 115200.
  * Manda linhas de texto (PING, SCAN, READ, WRITE BRxxxxxxxxxx) e devolve cada linha recebida no evento "linha"; a conexão
  * aberta ou fechada vai no evento "conexao". O ESP32-C3 aparece com o USB da Espressif (VID 0x303A), não CH340 nem CP2102.

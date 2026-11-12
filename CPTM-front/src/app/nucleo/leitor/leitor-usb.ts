@@ -5,7 +5,7 @@ import { Etiqueta, FIM, NUMERO_YBYRA, gravou, lerRead, lerScan, mensagemDoErro }
 
 /**
  * O caminho até o módulo: o USB-C do celular, como serial (USB Host → CDC ACM → 115200). Só USB: o ESP32 não usa Wi-Fi nem Bluetooth
- * (Victor, 2026-11-12). No app, é o plugin nativo RfidUsb; nos testes, um firmware de mentira.
+ * (Victor, 2026-11-11). No app, é o plugin nativo RfidUsb; nos testes, um firmware de mentira.
  */
 export interface TransporteUsb {
   conectar(): Promise<void>;
@@ -48,7 +48,7 @@ const ESPERA_MS = { PING: 1500, SCAN: 2500, READ: 2500, WRITE: 5000 } as const;
 
 /**
  * O módulo de verdade (protótipo YBYRA-RFID-P0, NFC 13,56 MHz): no lugar do simulado, no app, sem mudar as telas. Lê só de perto, então o
- * modo fica fixo no Normal e a leitura vai sem potência nem sinal (Victor, 2026-11-12: "só lê uma distância a normal"). A gravação só conta
+ * modo fica fixo no Normal e a leitura vai sem potência nem sinal (Victor, 2026-11-11: "só lê uma distância a normal"). A gravação só conta
  * com o VERIFY;OK do hardware e a releitura do número. Quando vier o YRM100 (UHF), troca este leitor, não as telas.
  */
 @Injectable({ providedIn: 'root' })

@@ -21,10 +21,25 @@ public class ParDoLoteDto
 }
 
 /// <summary>A via fecha o lote: os dormentes trocados e a equipe. Conferido ID por ID; o lote mandado duas vezes pelo celular entra uma vez.</summary>
-public class FecharLoteTrocaDto
+public record FecharLoteTrocaDto
 {
     public List<ParDoLoteDto> Pares { get; init; } = [];
+    /// <summary>As obrigatórias (trocas avulsas já aprovadas na faixa) que a via não conseguiu trocar, com motivo e foto.</summary>
+    public List<NaoDeuDto> NaoDeu { get; init; } = [];
     public string Equipe { get; init; } = "";
     public Guid? IdCliente { get; init; }
+    public DateTime? RegistradoEm { get; init; }
+}
+
+/// <summary>
+/// A via não conseguiu trocar uma obrigatória do lote (Victor, 2026-11-12): motivo e foto. A troca avulsa dela volta para o técnico como
+/// recusa, como a recusa da troca de hoje (ele mantém ou aceita).
+/// </summary>
+public class NaoDeuDto
+{
+    public int IdTroca { get; init; }
+    public string Motivo { get; init; } = "";
+    public string? Descricao { get; init; }
+    public string FotoArquivo { get; init; } = "";
     public DateTime? RegistradoEm { get; init; }
 }

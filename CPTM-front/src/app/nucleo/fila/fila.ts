@@ -53,11 +53,20 @@ const DESTINO: Record<TipoRegistro, { foto: (alvo: number) => string; registro: 
   'recusa-lote': { foto: (id) => `/lotes-troca/${id}/foto`, registro: (id) => `/lotes-troca/${id}/recusa` },
 };
 
-/** O corpo que vai para a API: no lote, cada foto vai no par da mesma posição; nos outros, a foto vai em fotoArquivo. */
-const corpoComFotos = (item: ItemFila, arquivos: string[]): Record<string, unknown> =>
-  item.fotos
-    ? { ...item.corpo, pares: (item.corpo['pares'] as Record<string, unknown>[]).map((par, i) => ({ ...par, fotoArquivo: arquivos[i] })) }
-    : { ...item.corpo, fotoArquivo: arquivos[0] };
+/**
+ * O corpo que vai para a API: no lote, cada foto vai no par da mesma posição, e as fotos depois das dos pares vão nos "não deu" das
+ * obrigatórias, na ordem; nos outros, a foto vai em fotoArquivo.
+ */
+const corpoComFotos = (item: ItemFila, arquivos: string[]): Record<string, unknown> => {
+  if (!item.fotos) return { ...item.corpo, fotoArquivo: arquivos[0] };
+  const pares = (item.corpo['pares'] as Record<string, unknown>[] | undefined) ?? [];
+  const naoDeu = (item.corpo['naoDeu'] as Record<string, unknown>[] | undefined) ?? [];
+  return {
+    ...item.corpo,
+    pares: pares.map((par, i) => ({ ...par, fotoArquivo: arquivos[i] })),
+    ...(naoDeu.length ? { naoDeu: naoDeu.map((n, j) => ({ ...n, fotoArquivo: arquivos[pares.length + j] })) } : {}),
+  };
+};
 
 /**
  * A fila sem internet (app Android, Etapa 6, 2026-10-24): a troca, a recusa, a inspeção e a vistoria ficam guardadas no celular

@@ -45,9 +45,9 @@
   <div class="cartoes-alerta">
     @for (l of lotesVisiveis(); track l.id) {
       <button type="button" class="cartao-alerta" [class.selecionado]="idLote() === l.id" (click)="abrirLote(l)">
-        <span class="topo-alerta"><b>Lote {{ l.codigo }}</b><span class="pilula">Lote · separar {{ l.quantidadeAprovada }}</span></span>
+        <span class="topo-alerta"><b>Lote {{ l.codigo }}</b><span class="pilula">Lote · separar {{ aSeparar(l) }}</span></span>
         <span class="tipo">{{ rotuloLote[l.status] }} · {{ l.trecho }}</span>
-        <span class="nota">{{ l.separadas.length }} de {{ l.quantidadeAprovada }} separadas · {{ metros(l.comprimentoM) }} · {{ l.classeExigida }}ª ou melhor</span>
+        <span class="nota">{{ l.separadas.length }} de {{ aSeparar(l) }} separadas · {{ metros(l.comprimentoM) }} · {{ l.classeExigida }}ª ou melhor</span>
       </button>
     }
     @for (t of valorDe(lista) ?? []; track t.id) {

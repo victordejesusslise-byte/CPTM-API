@@ -7,7 +7,7 @@ import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { CompativelDto, LoteTrocaDto } from '../../entidades/campo';
 import { LotesTroca } from '../../servicos/lotes-troca';
-import { ROTULO_LOTE } from './lote-aberto';
+import { ROTULO_LOTE, aSepararNoLote } from './lote-aberto';
 
 /** Separar peça, no lote de troca (Victor, 2026-11-11): o pátio separa até a quantidade aprovada, lendo a tag de cada peça; o sistema sugere a da frente. */
 @Component({
@@ -32,6 +32,9 @@ import { ROTULO_LOTE } from './lote-aberto';
         <span class="t">Faltam<b [class.vermelho]="faltam() > 0">{{ faltam() }}</b></span>
         <span class="t">Tamanho<b>{{ metros(l.comprimentoM) }} · {{ l.classeExigida }}ª</b></span>
       </div>
+      @if (obrigatoriasSemPeca().length || obrigatoriasComPeca().length) {
+        <p class="nota">{{ l.quantidadeAprovada }} aprovadas + {{ obrigatoriasSemPeca().length }} das trocas obrigatórias@for (o of obrigatoriasComPeca(); track o.idTroca) { · {{ o.separada!.codigo }} já está separada no avulso de {{ o.peca.codigo }} }</p>
+      }
       <div class="barra"><i [style.width.%]="aprovadas() ? (100 * l.separadas.length) / aprovadas() : 0"></i></div>
       <p class="nota">{{ l.trecho }} · <span class="mono">km {{ km(l.kmInicio) }} a {{ km(l.kmFim) }}</span></p>
 
@@ -79,7 +82,10 @@ export class SepararLote {
   protected readonly km = km;
   protected readonly metros = metros;
 
-  protected readonly aprovadas = computed(() => this.lote().quantidadeAprovada ?? 0);
+  /** As trocas avulsas já aprovadas na faixa somam às peças a separar; a que já tem peça separada no avulso usa aquela (Victor, 2026-11-12). */
+  protected readonly obrigatoriasSemPeca = computed(() => (this.lote().obrigatorias ?? []).filter((o) => o.situacao === 'Aberta' && !o.separada));
+  protected readonly obrigatoriasComPeca = computed(() => (this.lote().obrigatorias ?? []).filter((o) => o.situacao === 'Aberta' && !!o.separada));
+  protected readonly aprovadas = computed(() => aSepararNoLote(this.lote()));
   protected readonly faltam = computed(() => Math.max(0, this.aprovadas() - this.lote().separadas.length));
   protected readonly codigos = computed(() => this.lote().separadas.map((p) => p.codigo).join(', '));
   protected readonly compativeis = rxResource({

@@ -93,6 +93,6 @@ export class LeitorSimulado implements Leitor {
 
 /**
  * O leitor que as telas usam: no app, o módulo de verdade no USB-C (YBYRA-RFID-P0; sem ele, as telas pedem para conectar e digitar a tag
- * continua valendo); no site, o simulado, para testes (Victor, 2026-11-12).
+ * continua valendo); no site, o simulado, para testes (Victor, 2026-11-11).
  */
 export const LEITOR = new InjectionToken<Leitor>('Leitor RFID', { providedIn: 'root', factory: () => (inject(NO_APP) ? inject(LeitorUsb) : inject(LeitorSimulado)) });

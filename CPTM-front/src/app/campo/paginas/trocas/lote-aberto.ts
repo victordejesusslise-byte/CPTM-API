@@ -6,8 +6,15 @@ import { dataHora, km, mensagemDeErro, metros } from '../../../compartilhado/uti
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { PreviaLaudo } from '../../../laudos/componentes/previa-laudo';
 import { TipoLaudo } from '../../../laudos/servicos/laudos';
-import { LoteTrocaDto, StatusLoteTroca } from '../../entidades/campo';
+import { LoteTrocaDto, ObrigatoriaDto, StatusLoteTroca } from '../../entidades/campo';
 import { LotesTroca } from '../../servicos/lotes-troca';
+
+/** As peças do lote: as aprovadas (ou pedidas) mais as trocas obrigatórias ainda a trocar (Victor, 2026-11-12). */
+export const pecasDoLote = (l: LoteTrocaDto): number =>
+  (l.quantidadeAprovada ?? l.quantidadePedida) + (l.obrigatorias ?? []).filter((o) => o.situacao === 'Aberta').length;
+/** O que o pátio separa: as aprovadas mais as obrigatórias que ainda não têm peça separada no avulso. */
+export const aSepararNoLote = (l: LoteTrocaDto): number =>
+  (l.quantidadeAprovada ?? 0) + (l.obrigatorias ?? []).filter((o) => o.situacao === 'Aberta' && !o.separada).length;
 
 export const ROTULO_LOTE: Record<StatusLoteTroca, string> = {
   Pedido: 'Pedido', Aprovado: 'Aprovado', AguardandoPeca: 'Aguardando peça', Separado: 'Separado', Feito: 'Feito',
@@ -51,8 +58,13 @@ export const ROTULO_LOTE: Record<StatusLoteTroca, string> = {
       <p class="lbl">Pedido</p>
       <p>{{ l.trecho }}, <span class="mono">km {{ km(l.kmInicio) }} a {{ km(l.kmFim) }}</span>. Motivo: {{ l.motivo }}@if (l.observacao) { · {{ l.observacao }} }</p>
       <p class="nota">Pedido em {{ dataHora(l.dataPedido) }}@if (l.dataAprovacao) { · decidido em {{ dataHora(l.dataAprovacao) }} }@if (l.motivoMenos) { · aprovou menos: {{ l.motivoMenos }} }</p>
-      @if (l.avulsasAbertas.length) {
-        <div class="chamada chamada--neutra">Neste trecho já tem <b>{{ l.avulsasAbertas.length }} pedido{{ l.avulsasAbertas.length > 1 ? 's' : '' }} avulso{{ l.avulsasAbertas.length > 1 ? 's' : '' }} aberto{{ l.avulsasAbertas.length > 1 ? 's' : '' }}</b>
+      @if (obrigatorias().length) {
+        <div class="chamada chamada--neutra"><b>Trocas obrigatórias</b> (pedidos avulsos já aprovados nesta faixa; somam às peças aprovadas, e a via troca no lote ou diz que não deu):
+          @for (o of obrigatorias(); track o.idTroca) { <br /><span class="mono">km {{ km(o.peca.kmProjeto) }}</span> · {{ o.peca.codigo }} · {{ rotuloObrigatoria(o) }} }
+        </div>
+      }
+      @if (outrasAvulsas().length) {
+        <div class="chamada chamada--neutra">Neste trecho já tem <b>{{ outrasAvulsas().length }} pedido{{ outrasAvulsas().length > 1 ? 's' : '' }} avulso{{ outrasAvulsas().length > 1 ? 's' : '' }} aberto{{ outrasAvulsas().length > 1 ? 's' : '' }}</b>
           ({{ codigosAvulsas() }}). Se a via trocar essa peça no lote, o avulso fecha como feito no lote.</div>
       }
       @if (l.motivoReprovacao) { <p class="nota">Reprovado: {{ l.motivoReprovacao }}</p> }
@@ -66,7 +78,7 @@ export const ROTULO_LOTE: Record<StatusLoteTroca, string> = {
         </div>
         <mat-checkbox [checked]="urgente()" (change)="urgente.set($event.checked)">Urgente: entra no plano desta noite mesmo depois das 20:00</mat-checkbox>
         <div class="acoes">
-          <button mat-flat-button type="button" (click)="decidir(true)" [disabled]="enviando()" [appCarregando]="enviando()">Aprovar o lote · {{ quantidade() }} peças</button>
+          <button mat-flat-button type="button" (click)="decidir(true)" [disabled]="enviando()" [appCarregando]="enviando()">Aprovar o lote · {{ quantidade() }} peças@if (obrigatoriasAbertas()) { + {{ obrigatoriasAbertas() }} obrigatória{{ obrigatoriasAbertas() > 1 ? 's' : '' }} }</button>
           <button mat-stroked-button class="perigo" type="button" (click)="decidir(false)" [disabled]="enviando()" [appCarregando]="enviando()">Reprovar</button>
         </div>
       }
@@ -131,7 +143,20 @@ export class LoteAberto {
   protected readonly tipoLaudo = linkedSignal<number, TipoLaudo>({ source: () => this.lote().id, computation: () => 'lote' });
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
-  protected readonly codigosAvulsas = computed(() => this.codigos(this.lote().avulsasAbertas));
+  /** As trocas avulsas já aprovadas na faixa (Victor, 2026-11-12): somam às aprovadas; os outros pedidos avulsos abertos aparecem à parte. */
+  protected readonly obrigatorias = computed(() => this.lote().obrigatorias ?? []);
+  protected readonly obrigatoriasAbertas = computed(() => this.obrigatorias().filter((o) => o.situacao === 'Aberta').length);
+  protected readonly outrasAvulsas = computed(() => {
+    const delas = new Set(this.obrigatorias().map((o) => o.peca.id));
+    return this.lote().avulsasAbertas.filter((p) => !delas.has(p.id));
+  });
+  protected readonly codigosAvulsas = computed(() => this.codigos(this.outrasAvulsas()));
+
+  protected rotuloObrigatoria(o: ObrigatoriaDto): string {
+    if (o.situacao === 'Trocada') return 'trocada no lote';
+    if (o.situacao === 'NaoDeu') return `não deu: ${o.motivo}`;
+    return o.separada ? `a trocar · peça separada ${o.separada.codigo}` : 'a trocar';
+  }
 
   protected codigos(pecas: { codigo: string }[]): string {
     return pecas.map((p) => p.codigo).join(', ');

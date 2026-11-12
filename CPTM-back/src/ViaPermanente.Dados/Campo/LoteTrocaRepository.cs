@@ -56,6 +56,7 @@ public class LoteTrocaRepository(ViaPermanenteContext db) : ILoteTrocaRepository
             m.RecusaNova.IdLoteTroca = idLote;
             db.Add(m.RecusaNova);
         }
+        db.AddRange(m.RecusasDeAvulsas);
         if (m.RecusaAlterada is not null) db.Update(m.RecusaAlterada);
         await db.SaveChangesAsync();
 

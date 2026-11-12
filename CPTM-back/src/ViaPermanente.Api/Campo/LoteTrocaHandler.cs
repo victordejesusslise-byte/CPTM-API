@@ -18,6 +18,11 @@ public class LoteTrocaHandler(LoteTrocaService lotes, AvisoAoVivo aoVivo) : Cont
     [HttpGet]
     public Task<IReadOnlyList<LoteTrocaDto>> Listar([FromQuery] StatusLoteTroca? status) => lotes.Listar(status);
 
+    /// <summary>Ao pedir o lote: as trocas avulsas já aprovadas na faixa, que entram nele como obrigatórias (Victor, 2026-11-12).</summary>
+    [HttpGet("obrigatorias")]
+    public Task<IReadOnlyList<ObrigatoriaDto>> Obrigatorias([FromQuery] int idTrecho, [FromQuery] decimal kmInicio, [FromQuery] decimal kmFim, [FromQuery] int idTamanho)
+        => lotes.Obrigatorias(idTrecho, kmInicio, kmFim, idTamanho);
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<LoteTrocaDto>> Buscar(int id) => await lotes.BuscarPorId(id) is { } lote ? lote : NotFound();
 

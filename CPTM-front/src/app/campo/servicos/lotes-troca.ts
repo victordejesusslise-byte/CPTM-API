@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
 import { consulta } from '../../compartilhado/utilitarios/consulta';
 import { LeituraDto } from '../../compartilhado/entidades/enums';
-import { CompativelDto, LoteTrocaDto, NovoLoteTrocaDto, StatusLoteTroca } from '../entidades/campo';
+import { CompativelDto, LoteTrocaDto, NovoLoteTrocaDto, ObrigatoriaDto, StatusLoteTroca } from '../entidades/campo';
 
 /**
  * /api/lotes-troca (Victor, 2026-11-11): o técnico pede, quem aprova decide o lote inteiro e o pátio separa. O fechamento e a recusa da via
@@ -20,6 +20,10 @@ export class LotesTroca {
   }
   buscar(id: number): Observable<LoteTrocaDto> {
     return this.http.get<LoteTrocaDto>(`${this.url}/${id}`);
+  }
+  /** Ao pedir: as trocas avulsas já aprovadas na faixa, que entram no lote como obrigatórias. */
+  obrigatorias(idTrecho: number, kmInicio: number, kmFim: number, idTamanho: number): Observable<ObrigatoriaDto[]> {
+    return this.http.get<ObrigatoriaDto[]>(`${this.url}/obrigatorias`, { params: consulta({ idTrecho, kmInicio, kmFim, idTamanho }) });
   }
   pedir(novo: NovoLoteTrocaDto): Observable<LoteTrocaDto> {
     return this.http.post<LoteTrocaDto>(this.url, novo);

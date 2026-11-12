@@ -248,14 +248,34 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
     /// O lote de troca trocou a peça deste pedido avulso aberto: o avulso é cancelado como "Feita no lote LT-N" e a peça separada para ele,
     /// se houver, volta à pilha (Uma troca aberta por peça).
     /// </summary>
-    internal async Task<MudancasDaTroca> FechadaPeloLote(Troca troca, string codigoDoLote, int idUsuario, DateTime agora)
+    internal async Task<MudancasDaTroca> FechadaPeloLote(Troca troca, string codigoDoLote, int idUsuario, DateTime agora, bool pecaEntrouNoLote = false)
     {
-        var mudancas = troca.IdDormenteEntrou is int idEntrou && troca.Status == StatusTroca.Separada
+        // A peça separada para o avulso que entrou no lote, no lugar dele (Victor, 2026-11-12), não volta para a pilha.
+        var mudancas = troca.IdDormenteEntrou is int idEntrou && troca.Status == StatusTroca.Separada && !pecaEntrouNoLote
             ? Devolver(troca, idEntrou, idUsuario, agora, await trocas.PilhaDaSeparacao(troca.IdTroca, idEntrou))
             : new MudancasDaTroca();
         troca.Status = StatusTroca.Cancelada;
         troca.Cancelamento = $"Feita no lote {codigoDoLote}";
         return mudancas;
+    }
+
+    /// <summary>
+    /// A via não conseguiu trocar no lote esta troca avulsa obrigatória (Victor, 2026-11-12): ela é recusada como hoje (motivo e foto; a peça
+    /// separada para ela, se houver, volta à pilha) e o técnico mantém ou aceita. A descrição diz de qual lote veio.
+    /// </summary>
+    internal async Task<(MudancasDaTroca Mudancas, RecusaTroca Recusa)> NaoDeuNoLote(Troca troca, NaoDeuDto dto, string codigoDoLote, int idUsuario, DateTime agora)
+    {
+        var mudancas = troca.IdDormenteEntrou is int idEntrou && troca.Status == StatusTroca.Separada
+            ? Devolver(troca, idEntrou, idUsuario, agora, await trocas.PilhaDaSeparacao(troca.IdTroca, idEntrou))
+            : new MudancasDaTroca();
+        var noCampo = HoraDoCampo.De(dto.RegistradoEm, agora);
+        troca.Status = StatusTroca.Recusada;
+        var descricao = Limpo(dto.Descricao) is { } d ? $"Não deu no lote {codigoDoLote}: {d}" : $"Não deu no lote {codigoDoLote}";
+        return (mudancas, new RecusaTroca
+        {
+            IdTroca = troca.IdTroca, IdUsuario = idUsuario, Data = noCampo, Motivo = dto.Motivo.Trim(), Descricao = descricao,
+            FotoArquivo = dto.FotoArquivo.Trim(), RegistradoEm = noCampo, RecebidoEm = agora
+        });
     }
 
     /// <summary>Usado pela correção da inspeção: cancela a troca aberta e devolve a peça separada, se houver.</summary>

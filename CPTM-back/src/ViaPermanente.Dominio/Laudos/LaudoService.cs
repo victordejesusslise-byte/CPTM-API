@@ -201,9 +201,15 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             ]),
             new("Peças separadas", [], new TabelaPdf(["Peça", "Tag"],
                 lote.Separadas.Concat(lote.Trocas.Select(t => new PecaDoLoteDto(t.IdDormenteEntrou ?? 0, t.CodigoEntrou ?? "", t.TagEntrou, null, lote.IdTamanho, null)))
-                    .Select(p => (IReadOnlyList<string>)[p.Codigo, p.Tag ?? "—"]).ToList()))
+                    .Select(p => (IReadOnlyList<string>)[p.Codigo, p.Tag ?? "—"]).ToList())),
+            Obrigatorias(lote)
         ]);
     }
+
+    /// <summary>As trocas avulsas já aprovadas na faixa, obrigatórias no lote (Victor, 2026-11-12): a trocar, trocadas ou as que não deu, com o motivo.</summary>
+    private static SecaoPdf Obrigatorias(LoteTrocaDto l) => new("Trocas obrigatórias (pedidos já aprovados na faixa)", [], new TabelaPdf(["Peça", "Km", "Situação", "Peça separada"],
+        l.Obrigatorias.Select(o => (IReadOnlyList<string>)[o.Peca.Codigo, Km(o.Peca.KmProjeto),
+            o.Situacao switch { "Trocada" => "trocada no lote", "NaoDeu" => $"não deu: {o.Motivo}", _ => "a trocar" }, o.Separada?.Codigo ?? "—"]).ToList()));
 
     /// <summary>O laudo do lote: cresce a cada passo (pedido, aprovado, separado, feito) e a versão sobe junto; uma foto por dormente trocado.</summary>
     private async Task<DocumentoPdf?> DocumentoLote(int idLote)
@@ -230,7 +236,8 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             new("Passos", [], new TabelaPdf(["Passo", "Quem", "Quando", "Detalhe"], passos)),
             new("Trocas", [new("Conferidas", "pela tag da peça que sai e da que entra")], new TabelaPdf(["Saiu", "Entrou", "Km", "Hora", "Foto"],
                 lote.Trocas.Select((t, i) => (IReadOnlyList<string>)[t.CodigoSaiu ?? "", t.CodigoEntrou ?? "", Km(t.Km), Data(t.Data), (i + 1).ToString()]).ToList())),
-            new("Devolvidas ao armazém", [], new TabelaPdf(["Peça", "Pilha"], lote.Devolvidas.Select(p => (IReadOnlyList<string>)[p.Codigo, p.Pilha ?? "—"]).ToList()))
+            new("Devolvidas ao armazém", [], new TabelaPdf(["Peça", "Pilha"], lote.Devolvidas.Select(p => (IReadOnlyList<string>)[p.Codigo, p.Pilha ?? "—"]).ToList())),
+            Obrigatorias(lote)
         };
         if (lote.UltimaRecusa is { } r)
             secoes.Add(new("Recusa da via", [new("Data", Data(r.Data)), new("Quem", Nome(nomes, r.IdUsuario)), new("Motivo", r.Motivo),

@@ -143,6 +143,18 @@ describe('Fila (sem internet)', () => {
       expect(fila.itens()).toEqual([]);
     });
 
+    it('as fotos depois das dos pares vão nos "não deu" das obrigatórias, na ordem', async () => {
+      const fila = abrir();
+      const comNaoDeu: NovoRegistro = { ...lote, corpo: { ...lote.corpo, naoDeu: [{ idTroca: 7, motivo: 'Preso no AMV' }] } };
+      const r = fila.registrar(comNaoDeu, [imagem(), imagem(), imagem()]);
+      for (const nome of ['a', 'b', 'c']) (await pedido(fotoDoLote)).flush({ arquivo: `lotes/3/${nome}.jpg` });
+      const registro = await pedido(fechamento);
+      expect(registro.request.body.pares.map((p: { fotoArquivo: string }) => p.fotoArquivo)).toEqual(['lotes/3/a.jpg', 'lotes/3/b.jpg']);
+      expect(registro.request.body.naoDeu).toEqual([{ idTroca: 7, motivo: 'Preso no AMV', fotoArquivo: 'lotes/3/c.jpg' }]);
+      registro.flush({ id: 3, status: 'Feito' });
+      await r;
+    });
+
     it('o lote recusado pelo servidor vai para Não enviados com as fotos', async () => {
       online.set(false);
       const fila = abrir();

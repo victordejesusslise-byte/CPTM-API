@@ -69,7 +69,7 @@
   <div class="cartoes-alerta">
     @for (l of valorDe(lotes) ?? []; track l.id) {
       <button type="button" class="cartao-alerta" [class.urgente]="l.status === 'Pedido' || l.status === 'Recusado'" [class.selecionado]="idLote() === l.id" (click)="abrirLote(l)">
-        <span class="topo-alerta"><b>Lote {{ l.codigo }}</b><span class="pilula pilula--lote">Lote · {{ l.quantidadeAprovada ?? l.quantidadePedida }} peças</span></span>
+        <span class="topo-alerta"><b>Lote {{ l.codigo }}</b><span class="pilula pilula--lote">Lote · {{ pecasDoLote(l) }} peças</span></span>
         <span class="tipo">{{ rotuloLote[l.status] }} · {{ l.trecho }} · <span class="mono">km {{ km(l.kmInicio) }} a {{ km(l.kmFim) }}</span></span>
         <span class="nota">{{ metros(l.comprimentoM) }} · pedido em {{ dataHora(l.dataPedido) }} · laudo do lote</span>
       </button>

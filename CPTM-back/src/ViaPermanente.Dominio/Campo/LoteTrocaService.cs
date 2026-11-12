@@ -1,3 +1,4 @@
+using System.Globalization;
 using ViaPermanente.Dominio.Armazens.Models;
 using ViaPermanente.Dominio.Campo.Dtos;
 using ViaPermanente.Dominio.Campo.Models;
@@ -21,6 +22,9 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
     ICatalogoRepository catalogo, ITrechoMapaRepository trechos, LeituraService leituras, PecaService consulta, TrocaService avulsas)
 {
     private static readonly StatusLoteTroca[] Separaveis = [StatusLoteTroca.Aprovado, StatusLoteTroca.AguardandoPeca, StatusLoteTroca.Separado];
+    private static readonly StatusLoteTroca[] Abertos = [StatusLoteTroca.Pedido, StatusLoteTroca.Aprovado, StatusLoteTroca.AguardandoPeca, StatusLoteTroca.Separado, StatusLoteTroca.Recusado];
+    /// <summary>A troca avulsa já aprovada: estas são obrigatórias no lote que cobre a peça (Victor, 2026-11-12).</summary>
+    private static readonly StatusTroca[] AvulsasAprovadas = [StatusTroca.Aprovada, StatusTroca.AguardandoPeca, StatusTroca.Separada];
 
     public static string Codigo(int idLote) => $"LT-{idLote:0000}";
 
@@ -96,8 +100,13 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
             return null;
         if (!Separaveis.Contains(lote.Status))
             throw new RegraDeNegocioException("Só o lote aprovado é separado.");
-        if (Separadas(await lotes.Movimentacoes(idLote)).Count >= lote.QuantidadeAprovada)
-            throw new RegraDeNegocioException($"O lote já tem as {lote.QuantidadeAprovada} peças aprovadas separadas.");
+        // As obrigatórias somam à quantidade aprovada; a que já tem peça separada no avulso usa aquela peça (Victor, 2026-11-12).
+        var obrigatorias = AvulsasObrigatorias(lote, await DaFaixa(lote), await AvulsasAbertas());
+        var limite = (lote.QuantidadeAprovada ?? 0) + obrigatorias.Count(o => o.Troca.Status != StatusTroca.Separada);
+        if (Separadas(await lotes.Movimentacoes(idLote)).Count >= limite)
+            throw new RegraDeNegocioException(obrigatorias.Count > 0
+                ? $"O lote já tem as {limite} peças separadas (as aprovadas e as das trocas obrigatórias)."
+                : $"O lote já tem as {lote.QuantidadeAprovada} peças aprovadas separadas.");
         var compativel = (await Compativeis(lote)).FirstOrDefault(c => c.Peca.Id == dto.IdDormente)
             ?? throw new RegraDeNegocioException("Esta peça não serve no lote: precisa ter o comprimento do lote e classe igual ou melhor que a do trecho, e estar no estoque.");
         var tag = await pecas.TagAtiva(dto.IdDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
@@ -135,12 +144,18 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
             throw new RegraDeNegocioException("Fechar o lote exige a equipe.");
         if (dto.Pares.Count == 0)
             throw new RegraDeNegocioException("Troque pelo menos um dormente; se não deu para trocar nada, recuse o lote.");
-        if (dto.Pares.Count > lote.QuantidadeAprovada)
-            throw new RegraDeNegocioException($"O lote aprovou {lote.QuantidadeAprovada} peças, e vieram {dto.Pares.Count} trocas.");
 
         var separadas = Separadas(await lotes.Movimentacoes(idLote)).ToDictionary(m => m.IdDormente);
-        var faixa = (await DaFaixa(lote)).ToDictionary(p => p.Id);
-        var abertas = (await trocas.Listar()).Where(t => t.IdLoteTroca is null && TrocaService.Aberta(t)).ToList();
+        var daFaixa = await DaFaixa(lote);
+        var faixa = daFaixa.ToDictionary(p => p.Id);
+        var abertas = await AvulsasAbertas();
+        // As trocas avulsas já aprovadas na faixa: a via troca no lote ou diz que não deu; elas somam à quantidade aprovada.
+        var obrigatorias = AvulsasObrigatorias(lote, daFaixa, abertas);
+        var limite = (lote.QuantidadeAprovada ?? 0) + obrigatorias.Count;
+        if (dto.Pares.Count > limite)
+            throw new RegraDeNegocioException(obrigatorias.Count > 0
+                ? $"O lote aprovou {lote.QuantidadeAprovada} peças e tem {obrigatorias.Count} obrigatórias: cabem {limite} trocas, e vieram {dto.Pares.Count}."
+                : $"O lote aprovou {lote.QuantidadeAprovada} peças, e vieram {dto.Pares.Count} trocas.");
         var agora = DateTime.Now;
         var mudancas = new MudancasDoLote { LoteAlterado = lote };
         var (sairam, entraram) = (new HashSet<int>(), new HashSet<int>());
@@ -170,10 +185,23 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
             if (saiu.IdTamanho != lote.IdTamanho)
                 throw Erro($"a peça {saiu.Codigo} tem outro comprimento.");
 
-            // A peça que entra: uma das separadas para o lote, ainda não usada.
+            // A peça que entra: uma das separadas para o lote, ainda não usada; ou a que o pátio separou para o avulso obrigatório desta mesma peça.
             var tagEntra = par.LeituraEntrou?.Tag?.Trim();
             var idEntra = string.IsNullOrEmpty(tagEntra) ? null : (await pecas.BuscarTag(tagEntra))?.IdDormente;
-            if (idEntra is not int idEntrou || !separadas.TryGetValue(idEntrou, out var separacao))
+            if (idEntra is not int idEntrou)
+                throw Erro("a peça que entra não é uma das separadas para o lote.");
+            var doAvulso = obrigatorias.Select(o => o.Troca).FirstOrDefault(t => t.Status == StatusTroca.Separada && t.IdDormenteEntrou == idEntrou);
+            int? pilhaDeOrigem, idSeparou;
+            DateTime? dataSeparacao;
+            if (doAvulso is not null)
+            {
+                if (doAvulso.IdDormenteSaiu != idSaiu)
+                    throw Erro($"esta peça foi separada para a troca da peça {faixa[doAvulso.IdDormenteSaiu].Codigo} (km {Km(faixa[doAvulso.IdDormenteSaiu].KmProjeto)}) e só entra no lugar dela.");
+                (pilhaDeOrigem, idSeparou, dataSeparacao) = (await trocas.PilhaDaSeparacao(doAvulso.IdTroca, idEntrou), doAvulso.IdUsuarioSeparou, doAvulso.DataSeparacao);
+            }
+            else if (separadas.TryGetValue(idEntrou, out var separacao))
+                (pilhaDeOrigem, idSeparou, dataSeparacao) = (separacao.IdPilhaOrigem, separacao.IdUsuario, separacao.Data);
+            else
                 throw Erro("a peça que entra não é uma das separadas para o lote.");
             if (!entraram.Add(idEntrou))
                 throw Erro("a peça que entra já entrou neste lote.");
@@ -193,13 +221,13 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
             {
                 IdDormenteSaiu = idSaiu, IdDormenteEntrou = idEntrou, IdTrecho = lote.IdTrecho, IdLoteTroca = idLote, Origem = OrigemTroca.Lote, Status = StatusTroca.Feita,
                 IdUsuarioPediu = lote.IdUsuarioPediu, DataPedido = lote.DataPedido, IdUsuarioAprovou = lote.IdUsuarioAprovou, DataAprovacao = lote.DataAprovacao,
-                IdUsuarioSeparou = separacao.IdUsuario, DataSeparacao = separacao.Data, IdUsuarioFez = idUsuario, Data = hora, RecebidoEm = agora,
+                IdUsuarioSeparou = idSeparou, DataSeparacao = dataSeparacao, IdUsuarioFez = idUsuario, Data = hora, RecebidoEm = agora,
                 Motivo = lote.Motivo, Equipe = dto.Equipe.Trim(), FotoArquivo = par.FotoArquivo.Trim(), TagEntrou = tagAtiva.TagRfid, Km = km,
                 NoiteDoPlano = lote.NoiteDoPlano, Urgente = lote.Urgente
             };
             mudancas.TrocasFeitas.Add((troca, new Movimentacao
             {
-                IdDormente = idEntrou, Tipo = TipoMovimentacao.Saida, IdPilhaOrigem = separacao.IdPilhaOrigem, IdUsuario = idUsuario,
+                IdDormente = idEntrou, Tipo = TipoMovimentacao.Saida, IdPilhaOrigem = pilhaDeOrigem, IdUsuario = idUsuario,
                 IdLeitor = par.LeituraEntrou!.IdLeitor, Data = hora, RegistradoEm = hora, RecebidoEm = agora
             }, leituraEntrou));
             // A nova herda o trecho e o km; a velha ganha retirada_em; os alertas da velha fecham.
@@ -208,12 +236,36 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
             mudancas.FecharAlertas.Add((idSaiu, idUsuario, hora));
             foreach (var avulsa in abertas.Where(t => t.IdDormenteSaiu == idSaiu))
             {
-                var doAvulso = await avulsas.FechadaPeloLote(avulsa, Codigo(idLote), idUsuario, agora);
+                var fechada = await avulsas.FechadaPeloLote(avulsa, Codigo(idLote), idUsuario, agora, pecaEntrouNoLote: avulsa == doAvulso);
                 mudancas.AvulsasAlteradas.Add(avulsa);
-                mudancas.Movimentacoes.AddRange(doAvulso.Movimentacoes);
-                mudancas.Pecas.AddRange(doAvulso.Pecas);
+                mudancas.Movimentacoes.AddRange(fechada.Movimentacoes);
+                mudancas.Pecas.AddRange(fechada.Pecas);
             }
         }
+        // As obrigatórias que não deu para trocar voltam para o técnico como recusa; as que faltam, sem o "não deu", travam o lote.
+        var naoDeu = new HashSet<int>();
+        foreach (var nd in dto.NaoDeu)
+        {
+            var avulsa = obrigatorias.Select(o => o.Troca).FirstOrDefault(t => t.IdTroca == nd.IdTroca)
+                ?? throw new RegraDeNegocioException("O \"não deu\" é só para as trocas obrigatórias do lote (as já aprovadas na faixa).");
+            var peca = faixa[avulsa.IdDormenteSaiu].Codigo;
+            if (sairam.Contains(avulsa.IdDormenteSaiu))
+                throw new RegraDeNegocioException($"A peça {peca} foi trocada no lote: tire o \"não deu\" dela.");
+            if (!naoDeu.Add(avulsa.IdTroca))
+                throw new RegraDeNegocioException($"O \"não deu\" da peça {peca} veio duas vezes.");
+            if (string.IsNullOrWhiteSpace(nd.Motivo) || string.IsNullOrWhiteSpace(nd.FotoArquivo))
+                throw new RegraDeNegocioException($"O \"não deu\" da peça {peca} exige motivo e foto.");
+            var (doNaoDeu, recusa) = await avulsas.NaoDeuNoLote(avulsa, nd, Codigo(idLote), idUsuario, agora);
+            mudancas.AvulsasAlteradas.Add(avulsa);
+            mudancas.Movimentacoes.AddRange(doNaoDeu.Movimentacoes);
+            mudancas.Pecas.AddRange(doNaoDeu.Pecas);
+            mudancas.RecusasDeAvulsas.Add(recusa);
+        }
+        var faltam = obrigatorias.Where(o => !sairam.Contains(o.Peca.Id) && !naoDeu.Contains(o.Troca.IdTroca)).ToList();
+        if (faltam.Count > 0)
+            throw new RegraDeNegocioException($"Falta{(faltam.Count > 1 ? "m" : "")} {string.Join(", ", faltam.Select(o => $"a peça {o.Peca.Codigo} (km {Km(o.Peca.KmProjeto)})"))}, "
+                + "com troca já aprovada: troque no lote ou diga que não deu.");
+
         foreach (var sobra in separadas.Values.Where(s => !entraram.Contains(s.IdDormente)))
             Devolver(mudancas, sobra, idUsuario, agora);
 
@@ -352,18 +404,23 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
         var comprimentos = (await catalogo.ListarTamanhos()).ToDictionary(t => t.IdTamanho, t => t.ComprimentoM);
         var nomes = (await trechos.Trechos()).ToDictionary(t => t.IdTrecho, t => $"{t.Inicio} – {t.Fim}");
         var resultado = new List<LoteTrocaDto>();
+        IReadOnlyList<Troca>? avulsasAbertas = null; // uma vez para a lista toda
         foreach (var l in lista)
         {
             var ultimas = Ultimas(await lotes.Movimentacoes(l.IdLoteTroca));
             var porPeca = await consulta.PorIds(ultimas.Select(m => m.IdDormente).ToList());
             IReadOnlyList<PecaDoLoteDto> Na(TipoMovimentacao tipo)
                 => ultimas.Where(m => m.Tipo == tipo && porPeca.ContainsKey(m.IdDormente)).Select(m => DoLote(porPeca[m.IdDormente])).ToList();
-            var faixa = aberto ? await DaFaixa(l) : [];
+            // A faixa: no lote aberto (para o celular conferir sem rede) e nos lotes em andamento (para as obrigatórias).
+            var faixaToda = aberto || Abertos.Contains(l.Status) ? await DaFaixa(l) : [];
+            var faixa = aberto ? faixaToda : [];
             var naFaixa = faixa.Select(p => p.Id).ToHashSet();
             var comAvulso = aberto
                 ? (await trocas.Listar()).Where(t => t.IdLoteTroca is null && TrocaService.Aberta(t) && naFaixa.Contains(t.IdDormenteSaiu))
                     .Select(t => DoLote(faixa.First(p => p.Id == t.IdDormenteSaiu))).ToList()
                 : [];
+            IReadOnlyList<ObrigatoriaDto> obrigatorias = l.Status == StatusLoteTroca.Feito ? (aberto ? await DoHistorico(l) : [])
+                : Abertos.Contains(l.Status) ? await ParaTela(AvulsasObrigatorias(l, faixaToda, avulsasAbertas ??= await AvulsasAbertas())) : [];
             var r = (await lotes.Recusas(l.IdLoteTroca)).LastOrDefault();
             resultado.Add(new LoteTrocaDto(l.IdLoteTroca, Codigo(l.IdLoteTroca), l.Status.ToString(), l.IdTrecho, nomes.GetValueOrDefault(l.IdTrecho, $"trecho {l.IdTrecho}"),
                 (await trocas.BuscarTrecho(l.IdTrecho))?.ClasseExigida ?? 1, l.KmInicio, l.KmFim, l.IdTamanho, comprimentos.GetValueOrDefault(l.IdTamanho),
@@ -372,10 +429,56 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
                 Na(TipoMovimentacao.Separada), Na(TipoMovimentacao.Devolvida), await avulsas.DoLote(l.IdLoteTroca),
                 faixa.Select(DoLote).ToList(), comAvulso,
                 r is null ? null : new RecusaDto(r.IdRecusa, r.Data, r.IdUsuario, r.Motivo, r.Descricao, r.FotoArquivo,
-                    r.Decisao?.ToString(), r.IdUsuarioDecisao, r.DataDecisao, r.Resposta)));
+                    r.Decisao?.ToString(), r.IdUsuarioDecisao, r.DataDecisao, r.Resposta), obrigatorias));
         }
         return resultado;
     }
 
     private static string? Limpo(string? texto) => string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();
+
+    private static string Km(decimal? km) => km?.ToString("0.000", CultureInfo.GetCultureInfo("pt-BR")) ?? "—";
+
+    /// <summary>Para o técnico ver ao pedir o lote: as trocas avulsas já aprovadas na faixa, que entram nele como obrigatórias.</summary>
+    public async Task<IReadOnlyList<ObrigatoriaDto>> Obrigatorias(int idTrecho, decimal kmInicio, decimal kmFim, int idTamanho)
+    {
+        var lote = new LoteTroca { IdTrecho = idTrecho, KmInicio = kmInicio, KmFim = kmFim, IdTamanho = idTamanho };
+        return await ParaTela(AvulsasObrigatorias(lote, await DaFaixa(lote), await AvulsasAbertas()));
+    }
+
+    private async Task<IReadOnlyList<Troca>> AvulsasAbertas() => (await trocas.Listar()).Where(t => t.IdLoteTroca is null && TrocaService.Aberta(t)).ToList();
+
+    /// <summary>
+    /// As obrigatórias do lote (Victor, 2026-11-12): as trocas avulsas já aprovadas (aprovada, aguardando peça ou separada) das peças na via,
+    /// dentro da faixa e com o comprimento do lote, na ordem do km. A pedida ainda sem aprovação não entra; a de outro comprimento fica avulsa.
+    /// </summary>
+    private static IReadOnlyList<(Troca Troca, PecaDto Peca)> AvulsasObrigatorias(LoteTroca lote, IReadOnlyList<PecaDto> faixa, IEnumerable<Troca> abertas)
+    {
+        var doComprimento = faixa.Where(p => p.IdTamanho == lote.IdTamanho).ToDictionary(p => p.Id);
+        return abertas.Where(t => AvulsasAprovadas.Contains(t.Status) && doComprimento.ContainsKey(t.IdDormenteSaiu))
+            .Select(t => (t, doComprimento[t.IdDormenteSaiu])).OrderBy(o => o.Item2.KmProjeto).ToList();
+    }
+
+    private async Task<IReadOnlyList<ObrigatoriaDto>> ParaTela(IReadOnlyList<(Troca Troca, PecaDto Peca)> obrigatorias)
+    {
+        var separadas = await consulta.PorIds(obrigatorias.Where(o => o.Troca.Status == StatusTroca.Separada && o.Troca.IdDormenteEntrou is not null)
+            .Select(o => o.Troca.IdDormenteEntrou!.Value).ToList());
+        return obrigatorias.Select(o => new ObrigatoriaDto(o.Troca.IdTroca, "Aberta", DoLote(o.Peca),
+            o.Troca.Status == StatusTroca.Separada && o.Troca.IdDormenteEntrou is int e && separadas.TryGetValue(e, out var s) ? DoLote(s) : null, null)).ToList();
+    }
+
+    /// <summary>O lote feito: os pedidos avulsos que ele fechou (trocados) e os que não deu (a recusa diz "Não deu no lote LT-N").</summary>
+    private async Task<IReadOnlyList<ObrigatoriaDto>> DoHistorico(LoteTroca lote)
+    {
+        var codigo = Codigo(lote.IdLoteTroca);
+        var doTrecho = (await trocas.Listar()).Where(t => t.IdTrecho == lote.IdTrecho && t.IdLoteTroca is null).ToList();
+        var trocadas = doTrecho.Where(t => t.Cancelamento == $"Feita no lote {codigo}").Select(t => (Troca: t, Situacao: "Trocada", Motivo: (string?)null));
+        var naoDeu = (await trocas.Recusas(doTrecho.Select(t => t.IdTroca).ToList()))
+            .Where(r => r.Descricao == $"Não deu no lote {codigo}" || r.Descricao?.StartsWith($"Não deu no lote {codigo}:") == true)
+            .Select(r => (Troca: doTrecho.First(t => t.IdTroca == r.IdTroca), Situacao: "NaoDeu", Motivo: (string?)r.Motivo));
+        var lista = trocadas.Concat(naoDeu).ToList();
+        var porPeca = await consulta.PorIds(lista.Select(o => o.Troca.IdDormenteSaiu).Distinct().ToList());
+        return lista.Where(o => porPeca.ContainsKey(o.Troca.IdDormenteSaiu))
+            .Select(o => new ObrigatoriaDto(o.Troca.IdTroca, o.Situacao, DoLote(porPeca[o.Troca.IdDormenteSaiu]), null, o.Motivo))
+            .OrderBy(o => o.Peca.KmProjeto).ToList();
+    }
 }

@@ -21,6 +21,20 @@ describe('PedirLote (o técnico pede um lote de troca)', () => {
     return { fixture, http, tela, botao, pedir: fixture.componentInstance };
   };
 
+  it('mostra as trocas já aprovadas na faixa, que entram como obrigatórias (Victor, 2026-11-12)', async () => {
+    const { fixture, http, tela, pedir } = await abrir();
+    pedir.escolherTrecho(4);
+    pedir.idTamanho.set(2);
+    TestBed.tick(); // o pedido sai sem esperar a tela parar (ela só para quando ele volta)
+    const req = http.expectOne((r) => r.url.endsWith('/lotes-troca/obrigatorias'));
+    expect([req.request.params.get('idTrecho'), req.request.params.get('kmInicio'), req.request.params.get('idTamanho')]).toEqual(['4', '23', '2']);
+    req.flush([{ idTroca: 7, situacao: 'Aberta' as const, peca: { id: 9, codigo: 'DOR-000123', tag: 'BR9', kmProjeto: 23.15, idTamanho: 2, pilha: null }, separada: null, motivo: null }]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(tela.textContent).toContain('DOR-000123');
+    expect(tela.textContent).toContain('obrigatórias');
+  });
+
   it('sem motivo não envia e diz o que falta', async () => {
     const { fixture, http, tela, botao, pedir } = await abrir();
     pedir.escolherTrecho(4);
