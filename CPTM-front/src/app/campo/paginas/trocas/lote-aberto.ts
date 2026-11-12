@@ -28,6 +28,9 @@ export const ROTULO_LOTE: Record<StatusLoteTroca, string> = {
     .laudo-previa .ativo { font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
     .totais { margin-bottom: 12px; }
     .chamada { margin: 10px 0; }
+    p { margin: 4px 0; }
+    .lbl { margin: 14px 0 6px; }
+    .largo { grid-column: 1 / -1; }
   `,
   template: `
     @let l = lote();
@@ -59,7 +62,7 @@ export const ROTULO_LOTE: Record<StatusLoteTroca, string> = {
         <p class="lbl">Decisão</p>
         <div class="campos">
           <mat-form-field appearance="outline"><mat-label>Quantidade aprovada</mat-label><input matInput type="number" min="1" [max]="l.quantidadePedida" class="mono" [ngModel]="quantidade()" (ngModelChange)="quantidade.set($event)" /></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>{{ menos() ? 'Por que menos (obrigatório)' : 'Motivo (obrigatório para reprovar)' }}</mat-label><input matInput [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" /></mat-form-field>
+          <mat-form-field appearance="outline" class="largo"><mat-label>{{ menos() ? 'Por que menos (obrigatório)' : 'Motivo (obrigatório para reprovar)' }}</mat-label><input matInput [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" /></mat-form-field>
         </div>
         <mat-checkbox [checked]="urgente()" (change)="urgente.set($event.checked)">Urgente: entra no plano desta noite mesmo depois das 20:00</mat-checkbox>
         <div class="acoes">
