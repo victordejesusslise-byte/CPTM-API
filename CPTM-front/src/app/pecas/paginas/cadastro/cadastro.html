@@ -45,7 +45,7 @@
       <input matInput class="mono" [ngModel]="tagRelida()" (ngModelChange)="tagRelida.set($event)" (keydown.enter)="cadastrar()" autocomplete="off" />
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Tag do fornecedor (se a peça veio com uma)</mat-label>
+      <mat-label>Tag do fornecedor (montada pelo pedido; confira)</mat-label>
       <input matInput class="mono" [ngModel]="tagFornecedor()" (ngModelChange)="tagFornecedor.set($event)" autocomplete="off" />
     </mat-form-field>
     @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }

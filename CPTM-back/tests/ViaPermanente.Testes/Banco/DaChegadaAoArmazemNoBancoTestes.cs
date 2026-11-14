@@ -191,6 +191,31 @@ public class DaChegadaAoArmazemNoBancoTestes : IAsyncLifetime
         Assert.Equal(0, await db.Set<LeituraDormente>().CountAsync(l => l.MetodoCaptura == MetodoCaptura.Pistola));
     }
 
+    /// <summary>
+    /// Victor, 2026-11-14: a tag do fornecedor já vem montada pelo pedido, SIGLA-NÚMERO DO PEDIDO-SEQUÊNCIA (TG-20261013193233-28). A sequência
+    /// conta as peças do pedido inteiro (todos os feixes), não só as do feixe.
+    /// </summary>
+    [Fact]
+    public async Task A_tag_do_fornecedor_vem_montada_pelo_pedido()
+    {
+        var feixes = (await Chegar()).Feixes;
+
+        // Sem dígito no código do pedido (PED-CADEIA), vale o id; sem sigla, fica NÚMERO-SEQUÊNCIA.
+        Assert.Equal($"{idPedido}-01", await Pecas().ProximaTagFornecedor(feixes[0].Id));
+
+        await db.Set<Empresa>().ExecuteUpdateAsync(s => s.SetProperty(e => e.Sigla, "TG"));
+        await db.Set<Pedido>().ExecuteUpdateAsync(s => s.SetProperty(p => p.Codigo, "PD-20261017-195108"));
+        Assert.Equal("TG-20261017195108-01", await Pecas().ProximaTagFornecedor(feixes[0].Id));
+
+        await CadastrarComModulo(feixes[0].Id);
+        await CadastrarComModulo(feixes[0].Id, tagsVistas: 2); // bloqueada: não cadastrou a peça, não conta
+        await CadastrarComModulo(feixes[1].Id);
+        Assert.Equal("TG-20261017195108-03", await Pecas().ProximaTagFornecedor(feixes[1].Id));
+        Assert.Equal("TG-20261017195108-03", await Pecas().ProximaTagFornecedor(feixes[0].Id));
+
+        Assert.Null(await Pecas().ProximaTagFornecedor(999999));
+    }
+
     [Fact]
     public async Task Verificacao_e_estoque_peca_a_peca()
     {

@@ -16,6 +16,13 @@ public class PecaService(IPecaRepository pecas, ICatalogoRepository catalogo, IS
     /// <summary>O próximo número para o módulo gravar. Não fica reservado: o cadastro confere de novo.</summary>
     public async Task<string> ProximaTag() => TagHelper.Proxima(await pecas.MaiorTag());
 
+    /// <summary>
+    /// A tag do fornecedor da próxima peça do feixe, montada pelo pedido: SIGLA-NÚMERO DO PEDIDO-SEQUÊNCIA (TG-20261013193233-28). É uma
+    /// sugestão: a tela deixa conferir e mudar. Nulo: feixe não encontrado.
+    /// </summary>
+    public async Task<string?> ProximaTagFornecedor(int idFeixe)
+        => await pecas.PedidoDoFeixe(idFeixe) is { } p ? TagHelper.DoFornecedor(p.Sigla, p.Codigo, p.IdPedido, p.Cadastradas) : null;
+
     public async Task<CadastroPecaDto> Cadastrar(NovaPecaDto nova, int idUsuario)
     {
         if (nova.IdCliente is Guid idCliente && await pecas.GravacaoPorCliente(idCliente) is { } repetida)

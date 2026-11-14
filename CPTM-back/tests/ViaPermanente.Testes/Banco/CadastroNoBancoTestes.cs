@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using ViaPermanente.Dados;
 using ViaPermanente.Dados.Catalogos;
 using ViaPermanente.Dominio.Catalogos;
@@ -48,5 +49,35 @@ public class CadastroNoBancoTestes : IAsyncLifetime
 
         Assert.True(await s.AtivarEmpresa(ufv.Id, false));
         Assert.False((await s.Empresas(PapelEmpresa.Inspetora)).Single().Ativo);
+    }
+
+    /// <summary>A sigla da empresa (Victor, 2026-11-14) monta a tag do fornecedor: opcional, de 2 a 6 letras ou números, sempre em maiúsculas.</summary>
+    [Fact]
+    public async Task A_sigla_da_empresa_vai_em_maiusculas_e_e_conferida()
+    {
+        var s = new CadastroService(new CadastroRepository(db), new CatalogoRepository(db));
+        var tg = await s.NovaEmpresa(new NovaEmpresaDto
+        {
+            Nome = "TG–Três Guri", Sigla = " tg ", Papel = PapelEmpresa.Fornecedor, Medidas = [new() { LarguraM = 0.24m, AlturaM = 0.17m }]
+        });
+        Assert.Equal("TG", tg.Sigla);
+        Assert.Equal("TG", (await s.Empresas(PapelEmpresa.Fornecedor)).Single().Sigla);
+        Assert.Null((await s.NovaEmpresa(new NovaEmpresaDto { Nome = "UFV", Sigla = "  ", Papel = PapelEmpresa.Inspetora })).Sigla);
+        foreach (var ruim in new[] { "T", "TGTGTGT", "T-G", "TÊ" })
+        {
+            var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(() =>
+                s.NovaEmpresa(new NovaEmpresaDto { Nome = "Outra " + ruim, Sigla = ruim, Papel = PapelEmpresa.Inspetora }));
+            Assert.Contains("2 a 6 letras ou números", erro.Message);
+        }
+
+        // A sigla muda depois: a empresa que veio de antes, sem sigla no começo do nome, ganha uma; vazia, fica sem.
+        Assert.Equal("TGR", (await s.MudarSigla(tg.Id, "tgr"))!.Sigla);
+        Assert.Null((await s.MudarSigla(tg.Id, ""))!.Sigla);
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => s.MudarSigla(tg.Id, "T G"));
+        Assert.Null(await s.MudarSigla(999999, "TG"));
+
+        // O banco também só aceita de 2 a 6 letras ou números em maiúsculas.
+        await Assert.ThrowsAnyAsync<Exception>(() => db.Database.ExecuteSqlRawAsync("UPDATE EMPRESA SET sigla = 'tg'"));
+        await Assert.ThrowsAnyAsync<Exception>(() => db.Database.ExecuteSqlRawAsync("UPDATE EMPRESA SET sigla = 'T-G'"));
     }
 }

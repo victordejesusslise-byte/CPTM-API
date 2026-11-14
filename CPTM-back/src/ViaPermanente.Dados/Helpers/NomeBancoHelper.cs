@@ -29,6 +29,7 @@ public static class NomeBancoHelper
     public static int? TamanhoTexto(string coluna)
     {
         if (coluna.StartsWith("retrato_")) return null;        // JSON do antes e depois
+        if (coluna == "sigla") return 6;                       // sigla da empresa (TG): até 6 letras ou números
         if (coluna.Contains("arquivo")) return 260;            // caminho de foto ou planilha
         if (coluna is "observacao" or "descricao" or "mensagem" or "resposta" or "texto_lido" or "cancelamento"
             || coluna.StartsWith("motivo")) return 1000;

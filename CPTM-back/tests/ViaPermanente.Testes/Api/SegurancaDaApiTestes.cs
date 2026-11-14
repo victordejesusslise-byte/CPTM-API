@@ -115,6 +115,9 @@ public class SegurancaDaApiTestes(ApiDeTeste api) : IClassFixture<ApiDeTeste>
             ["POST api/alertas/{id:int}/foto"] = ["Tecnico", "OperadorVia"],
             ["POST api/dormentes/{id:int}/fotos/inspecao"] = ["Tecnico"],
             ["POST api/pedidos"] = ["OperadorPatio", "Supervisor"],
+            ["PUT api/empresas/{id:int}/sigla"] = ["Supervisor"],
+            ["GET api/tags/proxima"] = ["Supervisor", "OperadorPatio"],
+            ["GET api/tags/proxima-fornecedor"] = ["Supervisor", "OperadorPatio"],
             ["POST api/dormentes/{id:int}/verificacao"] = ["Especialista", "Supervisor"]
         };
         var rotas = Rotas().ToDictionary(r => r.Nome);

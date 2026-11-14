@@ -11,7 +11,13 @@ internal static class ComprasConfiguracao
 {
     public static void Aplicar(ModelBuilder mb)
     {
-        mb.Entity<Empresa>(e => e.HasKey(x => x.IdEmpresa));
+        // A sigla (TG) começa a tag do fornecedor: de 2 a 6 letras ou números, em maiúsculas (o binário não deixa passar minúscula nem acento).
+        mb.Entity<Empresa>(e =>
+        {
+            e.HasKey(x => x.IdEmpresa);
+            e.ToTable(t => t.HasCheckConstraint("CK_EMPRESA_sigla",
+                "[sigla] IS NULL OR (LEN([sigla]) BETWEEN 2 AND 6 AND [sigla] NOT LIKE '%[^A-Z0-9]%' COLLATE Latin1_General_BIN)"));
+        });
 
         // Os padrões de largura × altura de cada fornecedor (sem espécie: valem para todas).
         mb.Entity<MedidaFornecedor>(e =>

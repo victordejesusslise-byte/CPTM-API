@@ -24,6 +24,12 @@ public class CadastroHandler(CadastroService cadastros) : ControllerBase
     [Authorize(Roles = nameof(Cargo.Supervisor))]
     public async Task<IActionResult> Ativar(int id, [FromQuery] bool ativo) => await cadastros.AtivarEmpresa(id, ativo) ? NoContent() : NotFound();
 
+    /// <summary>Muda a sigla da empresa (TG), que começa a tag do fornecedor; vazia, fica sem.</summary>
+    [HttpPut("empresas/{id:int}/sigla")]
+    [Authorize(Roles = nameof(Cargo.Supervisor))]
+    public async Task<ActionResult<EmpresaDto>> MudarSigla(int id, AlterarSiglaDto dto)
+        => await cadastros.MudarSigla(id, dto.Sigla) is { } empresa ? empresa : NotFound();
+
     /// <summary>Mais um padrão de medida (largura × altura) para o fornecedor.</summary>
     [HttpPost("empresas/{id:int}/medidas")]
     [Authorize(Roles = nameof(Cargo.Supervisor))]

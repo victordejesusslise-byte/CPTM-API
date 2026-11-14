@@ -21,6 +21,22 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
     public Task<Lote?> LoteDoPedido(int idPedido)
         => db.Set<Lote>().AsNoTracking().OrderBy(l => l.IdLote).FirstOrDefaultAsync(l => l.IdPedido == idPedido);
 
+    public async Task<PedidoDoFeixe?> PedidoDoFeixe(int idFeixe)
+    {
+        var pedido = await (
+            from f in db.Set<Feixe>().AsNoTracking()
+            join r in db.Set<Recebimento>() on f.IdRecebimento equals r.IdRecebimento
+            join p in db.Set<Pedido>() on r.IdPedido equals p.IdPedido
+            join e in db.Set<Empresa>() on p.IdEmpresa equals e.IdEmpresa
+            where f.IdFeixe == idFeixe
+            select new { p.IdPedido, p.Codigo, e.Sigla }).FirstOrDefaultAsync();
+        if (pedido is null)
+            return null;
+        // As peças do pedido inteiro (todos os feixes e chegadas): a peça vem do lote, e o lote é do pedido.
+        var cadastradas = await db.Set<Dormente>().CountAsync(d => db.Set<Lote>().Any(l => l.IdLote == d.IdLote && l.IdPedido == pedido.IdPedido));
+        return new PedidoDoFeixe(pedido.IdPedido, pedido.Codigo, pedido.Sigla, cadastradas);
+    }
+
     public async Task<bool> TagEmUso(string tag)
         => await db.Set<Rfid>().AnyAsync(r => r.TagRfid == tag)
            || await db.Set<GravacaoTag>().AnyAsync(g => g.TagGravada == tag && NumeroGasto.Contains(g.Resultado));

@@ -11,6 +11,8 @@ public interface IPecaRepository
     Task<Recebimento?> BuscarRecebimento(int idRecebimento);
     Task<int> PecasNoFeixe(int idFeixe);
     Task<Lote?> LoteDoPedido(int idPedido);
+    /// <summary>O pedido do feixe, com a sigla do fornecedor e as peças já cadastradas do pedido inteiro. Nulo: feixe não encontrado.</summary>
+    Task<PedidoDoFeixe?> PedidoDoFeixe(int idFeixe);
 
     /// <summary>O número já está numa tag, ou já foi gravado (ok ou divergente)?</summary>
     Task<bool> TagEmUso(string tag);

@@ -66,6 +66,17 @@ export class Cadastro {
   protected escolherFeixe(f: FeixeDto): void {
     this.feixe.set(f);
     this.proximaTag();
+    this.proximaTagFornecedor();
+  }
+
+  /**
+   * A tag do fornecedor da próxima peça, montada pelo pedido: SIGLA-NÚMERO DO PEDIDO-SEQUÊNCIA (Victor, 2026-11-14). Continua editável:
+   * o operador confere com a que veio na peça.
+   */
+  private proximaTagFornecedor(): void {
+    const f = this.feixe();
+    if (!f) return;
+    this.pecas.proximaTagFornecedor(f.id).subscribe({ next: (t) => this.tagFornecedor.set(t), error: () => this.tagFornecedor.set('') });
   }
 
   protected proximaTag(): void {
@@ -92,6 +103,7 @@ export class Cadastro {
           this.doFeixe.reload();
           this.chegadas.reload();
           this.proximaTag();
+          this.proximaTagFornecedor();
         },
         error: (e) => {
           this.erro.set(mensagemDeErro(e));

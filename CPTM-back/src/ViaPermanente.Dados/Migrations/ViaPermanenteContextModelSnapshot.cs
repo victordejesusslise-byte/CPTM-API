@@ -2959,9 +2959,17 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("nvarchar(30)")
                         .HasColumnName("papel");
 
+                    b.Property<string>("Sigla")
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)")
+                        .HasColumnName("sigla");
+
                     b.HasKey("IdEmpresa");
 
-                    b.ToTable("EMPRESA");
+                    b.ToTable("EMPRESA", t =>
+                        {
+                            t.HasCheckConstraint("CK_EMPRESA_sigla", "[sigla] IS NULL OR (LEN([sigla]) BETWEEN 2 AND 6 AND [sigla] NOT LIKE '%[^A-Z0-9]%' COLLATE Latin1_General_BIN)");
+                        });
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pedidos.Models.MedidaFornecedor", b =>

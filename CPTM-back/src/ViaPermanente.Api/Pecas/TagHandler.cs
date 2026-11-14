@@ -32,6 +32,14 @@ public class TagHandler(PecaService pecas, VinculoTagService vinculos) : Control
     [Authorize(Roles = $"{nameof(Cargo.Supervisor)},{nameof(Cargo.OperadorPatio)}")]
     public async Task<object> Proxima() => new { tag = await pecas.ProximaTag() };
 
+    /// <summary>A tag do fornecedor da próxima peça do feixe, montada pelo pedido (SIGLA-NÚMERO DO PEDIDO-SEQUÊNCIA). 404: feixe não encontrado.</summary>
+    [HttpGet("proxima-fornecedor")]
+    [Authorize(Roles = $"{nameof(Cargo.Supervisor)},{nameof(Cargo.OperadorPatio)}")]
+    public async Task<ActionResult<object>> ProximaFornecedor([FromQuery] int idFeixe)
+        => await pecas.ProximaTagFornecedor(idFeixe) is { } tag
+            ? new { tag }
+            : Problem($"O feixe {idFeixe} não foi encontrado.", statusCode: StatusCodes.Status404NotFound);
+
     /// <summary>Abre a peça pela tag. 404: tag não associada.</summary>
     [HttpGet("{numero}")]
     public async Task<ActionResult<PecaDto>> Buscar(string numero)
