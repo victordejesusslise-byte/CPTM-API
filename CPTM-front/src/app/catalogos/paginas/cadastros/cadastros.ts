@@ -18,6 +18,16 @@ const novoPadrao = () => ({ idEspecie: null as number | null, larguraM: null as 
 const padraoValido = (p: { larguraM: number | null; alturaM: number | null }) =>
   p.larguraM !== null && p.alturaM !== null && p.larguraM >= 0.05 && p.larguraM <= 1 && p.alturaM >= 0.05 && p.alturaM <= 1;
 
+/**
+ * A sigla da empresa (Victor, 2026-11-14), que começa a tag do fornecedor (TG-20261013193233-28): em maiúsculas, de 2 a 6 letras ou números,
+ * sem acento, espaço nem traço. Vazia: a empresa fica sem sigla. A mesma regra do servidor.
+ */
+export function conferirSigla(texto: string | null | undefined): { sigla: string | null } | { erro: string } {
+  const sigla = (texto ?? '').trim().toUpperCase();
+  if (!sigla) return { sigla: null };
+  return /^[A-Z0-9]{2,6}$/.test(sigla) ? { sigla } : { erro: 'A sigla tem de 2 a 6 letras ou números, sem espaço nem traço (ex.: TG).' };
+}
+
 type Aba = 'empresas' | 'contratos' | 'via' | 'parametros' | 'leitores';
 const TITULOS: Record<Aba, string> = { empresas: 'Empresas', contratos: 'Contratos', via: 'Estações e trechos', parametros: 'Parâmetros', leitores: 'Leitores de tag' };
 
@@ -26,6 +36,11 @@ const TITULOS: Record<Aba, string> = { empresas: 'Empresas', contratos: 'Contrat
   selector: 'app-cadastros',
   imports: [LegivelPipe, CartoesNoCelular, Esqueleto, FormsModule, FORMULARIO],
   templateUrl: './cadastros.html',
+  // A sigla aparece em maiúsculas enquanto se digita (o envio também põe); na lista, o campo é estreito.
+  styles: `
+    .sigla { text-transform: uppercase; }
+    input.campo-tabela.sigla { width: 88px; min-width: 0; }
+  `,
 })
 export class Cadastros {
   protected readonly valorDe = valorDe;
@@ -48,7 +63,9 @@ export class Cadastros {
   protected readonly papeis: PapelEmpresa[] = ['Fornecedor', 'Tratadora', 'Inspetora'];
 
   // formulários (um objeto por aba)
-  protected readonly empresa = { nome: '', cnpj: '', papel: 'Fornecedor' as PapelEmpresa, medidas: [novoPadrao()] };
+  protected readonly empresa = { nome: '', sigla: '', cnpj: '', papel: 'Fornecedor' as PapelEmpresa, medidas: [novoPadrao()] };
+  /** A sigla que está sendo mudada na lista, por empresa (até salvar). */
+  protected readonly siglas: Record<number, string> = {};
   /** O fornecedor com os padrões de medida abertos na tabela. */
   protected readonly padroesDe = signal<number | null>(null);
   protected readonly padrao = novoPadrao();
@@ -65,11 +82,15 @@ export class Cadastros {
 
   protected salvarEmpresa(): void {
     if (!this.empresa.nome.trim()) return this.erro.set('Informe o nome da empresa.');
+    const sigla = conferirSigla(this.empresa.sigla);
+    if ('erro' in sigla) return this.erro.set(sigla.erro);
     const fornecedor = this.empresa.papel === 'Fornecedor';
     if (fornecedor && !this.empresa.medidas.every(padraoValido)) return this.erro.set('Informe a largura e a altura de cada padrão de medida, de 0,05 a 1 m.');
     const medidas = fornecedor ? this.empresa.medidas.map((m) => ({ idEspecie: m.idEspecie, larguraM: m.larguraM!, alturaM: m.alturaM! })) : [];
-    this.enviar(this.api.novaEmpresa({ nome: this.empresa.nome.trim(), cnpj: this.empresa.cnpj.trim() || null, papel: this.empresa.papel, medidas }), 'Empresa cadastrada.', () => {
+    const nova = { nome: this.empresa.nome.trim(), sigla: sigla.sigla, cnpj: this.empresa.cnpj.trim() || null, papel: this.empresa.papel, medidas };
+    this.enviar(this.api.novaEmpresa(nova), 'Empresa cadastrada.', () => {
       this.empresa.nome = '';
+      this.empresa.sigla = '';
       this.empresa.cnpj = '';
       this.empresa.medidas = [novoPadrao()];
       this.empresas.reload();
@@ -100,6 +121,20 @@ export class Cadastros {
 
   protected ativarPadrao(id: number, ativo: boolean): void {
     this.enviar(this.api.ativarMedida(id, ativo), ativo ? 'Padrão ativado.' : 'Padrão desativado: ele some da escolha do pedido.', () => this.empresas.reload());
+  }
+
+  /** Muda a sigla na própria lista (ao sair do campo ou com Enter). As tags de fornecedor já cadastradas não mudam. */
+  protected mudarSigla(e: EmpresaDto): void {
+    const sigla = conferirSigla(this.siglas[e.id] ?? e.sigla);
+    if ('erro' in sigla) {
+      this.mensagem.set(null);
+      return this.erro.set(sigla.erro);
+    }
+    if (sigla.sigla === e.sigla) return;
+    this.enviar(this.api.mudarSigla(e.id, sigla.sigla), sigla.sigla ? `Sigla de ${e.nome} alterada para ${sigla.sigla}.` : `${e.nome} ficou sem sigla.`, () => {
+      delete this.siglas[e.id];
+      this.empresas.reload();
+    });
   }
 
   protected ativar(id: number, ativo: boolean): void {

@@ -106,4 +106,27 @@ public class MigracoesNoBancoTestes : IAsyncLifetime
             c => Assert.Equal(0, Existe(c.Item1, c.Item2)));
         Assert.Equal(1, Existe("TROCA", "equipe"));
     }
+
+    /// <summary>
+    /// A sigla da empresa (Victor, 2026-11-14): as que já existem ganham o que vem antes do primeiro traço do nome, se for de 2 a 6 letras
+    /// ou números ("TG-Três Guri" → TG; o travessão "–" da placa também conta). As outras ficam sem sigla.
+    /// </summary>
+    [Fact]
+    public async Task A_sigla_das_empresas_vem_do_comeco_do_nome()
+    {
+        await MigrarAte("20261111212549_LoteDeTroca");
+        await db.Database.ExecuteSqlRawAsync(
+            "INSERT INTO EMPRESA (nome, ativo, papel) VALUES " +
+            "(N'TG-Três Guri', 1, 'Fornecedor'), (N'TG–Três Guri', 1, 'Tratadora'), (N'ab12 - Madeiras', 1, 'Fornecedor'), " +
+            "(N'Granoski', 1, 'Tratadora'), (N'T-Um', 1, 'Fornecedor'), (N'ABCDEFG-Longa', 1, 'Fornecedor'), (N'Três-Guri', 1, 'Inspetora'), " +
+            "(N'-Sem', 1, 'Inspetora'), (N'A B-Espaço', 1, 'Inspetora');");
+
+        await MigrarAte("20261114230539_SiglaDaEmpresa");
+
+        var siglas = await db.Set<Empresa>().AsNoTracking().ToDictionaryAsync(e => e.Nome, e => e.Sigla);
+        Assert.Equal("TG", siglas["TG-Três Guri"]);
+        Assert.Equal("TG", siglas["TG–Três Guri"]);
+        Assert.Equal("AB12", siglas["ab12 - Madeiras"]);
+        Assert.All(new[] { "Granoski", "T-Um", "ABCDEFG-Longa", "Três-Guri", "-Sem", "A B-Espaço" }, nome => Assert.Null(siglas[nome]));
+    }
 }

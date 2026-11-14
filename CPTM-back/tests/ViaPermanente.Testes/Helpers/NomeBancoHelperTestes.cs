@@ -31,4 +31,13 @@ public class NomeBancoHelperTestes
     [InlineData("confianca", 7, 4)]
     public void Precisao_pela_unidade_da_coluna(string coluna, int precisao, int escala)
         => Assert.Equal((precisao, escala), NomeBancoHelper.PrecisaoDecimal(coluna));
+
+    /// <summary>A sigla da empresa (TG) tem até 6 letras ou números (Victor, 2026-11-14).</summary>
+    [Theory]
+    [InlineData("sigla", 6)]
+    [InlineData("nome", 200)]
+    [InlineData("observacao", 1000)]
+    [InlineData("foto_arquivo", 260)]
+    public void Tamanho_do_texto_pela_funcao_da_coluna(string coluna, int tamanho)
+        => Assert.Equal(tamanho, NomeBancoHelper.TamanhoTexto(coluna));
 }

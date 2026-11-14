@@ -14,6 +14,10 @@ export class Pecas {
   proximaTag(): Observable<string> {
     return this.http.get<{ tag: string }>(`${this.api}/tags/proxima`).pipe(map((r) => r.tag));
   }
+  /** A tag do fornecedor da próxima peça do feixe, montada pelo pedido: SIGLA-NÚMERO DO PEDIDO-SEQUÊNCIA (TG-20261013193233-28). */
+  proximaTagFornecedor(idFeixe: number): Observable<string> {
+    return this.http.get<{ tag: string }>(`${this.api}/tags/proxima-fornecedor`, { params: consulta({ idFeixe }) }).pipe(map((r) => r.tag));
+  }
   porTag(tag: string): Observable<PecaDto> {
     return this.http.get<PecaDto>(`${this.api}/tags/${encodeURIComponent(tag.trim())}`);
   }

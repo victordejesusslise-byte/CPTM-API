@@ -13,6 +13,9 @@
       <header><h2>Nova empresa</h2><span class="nota">fornecedor, tratadora ou inspetora</span></header>
       <div class="campos">
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput [(ngModel)]="empresa.nome" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Sigla (opcional)</mat-label>
+          <input matInput class="mono sigla" maxlength="6" autocomplete="off" spellcheck="false" placeholder="TG" [(ngModel)]="empresa.sigla" />
+          <mat-hint>2 a 6 letras ou números (ex.: TG)</mat-hint></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>CNPJ (opcional)</mat-label><input matInput class="mono" [(ngModel)]="empresa.cnpj" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Papel</mat-label>
           <mat-select [(ngModel)]="empresa.papel"><app-busca-opcoes />@for (p of papeis; track p) { <mat-option [value]="p">{{ p }}</mat-option> }</mat-select></mat-form-field>
@@ -36,14 +39,17 @@
     </section>
     <section class="cartao">
       <div class="tabela"><table class="simples">
-        <thead><tr><th>Nome</th><th>Papel</th><th class="so-computador">CNPJ</th><th>Situação</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th>Sigla</th><th>Papel</th><th class="so-computador">CNPJ</th><th>Situação</th><th></th></tr></thead>
         <tbody>@if (empresas.isLoading()) { <tr><td colspan="9"><app-esqueleto tipo="linhas" [quantidade]="3" /></td></tr> }@for (e of valorDe(empresas) ?? []; track e.id) {
-          <tr><td>{{ e.nome }}</td><td>{{ e.papel | legivel }}</td><td class="mono so-computador">{{ e.cnpj ?? '—' }}</td><td [class.vermelho]="!e.ativo">{{ e.ativo ? 'Ativa' : 'Inativa' }}</td>
+          <tr><td>{{ e.nome }}</td>
+            <td><input class="mono campo-tabela sigla" maxlength="6" autocomplete="off" spellcheck="false" placeholder="—" [attr.aria-label]="'Sigla de ' + e.nome"
+              [ngModel]="siglas[e.id] ?? e.sigla ?? ''" (ngModelChange)="siglas[e.id] = $event" (change)="mudarSigla(e)" /></td>
+            <td>{{ e.papel | legivel }}</td><td class="mono so-computador">{{ e.cnpj ?? '—' }}</td><td [class.vermelho]="!e.ativo">{{ e.ativo ? 'Ativa' : 'Inativa' }}</td>
             <td style="text-align:right">
               @if (e.papel === 'Fornecedor') { <button mat-button type="button" (click)="abrirPadroes(e.id)" [attr.aria-expanded]="padroesDe() === e.id">Padrões ({{ ativos(e) }})</button> }
               <button mat-button type="button" (click)="ativar(e.id, !e.ativo)">{{ e.ativo ? 'Desativar' : 'Ativar' }}</button></td></tr>
           @if (padroesDe() === e.id) {
-            <tr class="detalhe-padroes"><td colspan="5">
+            <tr class="detalhe-padroes"><td colspan="6">
               <ul class="padroes-lista">
                 @for (m of e.medidas; track m.id) {
                   <li [class.inativo]="!m.ativo"><span class="mono">{{ m.rotulo }}</span><span>{{ m.especie ?? 'todas as espécies' }}@if (!m.ativo) { · desativado }</span>

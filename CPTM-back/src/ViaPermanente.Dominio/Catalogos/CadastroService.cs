@@ -13,13 +13,14 @@ public class CadastroService(ICadastroRepository cadastros, ICatalogoRepository 
     {
         var medidas = await MedidasDto();
         return (await cadastros.Empresas()).Where(e => papel is null || e.Papel == papel).OrderBy(e => e.Nome)
-            .Select(e => new EmpresaDto(e.IdEmpresa, e.Nome, e.Cnpj, e.Papel.ToString(), e.Ativo, medidas[e.IdEmpresa].ToList())).ToList();
+            .Select(e => new EmpresaDto(e.IdEmpresa, e.Nome, e.Sigla, e.Cnpj, e.Papel.ToString(), e.Ativo, medidas[e.IdEmpresa].ToList())).ToList();
     }
 
     /// <summary>O fornecedor já entra com os padrões de medida dele (pelo menos um: cada item do pedido escolhe um).</summary>
     public async Task<EmpresaDto> NovaEmpresa(NovaEmpresaDto dto)
     {
         var nome = Exigir(dto.Nome, "Informe o nome da empresa.");
+        var sigla = Sigla(dto.Sigla);
         if ((await cadastros.Empresas()).Any(e => e.Papel == dto.Papel && string.Equals(e.Nome, nome, StringComparison.OrdinalIgnoreCase)))
             throw new RegraDeNegocioException($"Já existe {nome} como {dto.Papel}.");
         var medidas = dto.Papel == PapelEmpresa.Fornecedor ? dto.Medidas : [];
@@ -31,7 +32,7 @@ public class CadastroService(ICadastroRepository cadastros, ICatalogoRepository 
         if (medidas.GroupBy(m => (m.IdEspecie, m.LarguraM, m.AlturaM)).Any(g => g.Count() > 1))
             throw new RegraDeNegocioException("O mesmo padrão de medida apareceu duas vezes.");
 
-        var empresa = new Empresa { Nome = nome, Cnpj = Limpo(dto.Cnpj), Papel = dto.Papel, Ativo = true };
+        var empresa = new Empresa { Nome = nome, Sigla = sigla, Cnpj = Limpo(dto.Cnpj), Papel = dto.Papel, Ativo = true };
         await cadastros.Adicionar(empresa);
         foreach (var m in medidas)
             await cadastros.Adicionar(new MedidaFornecedor { IdEmpresa = empresa.IdEmpresa, IdEspecie = m.IdEspecie, LarguraM = m.LarguraM, AlturaM = m.AlturaM });
@@ -78,6 +79,28 @@ public class CadastroService(ICadastroRepository cadastros, ICatalogoRepository 
             throw new RegraDeNegocioException("A largura e a altura vão de 0,05 a 1 m.");
         if (m.IdEspecie is int e && !especies.ContainsKey(e))
             throw new RegraDeNegocioException("Espécie não encontrada.");
+    }
+
+    /// <summary>
+    /// Muda a sigla (vazia: fica sem). Serve para a empresa que já existia e não ganhou sigla pelo nome. As tags de fornecedor já
+    /// cadastradas não mudam; só as próximas. Nulo se a empresa não existe.
+    /// </summary>
+    public async Task<EmpresaDto?> MudarSigla(int idEmpresa, string? sigla)
+    {
+        var nova = Sigla(sigla);
+        if ((await cadastros.Empresas()).All(e => e.IdEmpresa != idEmpresa))
+            return null;
+        await cadastros.MudarSigla(idEmpresa, nova);
+        return (await Empresas(null)).First(e => e.Id == idEmpresa);
+    }
+
+    /// <summary>A sigla em maiúsculas, de 2 a 6 letras ou números (sem acento); vazia vira nula.</summary>
+    private static string? Sigla(string? sigla)
+    {
+        var limpa = Limpo(sigla)?.ToUpperInvariant();
+        if (limpa is not null && (limpa.Length is < 2 or > 6 || !limpa.All(char.IsAsciiLetterOrDigit)))
+            throw new RegraDeNegocioException("A sigla tem de 2 a 6 letras ou números, sem espaço nem traço (ex.: TG).");
+        return limpa;
     }
 
     /// <summary>Desativar não apaga: a empresa some das listas de escolha, e o que já foi registrado continua. Falso se não existe.</summary>

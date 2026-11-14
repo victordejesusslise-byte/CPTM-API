@@ -2,8 +2,8 @@ using ViaPermanente.Dominio.Pedidos.Models;
 
 namespace ViaPermanente.Dominio.Catalogos.Dtos;
 
-/// <summary>A empresa; o fornecedor traz os padrões de medida dele.</summary>
-public record EmpresaDto(int Id, string Nome, string? Cnpj, string Papel, bool Ativo, IReadOnlyList<MedidaDto> Medidas);
+/// <summary>A empresa; o fornecedor traz os padrões de medida dele. A sigla (TG) começa a tag do fornecedor.</summary>
+public record EmpresaDto(int Id, string Nome, string? Sigla, string? Cnpj, string Papel, bool Ativo, IReadOnlyList<MedidaDto> Medidas);
 public record ContratoDto(int Id, int IdEmpresa, string Empresa, string NumeroAta, string NumeroContrato, DateOnly? VigenciaInicio, DateOnly? VigenciaFim);
 public record EstacaoDto(int Id, string Nome, string Linha, decimal Km, int Ordem);
 public record TrechoDto(int Id, int IdEstacaoInicio, string EstacaoInicio, int IdEstacaoFim, string EstacaoFim, byte ClasseExigida);
@@ -11,10 +11,18 @@ public record TrechoDto(int Id, int IdEstacaoInicio, string EstacaoInicio, int I
 public class NovaEmpresaDto
 {
     public string Nome { get; init; } = "";
+    /// <summary>Opcional: de 2 a 6 letras ou números (vai em maiúsculas).</summary>
+    public string? Sigla { get; init; }
     public string? Cnpj { get; init; }
     public PapelEmpresa Papel { get; init; }
     /// <summary>Os padrões de medida do fornecedor (pelo menos um, se for fornecedor).</summary>
     public IReadOnlyList<NovaMedidaDto> Medidas { get; init; } = [];
+}
+
+/// <summary>A sigla nova da empresa; vazia, a empresa fica sem sigla.</summary>
+public class AlterarSiglaDto
+{
+    public string? Sigla { get; init; }
 }
 
 public class NovoContratoDto

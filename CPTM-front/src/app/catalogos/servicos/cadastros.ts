@@ -20,6 +20,10 @@ export class Cadastros {
   novaEmpresa(dto: NovaEmpresaDto): Observable<EmpresaDto> {
     return this.http.post<EmpresaDto>(`${this.api}/empresas`, dto);
   }
+  /** Muda a sigla da empresa (vazia: fica sem). */
+  mudarSigla(id: number, sigla: string | null): Observable<EmpresaDto> {
+    return this.http.put<EmpresaDto>(`${this.api}/empresas/${id}/sigla`, { sigla });
+  }
   ativarEmpresa(id: number, ativo: boolean): Observable<void> {
     return this.http.put<void>(`${this.api}/empresas/${id}/ativo`, null, { params: consulta({ ativo }) });
   }
