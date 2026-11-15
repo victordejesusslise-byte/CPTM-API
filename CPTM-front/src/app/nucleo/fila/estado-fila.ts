@@ -50,8 +50,12 @@ import { Fila } from './fila';
   `,
 })
 export class EstadoFila {
+  /** A fila sem internet. */
   protected readonly fila = inject(Fila);
+  /** Quantos registros meus esperam para subir. */
   protected readonly esperando = computed(() => this.fila.meus().length);
+  /** A lista dos não enviados está aberta? */
   protected readonly aberta = signal(false);
+  /** Mostra a data e a hora do registro. */
   protected readonly dataHora = dataHora;
 }

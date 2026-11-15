@@ -12,8 +12,10 @@ namespace ViaPermanente.Dominio.Campo;
 /// </summary>
 public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, LeituraService leituras, PecaService consulta)
 {
+    /// <summary>A fila de alertas, filtrada pela origem (aba) e pelo status.</summary>
     public async Task<IReadOnlyList<AlertaDto>> Listar(OrigemAlerta? origem, StatusAlerta? status) => await Montar(await alertas.Listar(origem, status));
 
+    /// <summary>Um alerta pelo id; nulo se não existe.</summary>
     public async Task<AlertaDto?> BuscarPorId(int idAlerta) => (await Montar(await alertas.Listar(null, null, idAlerta))).FirstOrDefault();
 
     /// <summary>Devolve nulo se o alerta não existe.</summary>
@@ -25,8 +27,10 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
         // O celular mandou de novo (a rede caiu antes da resposta): devolve o alerta como está.
         if (dto.IdCliente is Guid idCliente && await alertas.VistoriaExiste(idCliente))
             return await BuscarPorId(idAlerta);
+        // Alerta já decidido não recebe vistoria.
         if (alerta.Status != StatusAlerta.Aberto)
             throw new RegraDeNegocioException("O alerta já foi decidido pelo técnico.");
+        // Sem foto, não há vistoria.
         if (string.IsNullOrWhiteSpace(dto.FotoArquivo))
             throw new RegraDeNegocioException("A vistoria precisa de foto (Foto em todo registro de campo).");
 
@@ -34,6 +38,7 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
         LeituraDormente? leitura = null;
         int? pecaIdentificada = null;
         string? tagLida = null;
+        // Tag que não responde: grava a leitura falha; só vale se o alerta já sabe qual é a peça.
         if (dto.TagNaoResponde)
         {
             if (alerta.IdDormente is null)
@@ -49,9 +54,10 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
         {
             if (dto.Leitura is null)
                 throw new RegraDeNegocioException("Leia a tag da peça com o módulo, ou marque que ela não responde.");
+            // Alerta com peça: a tag lida tem de ser dessa peça.
             if (alerta.IdDormente is int idDormente)
             {
-                var tag = await pecas.TagAtiva(idDormente) ?? throw new RegraDeNegocioException("A peça do alerta não tem tag ativa.");
+                var tag = await pecas.TagVigente(idDormente) ?? throw new RegraDeNegocioException("A peça do alerta não tem tag ativa.");
                 leitura = await leituras.ConferirPeca(idDormente, tag, dto.Leitura, idUsuario); // a da vizinha é recusada
             }
             else
@@ -59,13 +65,14 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
                 // Alerta sem peça: a tag lida com alvo único dá a peça ao alerta.
                 tagLida = dto.Leitura.Tag.Trim();
                 var dona = await pecas.BuscarTag(tagLida);
-                if (dona is null || !dona.Ativo)
+                if (dona is null || !dona.Vigente)
                     throw new RegraDeNegocioException($"A tag {tagLida} não está associada a nenhuma peça.");
                 leitura = await leituras.ConferirPeca(dona.IdDormente, dona, dto.Leitura, idUsuario);
                 pecaIdentificada = dona.IdDormente;
             }
         }
 
+        // Grava a vistoria e a leitura juntas (e a peça no alerta, se ela foi descoberta agora).
         await alertas.Vistoriar(new VistoriaAlerta
         {
             IdAlerta = idAlerta, IdUsuario = idUsuario, Data = agora, Viu = dto.Viu, TagLida = tagLida,
@@ -81,6 +88,7 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
         var alerta = (await alertas.Listar(null, null, idAlerta)).FirstOrDefault();
         if (alerta is null)
             return null;
+        // Descartar exige motivo e alerta ainda aberto.
         if (string.IsNullOrWhiteSpace(motivo))
             throw new RegraDeNegocioException("Informe o motivo do descarte.");
         if (alerta.Status != StatusAlerta.Aberto)
@@ -89,10 +97,12 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
         return await BuscarPorId(idAlerta);
     }
 
+    /// <summary>Monta os alertas para a tela: junta o quadro da câmera, o km, as vistorias e a peça.</summary>
     private async Task<IReadOnlyList<AlertaDto>> Montar(IReadOnlyList<Alerta> lista)
     {
         if (lista.Count == 0)
             return [];
+        // Busca tudo de uma vez para a lista inteira (uma consulta por tipo de dado).
         var deteccoes = await alertas.Deteccoes(lista.Where(a => a.IdDeteccao != null).Select(a => a.IdDeteccao!.Value).ToList());
         var kms = await alertas.KmDasLeituras(lista.Where(a => a.IdLeituraVia != null).Select(a => a.IdLeituraVia!.Value).ToList());
         var vistorias = await alertas.ContarVistorias(lista.Select(a => a.IdAlerta).ToList());
@@ -102,6 +112,7 @@ public class AlertaService(IAlertaRepository alertas, IPecaRepository pecas, Lei
         {
             var d = a.IdDeteccao is int idD ? deteccoes.GetValueOrDefault(idD) : null;
             var peca = a.IdDormente is int idP ? porPeca.GetValueOrDefault(idP) : null;
+            // O km vem da detecção da câmera; sem ela, da leitura do carro.
             var km = d?.KmMedido ?? (a.IdLeituraVia is long idL ? kms.GetValueOrDefault(idL) : null);
             return new AlertaDto(a.IdAlerta, a.Origem.ToString(), a.Tipo.ToString(), a.Status.ToString(), a.Data, a.DesvioMm, km,
                 a.IdDormente, peca?.Codigo, peca?.Tag,

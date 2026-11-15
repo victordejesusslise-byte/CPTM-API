@@ -1,3 +1,6 @@
+// Program.cs: liga e sobe o back do YBYRA na porta 8045. Lê o .env e registra o banco, os repositórios e os services.
+// Tudo exige login (o token da pessoa ou a chave do carro), menos o que tem [AllowAnonymous]; o cargo de cada rota fica no handler.
+// Na primeira subida, aplica as migrações (se pedido) e cria o supervisor do .env.
 using System.Text.Json.Serialization;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
@@ -51,17 +54,21 @@ if (builder.Configuration.GetValue<bool>("Logs:Json"))
     builder.Logging.AddJsonConsole(o => o.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffzzz ");
 }
 
+// Sem a conexão do banco o back não tem o que fazer: para logo, com a mensagem de onde configurar.
 var conexao = builder.Configuration.GetConnectionString("ViaPermanente");
 if (string.IsNullOrWhiteSpace(conexao))
     throw new InvalidOperationException("Falta ConnectionStrings__ViaPermanente no .env (veja .env.exemplo).");
 
+// Chave do JWT curta deixaria o token fácil de forjar: com menos de 32 caracteres o back não sobe.
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOpcoes>() ?? new JwtOpcoes();
 if (jwt.Chave.Length < 32)
     throw new InvalidOperationException("Jwt__Chave no .env precisa ter pelo menos 32 caracteres.");
 builder.Services.AddSingleton(jwt);
 
+// O banco é o SQL Server (decisão: SQL Server no lugar do MySQL), com um contexto do EF Core por chamada.
 builder.Services.AddDbContext<ViaPermanenteContext>(o => o.UseSqlServer(conexao));
 
+// Repositórios (projeto Dados): cada interface do Dominio ligada à sua implementação, um por chamada HTTP (Scoped).
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<ICatalogoRepository, CatalogoRepository>();
 builder.Services.AddScoped<IParametroRepository, ParametroRepository>();
@@ -96,6 +103,7 @@ builder.Services.AddScoped<ILeituraOcrRepository, LeituraOcrRepository>();
 var raiz = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", ".."));
 builder.Services.AddSingleton<IOcrRepository>(new TesseractOcrRepository(builder.Configuration["Ocr:Tessdata"] ?? Path.Combine(raiz, "tessdata")));
 builder.Services.AddSingleton<IFotoRepository>(new FotoRepository(builder.Configuration["Fotos:Pasta"] ?? Path.Combine(raiz, "fotos")));
+// Services (projeto Dominio): as regras de negócio de cada etapa do fluxo, também um por chamada HTTP.
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<CatalogoService>();
@@ -135,11 +143,14 @@ builder.Services.AddScoped<ExportacaoService>();
 builder.Services.AddScoped<LaudoService>();
 builder.Services.AddScoped<IndicadorService>();
 builder.Services.AddScoped<OcrPlacaService>();
+// Tarefa de fundo: uma vez por dia, a manutenção das partições semanais das leituras do carro (decisão: 90 dias de passagem).
 builder.Services.AddHostedService<ManutencaoDiariaHandler>();
 
+// Dois jeitos de se identificar: o token JWT da pessoa (padrão) e a chave de máquina do carro da via (esquema próprio).
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
+        // Mantém os nomes curtos dos dados do token (sub, role), sem trocar pelos nomes longos da Microsoft.
         o.MapInboundClaims = false;
         o.TokenValidationParameters = TokenHelper.Parametros(jwt);
         // A cada chamada: conta ativa e sessão atual (sair e desativar derrubam o token na hora).
@@ -160,12 +171,15 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
 
 // No máximo N tentativas de login por minuto por aparelho (Seguranca:TentativasPorMinuto, padrão 10).
 builder.Services.AddLimiteDeLogin(builder.Configuration.GetValue("Seguranca:TentativasPorMinuto", 10));
+// Erro no formato padrão (ProblemDetails); a regra de negócio quebrada vira 400 com a mensagem (ErroHandler).
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ErroHandler>();
-// Enum como texto no JSON: o Angular manda e recebe "Tecnico", não 1.
+// O /hc confere o banco (BancoHealthCheck).
 builder.Services.AddHealthChecks().AddCheck<BancoHealthCheck>("banco");
+// Enum como texto no JSON: o Angular manda e recebe "Tecnico", não 1.
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+// Swagger (só no desenvolvimento): a página de testar a API, com o campo para colar o token do login.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -189,6 +203,7 @@ var app = builder.Build();
 app.UseHttpsDeProducao(builder.Configuration.GetValue("Seguranca:ExigirHttps", false));
 app.UseCabecalhosDeSeguranca();
 
+// A ordem importa: primeiro o tratamento de erro, depois o CORS, o limite, o login e a permissão.
 app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
@@ -208,6 +223,7 @@ app.MapHealthChecks("/hc", Saude.Opcoes()).AllowAnonymous();
 // Primeira subida: aplica as migrações (no Docker) e cria o supervisor do .env se o banco ainda não tem usuário.
 using (var escopo = app.Services.CreateScope())
 {
+    // Só migra quando a configuração pede (o Docker liga Banco__MigrarAoIniciar).
     if (builder.Configuration.GetValue<bool>("Banco:MigrarAoIniciar"))
         await escopo.ServiceProvider.GetRequiredService<ViaPermanenteContext>().Database.MigrateAsync();
     var inicial = builder.Configuration.GetSection("UsuarioInicial");

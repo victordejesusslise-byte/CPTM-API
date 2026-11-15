@@ -46,7 +46,7 @@ public class CampoNoBancoTestes : IAsyncLifetime
     public Task DisposeAsync() => BancoDeTeste.Apagar(db);
 
     private static string Tag(int n) => $"BR{n:D10}";
-    private async Task<int> Peca(int n) => (await db.Set<Dominio.Pecas.Models.Rfid>().AsNoTracking().SingleAsync(r => r.TagRfid == Tag(n))).IdDormente;
+    private async Task<int> Peca(int n) => (await db.Set<Dominio.Pecas.Models.GravacaoTag>().AsNoTracking().SingleAsync(g => g.TagGravada == Tag(n) && g.Vigente)).IdDormente!.Value;
     private VarreduraService Varredura() => new(new VarreduraRepository(db), new ParametroRepository(db));
     private PecaService Pecas() => new(new PecaRepository(db), new CatalogoRepository(db));
     private AlertaService Alertas() => new(new AlertaRepository(db), new PecaRepository(db), new LeituraService(new PecaRepository(db)), Pecas());

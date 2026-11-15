@@ -7,7 +7,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Pecas;
 
-/// <summary>A tag UHF: o próximo número a gravar e abrir a peça pela tag.</summary>
+/// <summary>
+/// A tag UHF: o próximo número a gravar e abrir a peça pela tag. Rotas em /api/tags.
+/// Tag sem cadastro em campo: a via avisa; o técnico e o supervisor vinculam (decisão: Tag sem cadastro em campo).
+/// </summary>
 [ApiController]
 [Route("api/tags")]
 public class TagHandler(PecaService pecas, VinculoTagService vinculos) : ControllerBase
@@ -18,6 +21,7 @@ public class TagHandler(PecaService pecas, VinculoTagService vinculos) : Control
     public async Task<ActionResult<AvisoTagDto>> Avisar(NovoAvisoTagDto dto)
         => StatusCode(StatusCodes.Status201Created, await vinculos.Avisar(dto, TokenHelper.IdUsuario(User)));
 
+    /// <summary>GET avisos (Técnico e Supervisor): os avisos de tag sem cadastro que ainda esperam alguém resolver.</summary>
     [HttpGet("avisos")]
     [Authorize(Roles = $"{nameof(Cargo.Tecnico)},{nameof(Cargo.Supervisor)}")]
     public Task<IReadOnlyList<AvisoTagDto>> Avisos() => vinculos.Pendentes();
@@ -40,7 +44,7 @@ public class TagHandler(PecaService pecas, VinculoTagService vinculos) : Control
             ? new { tag }
             : Problem($"O feixe {idFeixe} não foi encontrado.", statusCode: StatusCodes.Status404NotFound);
 
-    /// <summary>Abre a peça pela tag. 404: tag não associada.</summary>
+    /// <summary>Abre a peça pela tag (qualquer cargo logado). 404: tag não associada.</summary>
     [HttpGet("{numero}")]
     public async Task<ActionResult<PecaDto>> Buscar(string numero)
     {

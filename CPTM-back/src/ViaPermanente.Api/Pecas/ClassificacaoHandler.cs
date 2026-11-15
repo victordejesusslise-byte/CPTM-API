@@ -7,12 +7,16 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Pecas;
 
-/// <summary>Classificação da madeira (etapa 07): o especialista confirma ou corrige a espécie da placa.</summary>
+/// <summary>
+/// Classificação da madeira (etapa 07): o especialista confirma ou corrige a espécie da placa.
+/// Rotas em /api/classificacoes: classificar, só o Especialista; ver, o Especialista e o Supervisor.
+/// </summary>
 [ApiController]
 [Route("api/classificacoes")]
 [Authorize(Roles = $"{nameof(Cargo.Especialista)},{nameof(Cargo.Supervisor)}")]
 public class ClassificacaoHandler(ClassificacaoService classificacoes) : ControllerBase
 {
+    /// <summary>POST (só o Especialista, pelas duas regras somadas): grava a classificação da peça lida.</summary>
     [HttpPost]
     [Authorize(Roles = nameof(Cargo.Especialista))]
     public async Task<ActionResult<ClassificacaoDto>> Classificar(NovaClassificacaoDto dto)

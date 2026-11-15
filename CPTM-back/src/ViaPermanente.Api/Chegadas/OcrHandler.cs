@@ -7,7 +7,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Chegadas;
 
-/// <summary>A placa do feixe lida pela foto (OCR com o Tesseract, no servidor). Quem faz: o operador de pátio, na chegada.</summary>
+/// <summary>
+/// A placa do feixe lida pela foto (OCR com o Tesseract, no servidor). Quem faz: o operador de pátio, na chegada.
+/// Rotas em /api/ocr; quem chama: Operador de pátio e Supervisor (decisão: Placa lida pela foto, conferida pelo operador).
+/// </summary>
 [ApiController]
 [Route("api/ocr")]
 [Authorize(Roles = $"{nameof(Cargo.OperadorPatio)},{nameof(Cargo.Supervisor)}")]
@@ -19,6 +22,7 @@ public class OcrHandler(OcrPlacaService ocr) : ControllerBase
     [RequestSizeLimit(15_000_000)]
     public async Task<ActionResult<LeituraOcrDto>> Ler(IFormFile foto, [FromForm] int? idPedido, [FromForm] Guid? idCliente)
     {
+        // A foto vai inteira para a memória (até 15 MB) e segue em bytes para o OCR.
         using var memoria = new MemoryStream();
         await foto.CopyToAsync(memoria);
         return StatusCode(StatusCodes.Status201Created, await ocr.Ler(memoria.ToArray(), Path.GetExtension(foto.FileName), idPedido, TokenHelper.IdUsuario(User), idCliente));
@@ -28,6 +32,7 @@ public class OcrHandler(OcrPlacaService ocr) : ControllerBase
     [HttpGet("placas")]
     public Task<IReadOnlyList<LeituraOcrDto>> DoPedido([FromQuery] int idPedido) => ocr.PlacasDoPedido(idPedido);
 
+    /// <summary>Uma leitura de placa pelo id (→ LEITURA_OCR); 404 se não existe.</summary>
     [HttpGet("placas/{id:int}")]
     public async Task<ActionResult<LeituraOcrDto>> Buscar(int id)
     {
@@ -43,6 +48,7 @@ public class OcrHandler(OcrPlacaService ocr) : ControllerBase
         return leitura is null ? NotFound() : leitura;
     }
 
+    /// <summary>Os modelos de placa que o OCR conhece (→ MODELO_OCR).</summary>
     [HttpGet("modelos")]
     public Task<IReadOnlyList<ModeloOcrDto>> Modelos() => ocr.Modelos();
 }

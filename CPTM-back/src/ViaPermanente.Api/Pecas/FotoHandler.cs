@@ -7,7 +7,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Pecas;
 
-/// <summary>As fotos da peça: a da entrada (enviada na verificação de qualidade) e a lista para comparar com a câmera da via.</summary>
+/// <summary>
+/// As fotos da peça: a da entrada (enviada na verificação de qualidade) e a lista para comparar com a câmera da via.
+/// Rotas em /api: enviar a da entrada (Especialista e Supervisor), a da inspeção (Técnico); ver: qualquer cargo logado.
+/// </summary>
 [ApiController]
 [Route("api")]
 public class FotoHandler(FotoPecaService fotos) : ControllerBase
@@ -19,6 +22,7 @@ public class FotoHandler(FotoPecaService fotos) : ControllerBase
     [RequestSizeLimit(FotoPecaService.TamanhoMaximo + 100_000)]
     public async Task<ActionResult<object>> Enviar(int id, IFormFile foto)
     {
+        // Lê o arquivo inteiro na memória (o tamanho já está limitado acima) e passa os bytes ao service.
         using var memoria = new MemoryStream();
         await foto.CopyToAsync(memoria);
         return StatusCode(StatusCodes.Status201Created, new { arquivo = await fotos.SalvarEntrada(id, memoria.ToArray(), Path.GetExtension(foto.FileName)) });
@@ -37,6 +41,7 @@ public class FotoHandler(FotoPecaService fotos) : ControllerBase
         return arquivo is null ? NotFound() : StatusCode(StatusCodes.Status201Created, new { arquivo });
     }
 
+    /// <summary>As fotos da peça (404 se a peça não existe).</summary>
     [HttpGet("dormentes/{id:int}/fotos")]
     public async Task<ActionResult<FotosDaPecaDto>> DaPeca(int id) => await fotos.DaPeca(id) is { } lista ? lista : NotFound();
 
@@ -46,6 +51,7 @@ public class FotoHandler(FotoPecaService fotos) : ControllerBase
     {
         var conteudo = fotos.Arquivo(caminho);
         if (conteudo is null) return NotFound();
+        // O tipo da imagem sai da extensão; o que não for png nem webp vai como jpeg.
         var tipo = Path.GetExtension(caminho).ToLowerInvariant() switch { ".png" => "image/png", ".webp" => "image/webp", _ => "image/jpeg" };
         return File(conteudo, tipo);
     }

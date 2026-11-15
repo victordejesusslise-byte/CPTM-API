@@ -2,13 +2,14 @@ using ViaPermanente.Dominio.Chegadas.Models;
 using ViaPermanente.Dominio.Comum;
 using ViaPermanente.Dominio.Pecas;
 using ViaPermanente.Dominio.Pecas.Dtos;
+using ViaPermanente.Dominio.Pecas.Models;
 
 namespace ViaPermanente.Dominio.Chegadas;
 
 /// <summary>
 /// Etapa 04: a verificação de qualidade, peça a peça, depois da UHF, feita pelo especialista com a peça lida.
 /// É conferência visual: a qualidade vem certificada pela inspetora da placa. Só insere, nunca altera.
-/// Reprovada: motivo e foto obrigatórios, a tag é desativada e a peça volta ao fornecedor.
+/// Reprovada: motivo e foto obrigatórios, a etiqueta é desligada (perde a marca vigente e ganha a linha Desligada) e a peça volta ao fornecedor.
 /// </summary>
 public class QualidadeService(IPecaRepository pecas, LeituraService leituras, PecaService consulta)
 {
@@ -24,7 +25,7 @@ public class QualidadeService(IPecaRepository pecas, LeituraService leituras, Pe
         // muda o resultado sozinha; o servidor confere de novo, porque não confia só na tela.
         if (!reprovada && (dto.AtaqueBiologico != AtaqueBiologicoVerificacao.Nenhum || dto.Rachadura != RachaduraVerificacao.Nenhuma))
             throw new RegraDeNegocioException("Peça com ataque biológico ou rachadura é reprovada: marque Reprovada, com o motivo e a foto.");
-        var tag = await pecas.TagAtiva(idDormente)
+        var tag = await pecas.TagVigente(idDormente)
             ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
         if (await pecas.Verificacao(idDormente) is { } feita)
             throw new RegraDeNegocioException($"Esta peça já foi verificada ({(feita.Resultado == ResultadoVerificacao.Aprovada ? "aprovada" : "reprovada")}).");
@@ -39,7 +40,7 @@ public class QualidadeService(IPecaRepository pecas, LeituraService leituras, Pe
             Resultado = dto.Resultado, Motivo = Limpo(dto.Motivo), FotoArquivo = Limpo(dto.FotoArquivo),
             Destino = reprovada ? DestinoVerificacao.Devolucao : DestinoVerificacao.Armazem,
             IdCliente = dto.IdCliente, RegistradoEm = dto.RegistradoEm ?? agora, RecebidoEm = agora
-        }, leitura, reprovada ? tag.IdRfid : null);
+        }, leitura, reprovada ? GravacaoTag.Desligada(idDormente, tag.Tag, "peça reprovada", idUsuario, agora) : null);
         return await consulta.BuscarPorId(idDormente);
     }
 

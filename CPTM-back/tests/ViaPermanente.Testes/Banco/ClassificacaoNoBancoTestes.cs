@@ -36,7 +36,7 @@ public class ClassificacaoNoBancoTestes : IAsyncLifetime
         });
         await new ApresentacaoService(new ApresentacaoRepository(db)).CriarExemplo(usuario.Id);
         var peca = await db.Set<Dormente>().OrderBy(d => d.IdDormente).FirstAsync();
-        var tag = await db.Set<Rfid>().Where(r => r.IdDormente == peca.IdDormente).Select(r => r.TagRfid).FirstAsync();
+        var tag = await db.Set<GravacaoTag>().Where(g => g.IdDormente == peca.IdDormente && g.Vigente).Select(g => g.TagGravada).FirstAsync();
         var outra = await db.Set<Especie>().FirstAsync(e => e.NomeCientifico == "Hymenaea courbaril");
         var pecas = new PecaService(new PecaRepository(db), new CatalogoRepository(db));
         var servico = new ClassificacaoService(new ClassificacaoRepository(db), new PecaRepository(db));

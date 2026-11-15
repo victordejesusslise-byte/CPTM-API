@@ -38,12 +38,12 @@ public class ArmazemRepository(ViaPermanenteContext db) : IArmazemRepository
         => (await (from d in db.Set<Dormente>().AsNoTracking()
                    join p in db.Set<Pilha>() on d.IdPilha equals p.IdPilha
                    where p.IdArmazem == idArmazem
-                   select new { d.IdDormente, p.IdPilha, Tag = db.Set<Rfid>().Where(r => r.IdDormente == d.IdDormente && r.Ativo).Select(r => r.TagRfid).FirstOrDefault() })
+                   select new { d.IdDormente, p.IdPilha, Tag = db.Set<GravacaoTag>().Where(g => g.IdDormente == d.IdDormente && g.Vigente).Select(g => g.TagGravada).FirstOrDefault() })
                 .ToListAsync())
             .Select(x => (x.IdDormente, x.IdPilha, (string?)x.Tag)).ToList();
 
     public async Task<IReadOnlyDictionary<string, int>> DonosDasTags(IReadOnlyCollection<string> tags)
-        => await db.Set<Rfid>().AsNoTracking().Where(r => r.Ativo && tags.Contains(r.TagRfid)).ToDictionaryAsync(r => r.TagRfid, r => r.IdDormente);
+        => await db.Set<GravacaoTag>().AsNoTracking().Where(g => g.Vigente && tags.Contains(g.TagGravada)).ToDictionaryAsync(g => g.TagGravada, g => g.IdDormente!.Value);
 
     public async Task TrocarPilha(int idDormente, int idPilhaNova, Movimentacao movimentacao, LeituraDormente leitura)
     {
@@ -59,15 +59,20 @@ public class ArmazemRepository(ViaPermanenteContext db) : IArmazemRepository
 
     public async Task<IReadOnlyList<LeituraDormente>> AvisosPendentes()
         => await db.Set<LeituraDormente>().AsNoTracking()
-            .Where(l => l.Aviso && l.IdDormente == null && l.TagLida != null && !db.Set<Rfid>().Any(r => r.TagRfid == l.TagLida))
+            .Where(l => l.Aviso && l.IdDormente == null && l.TagLida != null && !db.Set<GravacaoTag>().Any(g => g.TagGravada == l.TagLida && g.IdDormente != null))
             .OrderByDescending(l => l.DataLeitura).ToListAsync();
 
-    public async Task Vincular(Rfid nova, int? idRfidAntiga, LeituraDormente leitura)
+    public async Task Vincular(GravacaoTag? desligada, GravacaoTag ligada, LeituraDormente leitura)
     {
         await using var transacao = await db.Database.BeginTransactionAsync();
-        if (idRfidAntiga is int idAntiga)
-            await db.Set<Rfid>().Where(r => r.IdRfid == idAntiga).ExecuteUpdateAsync(s => s.SetProperty(r => r.Ativo, false));
-        db.Add(nova);
+        if (desligada is not null)
+        {
+            // A única mudança numa linha antiga da GRAVACAO_TAG: a marca vigente passa de 1 para 0. A Desligada entra antes da Ligada.
+            await db.Set<GravacaoTag>().Where(g => g.IdDormente == ligada.IdDormente && g.Vigente).ExecuteUpdateAsync(s => s.SetProperty(g => g.Vigente, false));
+            db.Add(desligada);
+            await db.SaveChangesAsync();
+        }
+        db.Add(ligada);
         db.Add(leitura);
         await db.SaveChangesAsync();
         await transacao.CommitAsync();

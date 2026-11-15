@@ -10,6 +10,10 @@ using ViaPermanente.Dominio.Pessoas.Dtos;
 
 namespace ViaPermanente.Api.Pessoas;
 
+/// <summary>
+/// Entrar e sair (decisão: Login pelo e-mail da pessoa). Rotas em /api/auth: POST login (aberto a todos, com limite por aparelho),
+/// POST sair e GET eu (qualquer cargo logado). Quem confere a senha é o AuthService; aqui vira resposta HTTP e log.
+/// </summary>
 [ApiController]
 [Route("api/auth")]
 public class AuthHandler(AuthService auth, UsuarioService usuarios, JwtOpcoes jwt, ILogger<AuthHandler> log) : ControllerBase
@@ -25,16 +29,19 @@ public class AuthHandler(AuthService auth, UsuarioService usuarios, JwtOpcoes jw
     {
         var resultado = await auth.Entrar(login);
         var origem = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "?";
+        // A conta está esperando por senhas erradas seguidas: diz até quando.
         if (resultado.EsperarAte is { } ate)
         {
             log.LogWarning("Login em espera para {Email} (de {Origem}) até {Ate}", EmailHelper.Normalizar(login.Email), origem, ate);
             return Problem($"Muitas senhas erradas seguidas. Tente de novo às {ate:HH:mm:ss}.", statusCode: StatusCodes.Status429TooManyRequests);
         }
+        // E-mail ou senha errados (ou conta desativada): a mensagem não diz qual, para não ajudar quem tenta adivinhar.
         if (resultado.Usuario is null)
         {
             log.LogWarning("Login recusado para {Email} (de {Origem})", EmailHelper.Normalizar(login.Email), origem);
             return Problem("E-mail ou senha inválidos.", statusCode: StatusCodes.Status401Unauthorized);
         }
+        // Deu certo: o token leva o cargo e a versão atual da sessão.
         return TokenHelper.Gerar(resultado.Usuario, resultado.VersaoSessao, jwt, DateTime.UtcNow);
     }
 

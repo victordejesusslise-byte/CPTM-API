@@ -16,14 +16,19 @@ public class CampoHub : Hub
 /// <summary>Manda os avisos do ao vivo. Chamado pelos handlers depois que o registro foi gravado.</summary>
 public class AvisoAoVivo(IHubContext<CampoHub> hub, ILogger<AvisoAoVivo> log)
 {
+    /// <summary>Uma troca do plano mudou: o celular baixa o plano de novo.</summary>
     public const string TrocaNoPlano = "trocaNoPlano";
+    /// <summary>Uma troca foi aprovada como urgente.</summary>
     public const string TrocaUrgente = "trocaUrgente";
     /// <summary>O técnico pediu uma troca: o aviso para quem aprova (Victor, 2026-10-31).</summary>
     public const string TrocaPedida = "trocaPedida";
+    /// <summary>A passagem abriu alertas novos.</summary>
     public const string AlertaNovo = "alertaNovo";
+    /// <summary>Um alerta foi fechado (descartado ou confirmado pela inspeção).</summary>
     public const string AlertaFechado = "alertaFechado";
     /// <summary>O técnico pediu um lote de troca: o aviso para quem aprova (Victor, 2026-11-11).</summary>
     public const string LotePedido = "lotePedido";
+    /// <summary>Um lote de troca do plano mudou.</summary>
     public const string LoteNoPlano = "loteNoPlano";
 
     /// <summary>A troca mudou (aprovada, separada, feita, recusada, cancelada). Aprovada como urgente vai como urgente.</summary>
@@ -34,6 +39,7 @@ public class AvisoAoVivo(IHubContext<CampoHub> hub, ILogger<AvisoAoVivo> log)
     /// <summary>O lote mudou (aprovado, separado, feito, recusado, cancelado): o celular baixa o plano de novo.</summary>
     public Task Lote(LoteTrocaDto? lote) => lote is null ? Task.CompletedTask : Avisar(LoteNoPlano, lote.Id);
 
+    /// <summary>Manda o aviso (o nome do evento e o id) para todos os celulares conectados.</summary>
     public async Task Avisar(string evento, int? id)
     {
         // O aviso é um extra: se falhar, o registro já está gravado e o celular pega a mudança na próxima busca do plano.

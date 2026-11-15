@@ -57,8 +57,10 @@ public class IndicadorRepository(ViaPermanenteContext db) : IIndicadorRepository
                 .ToListAsync())
             .Select(x => (x.IdDormente, x.Noites)).ToList();
 
+    // Só as gravações do módulo (Gravada, com leitor): a Ligada, a Desligada e as etiquetas do exemplo não são tentativas de gravar.
     public async Task<IReadOnlyList<ResultadoGravacao>> Gravacoes(DateTime de, DateTime ate)
-        => await db.Set<GravacaoTag>().AsNoTracking().Where(g => g.Data >= de && g.Data < ate).Select(g => g.Resultado).ToListAsync();
+        => await db.Set<GravacaoTag>().AsNoTracking()
+            .Where(g => g.Tipo == TipoGravacao.Gravada && g.IdLeitor != null && g.Data >= de && g.Data < ate).Select(g => g.Resultado).ToListAsync();
 
     public async Task<IReadOnlyList<Inspecao>> Inspecoes(DateTime de, DateTime ate)
         => await db.Set<Inspecao>().AsNoTracking().Where(i => i.FinalizadoEm >= de && i.FinalizadoEm < ate).ToListAsync();

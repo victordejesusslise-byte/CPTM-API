@@ -3,8 +3,10 @@ using ViaPermanente.Dominio.Pecas.Models;
 
 namespace ViaPermanente.Dominio.Campo;
 
+/// <summary>O acesso ao banco das inspeções (INSPECAO). Usado pelo InspecaoService e pela cópia das linhas do celular.</summary>
 public interface IInspecaoRepository
 {
+    /// <summary>As inspeções, de uma peça ou por id.</summary>
     Task<IReadOnlyList<Inspecao>> Listar(int? idDormente = null, int? idInspecao = null);
     /// <summary>A inspeção que o celular já mandou com este ID (o reenvio depois de a rede cair).</summary>
     Task<int?> IdPorCliente(Guid idCliente);

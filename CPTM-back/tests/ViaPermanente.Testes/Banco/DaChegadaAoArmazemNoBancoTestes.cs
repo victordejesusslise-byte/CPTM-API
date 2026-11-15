@@ -159,6 +159,14 @@ public class DaChegadaAoArmazemNoBancoTestes : IAsyncLifetime
         Assert.Equal("Divergente", divergente.Resultado);  // gastou o BR0000000002
         Assert.Equal("BR0000000003", outra.Peca!.Tag);
         Assert.Equal(4, await db.Set<GravacaoTag>().CountAsync());
+        // Etiqueta na GRAVACAO_TAG (2026-11-14): a gravação ok é a etiqueta da peça (Gravada e vigente); as outras ficam sem peça.
+        var gravacoes = await db.Set<GravacaoTag>().AsNoTracking().OrderBy(g => g.IdGravacao).ToListAsync();
+        Assert.Equal(new (int?, bool)[] { (ok.Peca.Id, true), (null, false), (null, false), (outra.Peca.Id, true) }, gravacoes.Select(g => (g.IdDormente, g.Vigente)));
+        Assert.All(gravacoes, g => Assert.Equal(TipoGravacao.Gravada, g.Tipo));
+        // O código da peça fica gravado na peça, na mesma gravação.
+        var lote = await db.Set<Lote>().AsNoTracking().SingleAsync();
+        Assert.Equal(Dormente.MontarCodigo(lote.IdEmpresa, lote.IdLote, ok.Peca.Id), ok.Peca.Codigo);
+        Assert.Equal(ok.Peca.Codigo, (await db.Set<Dormente>().AsNoTracking().SingleAsync(d => d.IdDormente == ok.Peca.Id)).Codigo);
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => CadastrarComModulo(feixe.Id)); // feixe de 2 já completo
         Assert.Equal(1, await db.Set<ClassificacaoMadeira>().CountAsync(c => c.Metodo == MetodoClassificacao.PlacaFornecedor && c.IdDormente == ok.Peca.Id));
     }
@@ -239,7 +247,10 @@ public class DaChegadaAoArmazemNoBancoTestes : IAsyncLifetime
         // Peca_reprovada_desativa_a_tag_e_nao_aparece_no_estoque
         Assert.Equal("Reprovada", ruim!.Situacao);
         Assert.Null(ruim.Tag);
-        Assert.False((await db.Set<Rfid>().AsNoTracking().SingleAsync(r => r.IdDormente == reprovada.Id)).Ativo);
+        var etiqueta = await db.Set<GravacaoTag>().AsNoTracking().Where(g => g.IdDormente == reprovada.Id).OrderBy(g => g.IdGravacao).ToListAsync();
+        Assert.Equal([(TipoGravacao.Gravada, false), (TipoGravacao.Desligada, false)], etiqueta.Select(g => (g.Tipo, g.Vigente)));
+        Assert.Equal((reprovada.Tag, "peça reprovada", idUsuario), (etiqueta[1].TagGravada, etiqueta[1].Observacao, etiqueta[1].IdUsuario));
+        Assert.Equal(reprovada.Id, (await Pecas().BuscarPorTag(reprovada.Tag!))!.Id); // a tag desligada ainda acha a peça
         Assert.Equal([aprovada.Id], (await Pecas().Estoque()).Select(p => p.Id));
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Qualidade().Verificar(aprovada.Id, Verificacao(aprovada.Tag!, ResultadoVerificacao.Aprovada), idUsuario));
     }

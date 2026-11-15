@@ -9,7 +9,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Campo;
 
-/// <summary>Etapa 09: a fila de alertas. Técnico e operador da via veem e vão ao local; o supervisor só vê; só o técnico decide.</summary>
+/// <summary>
+/// Etapa 09: a fila de alertas. Técnico e operador da via veem e vão ao local; o supervisor só vê; só o técnico decide.
+/// Rotas em /api/alertas (decisão: A câmera aponta, o técnico decide).
+/// </summary>
 [ApiController]
 [Route("api/alertas")]
 [Authorize(Roles = $"{nameof(Cargo.Tecnico)},{nameof(Cargo.OperadorVia)},{nameof(Cargo.Supervisor)}")]
@@ -19,6 +22,7 @@ public class AlertaHandler(AlertaService alertas, AvisoAoVivo aoVivo) : Controll
     [HttpGet]
     public Task<IReadOnlyList<AlertaDto>> Listar([FromQuery] OrigemAlerta? origem, [FromQuery] StatusAlerta? status) => alertas.Listar(origem, status);
 
+    /// <summary>Um alerta pelo id (→ ALERTA); 404 se não existe.</summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<AlertaDto>> Buscar(int id)
     {
@@ -54,6 +58,7 @@ public class AlertaHandler(AlertaService alertas, AvisoAoVivo aoVivo) : Controll
     public async Task<ActionResult<AlertaDto>> Descartar(int id, DescartarAlertaDto dto)
     {
         var alerta = await alertas.Descartar(id, dto.Motivo, TokenHelper.IdUsuario(User));
+        // Descartou: avisa ao vivo, para o alerta sair da fila nos outros celulares.
         if (alerta is not null)
             await aoVivo.Avisar(AvisoAoVivo.AlertaFechado, id);
         return alerta is null ? NotFound() : alerta;

@@ -10,14 +10,19 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Campo;
 
-/// <summary>Etapas 11 a 13: a troca em quatro passos (técnico pede, supervisor ou técnico aprova, pátio separa, via troca).</summary>
+/// <summary>
+/// Etapas 11 a 13: a troca em quatro passos (técnico pede, supervisor ou técnico aprova, pátio separa, via troca).
+/// Rotas em /api/trocas; cada passo tem o seu cargo, e cada mudança avisa os celulares ao vivo (decisão: Troca em quatro passos).
+/// </summary>
 [ApiController]
 [Route("api/trocas")]
 public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerBase
 {
+    /// <summary>As trocas (qualquer cargo logado), com filtro opcional por status.</summary>
     [HttpGet]
     public Task<IReadOnlyList<TrocaDto>> Listar([FromQuery] StatusTroca? status) => trocas.Listar(status);
 
+    /// <summary>Uma troca pelo id (→ TROCA); 404 se não existe.</summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TrocaDto>> Buscar(int id)
     {
@@ -25,6 +30,7 @@ public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerB
         return troca is null ? NotFound() : troca;
     }
 
+    /// <summary>Passo 1, só o Técnico: pede a troca de uma peça (uma troca aberta por peça).</summary>
     [HttpPost]
     [Authorize(Roles = nameof(Cargo.Tecnico))]
     public async Task<ActionResult<TrocaDto>> Pedir(NovaTrocaDto dto)
@@ -38,6 +44,7 @@ public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerB
     [HttpPost("{id:int}/decisao")]
     public async Task<ActionResult<TrocaDto>> Decidir(int id, DecisaoTrocaDto dto)
     {
+        // Sem [Authorize] de cargo aqui: o service confere o cargo do token com o parâmetro.
         var cargo = Enum.Parse<Cargo>(User.FindFirstValue(TokenHelper.ClaimCargo)!);
         var troca = await trocas.Decidir(id, dto, cargo, TokenHelper.IdUsuario(User));
         await aoVivo.Troca(troca);
@@ -53,6 +60,7 @@ public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerB
         return lista is null ? NotFound() : Ok(lista);
     }
 
+    /// <summary>Passo 3, só o Operador de pátio: separa no armazém a peça nova para a troca.</summary>
     [HttpPost("{id:int}/separacao")]
     [Authorize(Roles = nameof(Cargo.OperadorPatio))]
     public async Task<ActionResult<TrocaDto>> Separar(int id, SepararTrocaDto dto)
@@ -62,6 +70,7 @@ public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerB
         return troca is null ? NotFound() : troca;
     }
 
+    /// <summary>Passo 4, só o Operador da via: registra a troca feita no trecho, com a foto.</summary>
     [HttpPost("{id:int}/execucao")]
     [Authorize(Roles = nameof(Cargo.OperadorVia))]
     public async Task<ActionResult<TrocaDto>> Executar(int id, ExecutarTrocaDto dto)
@@ -84,6 +93,7 @@ public class TrocaHandler(TrocaService trocas, AvisoAoVivo aoVivo) : ControllerB
         return arquivo is null ? NotFound() : StatusCode(StatusCodes.Status201Created, new { arquivo });
     }
 
+    /// <summary>Só o Operador da via: recusa a troca no local, com motivo e foto (decisão: Recusa de troca é linha).</summary>
     [HttpPost("{id:int}/recusa")]
     [Authorize(Roles = nameof(Cargo.OperadorVia))]
     public async Task<ActionResult<TrocaDto>> Recusar(int id, RecusarTrocaDto dto)

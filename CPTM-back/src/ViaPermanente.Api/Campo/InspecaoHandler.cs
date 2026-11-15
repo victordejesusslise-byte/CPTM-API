@@ -7,7 +7,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Campo;
 
-/// <summary>Etapa 10: a inspeção (checklist v2). Quem faz: o técnico.</summary>
+/// <summary>
+/// Etapa 10: a inspeção (checklist v2). Quem faz: o técnico. Rotas em /api/inspecoes.
+/// Registrar e corrigir: só o Técnico; consultar: qualquer cargo logado (decisão: Corrigir inspeção não é refazer).
+/// </summary>
 [ApiController]
 [Route("api/inspecoes")]
 public class InspecaoHandler(InspecaoService inspecoes, AvisoAoVivo aoVivo) : ControllerBase
@@ -18,6 +21,7 @@ public class InspecaoHandler(InspecaoService inspecoes, AvisoAoVivo aoVivo) : Co
     public async Task<ActionResult<InspecaoDto>> Registrar(NovaInspecaoDto dto)
     {
         var inspecao = await inspecoes.Registrar(dto, TokenHelper.IdUsuario(User));
+        // A inspeção fecha o alerta: avisa ao vivo (decisão: Confirmar alerta é fazer o checklist).
         await aoVivo.Avisar(AvisoAoVivo.AlertaFechado, dto.IdAlerta);
         return StatusCode(StatusCodes.Status201Created, inspecao);
     }
@@ -28,11 +32,12 @@ public class InspecaoHandler(InspecaoService inspecoes, AvisoAoVivo aoVivo) : Co
     public async Task<ActionResult<InspecaoDto>> Corrigir(int id, CorrigirInspecaoDto dto)
     {
         var inspecao = await inspecoes.Corrigir(id, dto, TokenHelper.IdUsuario(User));
-        // Passou a aprovar: a troca aberta pela inspeção foi cancelada e sai do plano.
+        // Avisa sempre: se passou a aprovar, a troca aberta pela inspeção foi cancelada e sai do plano.
         await aoVivo.Avisar(AvisoAoVivo.TrocaNoPlano, null);
         return inspecao is null ? NotFound() : inspecao;
     }
 
+    /// <summary>Uma inspeção pelo id (→ INSPECAO); 404 se não existe.</summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<InspecaoDto>> Buscar(int id)
     {

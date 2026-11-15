@@ -7,10 +7,15 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Catalogos;
 
+/// <summary>
+/// Os parâmetros do sistema (ex.: troca_quem_aprova, o limite de 2ª classe). Rotas em /api/parametros.
+/// Ver: qualquer cargo logado; mudar: só o Supervisor.
+/// </summary>
 [ApiController]
 [Route("api/parametros")]
 public class ParametroHandler(ParametroService parametros) : ControllerBase
 {
+    /// <summary>Todos os parâmetros, com o valor atual.</summary>
     [HttpGet]
     public Task<IReadOnlyList<ParametroDto>> Listar() => parametros.Listar();
 

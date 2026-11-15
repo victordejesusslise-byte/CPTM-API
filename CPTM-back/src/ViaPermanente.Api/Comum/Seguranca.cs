@@ -17,6 +17,7 @@ namespace ViaPermanente.Api.Comum;
 /// </summary>
 public static class Seguranca
 {
+    /// <summary>O nome da política de limite de tentativas, usada no [EnableRateLimiting] do login.</summary>
     public const string PoliticaLogin = "login";
 
     /// <summary>Depois de conferir assinatura e validade do token, confere a conta e a sessão no banco.</summary>
@@ -30,12 +31,14 @@ public static class Seguranca
                 contexto.Token = token;
             return Task.CompletedTask;
         },
+        // Assinatura e validade já conferidas: falta saber se a conta ainda está ativa e se o token é da sessão atual.
         OnTokenValidated = async contexto =>
         {
             var principal = contexto.Principal;
             var id = int.TryParse(principal?.FindFirst(TokenHelper.ClaimId)?.Value, out var i) ? i : (int?)null;
             var versao = principal is null ? null : TokenHelper.VersaoSessao(principal);
             var auth = contexto.HttpContext.RequestServices.GetRequiredService<AuthService>();
+            // Sem id, sem versão (token antigo) ou com a sessão trocada (saiu, foi desativado): o token não vale mais.
             if (id is null || versao is null || !await auth.SessaoValida(id.Value, versao.Value))
                 contexto.Fail("A sessão foi encerrada. Entre de novo.");
         }
@@ -45,6 +48,7 @@ public static class Seguranca
     public static IServiceCollection AddLimiteDeLogin(this IServiceCollection services, int porMinuto) => services.AddRateLimiter(o =>
     {
         o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        // Uma janela fixa de 1 minuto para cada endereço de origem, sem fila: passou do limite, recusa na hora.
         o.AddPolicy(PoliticaLogin, contexto => RateLimitPartition.GetFixedWindowLimiter(
             contexto.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
             _ => new FixedWindowRateLimiterOptions { PermitLimit = porMinuto, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -59,12 +63,15 @@ public static class Seguranca
     public static void UseHttpsDeProducao(this WebApplication app, bool exigir)
     {
         app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto });
+        // No desenvolvimento e no Docker local o HTTP é aceito.
         if (!exigir)
             return;
+        // O HSTS manda o navegador usar sempre https:// neste endereço.
         app.UseHsts();
         app.Use(async (contexto, proximo) =>
         {
             var doProprioServidor = contexto.Connection.RemoteIpAddress is { } ip && IPAddress.IsLoopback(ip);
+            // HTTP de fora do servidor é recusado (menos o /hc, que o healthcheck chama sem criptografia).
             if (!contexto.Request.IsHttps && !doProprioServidor && contexto.Request.Path != "/hc")
             {
                 await Problema(contexto, StatusCodes.Status403Forbidden, "Use o endereço com https://: a API não aceita senha nem token sem criptografia.", contexto.RequestAborted);
@@ -85,11 +92,13 @@ public static class Seguranca
         cabecalhos.XContentTypeOptions = "nosniff";
         cabecalhos.XFrameOptions = "DENY";
         cabecalhos["Referrer-Policy"] = "no-referrer";
+        // O Swagger é uma página com script e estilo: a política fechada o quebraria.
         if (!contexto.Request.Path.StartsWithSegments("/swagger"))
             cabecalhos.ContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'";
         await proximo();
     });
 
+    /// <summary>Responde na hora com o status e a mensagem em JSON (formato problem+json), sem passar pelo resto do pipeline.</summary>
     private static async ValueTask Problema(HttpContext contexto, int status, string detalhe, CancellationToken cancelar)
     {
         contexto.Response.StatusCode = status;

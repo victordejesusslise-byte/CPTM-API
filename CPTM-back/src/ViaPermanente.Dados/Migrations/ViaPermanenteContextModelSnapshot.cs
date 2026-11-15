@@ -2338,6 +2338,11 @@ namespace ViaPermanente.Dados.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdDormente"));
 
+                    b.Property<string>("Codigo")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("codigo");
+
                     b.Property<DateTime?>("EntradaArmazemEm")
                         .HasColumnType("datetime2")
                         .HasColumnName("entrada_armazem_em");
@@ -2379,6 +2384,10 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasKey("IdDormente");
 
+                    b.HasIndex("Codigo")
+                        .IsUnique()
+                        .HasFilter("[codigo] IS NOT NULL");
+
                     b.HasIndex("IdFeixe");
 
                     b.HasIndex("IdLote");
@@ -2407,21 +2416,26 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id_cliente");
 
-                    b.Property<int>("IdLeitor")
+                    b.Property<int?>("IdDormente")
+                        .HasColumnType("int")
+                        .HasColumnName("id_dormente");
+
+                    b.Property<int?>("IdLeitor")
                         .HasColumnType("int")
                         .HasColumnName("id_leitor");
 
-                    b.Property<int>("IdModo")
+                    b.Property<int?>("IdModo")
                         .HasColumnType("int")
                         .HasColumnName("id_modo");
-
-                    b.Property<int?>("IdRfid")
-                        .HasColumnType("int")
-                        .HasColumnName("id_rfid");
 
                     b.Property<int>("IdUsuario")
                         .HasColumnType("int")
                         .HasColumnName("id_usuario");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("observacao");
 
                     b.Property<DateTime?>("RecebidoEm")
                         .HasColumnType("datetime2")
@@ -2457,6 +2471,16 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("int")
                         .HasColumnName("tags_vistas");
 
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("tipo");
+
+                    b.Property<bool>("Vigente")
+                        .HasColumnType("bit")
+                        .HasColumnName("vigente");
+
                     b.HasKey("IdGravacao");
 
                     b.HasIndex("IdCliente")
@@ -2467,13 +2491,22 @@ namespace ViaPermanente.Dados.Migrations
 
                     b.HasIndex("IdModo");
 
-                    b.HasIndex("IdRfid");
-
                     b.HasIndex("IdUsuario");
 
                     b.HasIndex("TagGravada");
 
-                    b.ToTable("GRAVACAO_TAG");
+                    b.HasIndex(new[] { "TagGravada" }, "UX_GRAVACAO_TAG_tag_vigente")
+                        .IsUnique()
+                        .HasFilter("[vigente] = 1");
+
+                    b.HasIndex(new[] { "IdDormente" }, "UX_GRAVACAO_TAG_uma_vigente_por_peca")
+                        .IsUnique()
+                        .HasFilter("[vigente] = 1");
+
+                    b.ToTable("GRAVACAO_TAG", t =>
+                        {
+                            t.HasCheckConstraint("CK_GRAVACAO_TAG_vigente", "[vigente] = 0 OR ([id_dormente] IS NOT NULL AND ([tipo] = 'Ligada' OR ([tipo] = 'Gravada' AND [resultado] = 'Ok')))");
+                        });
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pecas.Models.Leitor", b =>
@@ -2797,52 +2830,6 @@ namespace ViaPermanente.Dados.Migrations
                             Nome = "Personalizado",
                             PotenciaDbm = 20m
                         });
-                });
-
-            modelBuilder.Entity("ViaPermanente.Dominio.Pecas.Models.Rfid", b =>
-                {
-                    b.Property<int>("IdRfid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id_rfid");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdRfid"));
-
-                    b.Property<bool>("Ativo")
-                        .HasColumnType("bit")
-                        .HasColumnName("ativo");
-
-                    b.Property<int>("IdDormente")
-                        .HasColumnType("int")
-                        .HasColumnName("id_dormente");
-
-                    b.Property<int?>("IdUsuarioVinculou")
-                        .HasColumnType("int")
-                        .HasColumnName("id_usuario_vinculou");
-
-                    b.Property<string>("TagRfid")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("tag_rfid");
-
-                    b.Property<DateTime?>("VinculadaEm")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("vinculada_em");
-
-                    b.HasKey("IdRfid");
-
-                    b.HasIndex("IdDormente")
-                        .IsUnique()
-                        .HasDatabaseName("UX_RFID_uma_ativa_por_peca")
-                        .HasFilter("[ativo] = 1");
-
-                    b.HasIndex("IdUsuarioVinculou");
-
-                    b.HasIndex("TagRfid")
-                        .IsUnique();
-
-                    b.ToTable("RFID");
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pecas.Models.Sensor", b =>
@@ -4239,21 +4226,19 @@ namespace ViaPermanente.Dados.Migrations
 
             modelBuilder.Entity("ViaPermanente.Dominio.Pecas.Models.GravacaoTag", b =>
                 {
+                    b.HasOne("ViaPermanente.Dominio.Pecas.Models.Dormente", null)
+                        .WithMany()
+                        .HasForeignKey("IdDormente")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ViaPermanente.Dominio.Pecas.Models.Leitor", null)
                         .WithMany()
                         .HasForeignKey("IdLeitor")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ViaPermanente.Dominio.Pecas.Models.ModoLeitura", null)
                         .WithMany()
                         .HasForeignKey("IdModo")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ViaPermanente.Dominio.Pecas.Models.Rfid", null)
-                        .WithMany()
-                        .HasForeignKey("IdRfid")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
@@ -4325,20 +4310,6 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
                         .WithMany()
                         .HasForeignKey("AlteradoPor")
-                        .OnDelete(DeleteBehavior.Restrict);
-                });
-
-            modelBuilder.Entity("ViaPermanente.Dominio.Pecas.Models.Rfid", b =>
-                {
-                    b.HasOne("ViaPermanente.Dominio.Pecas.Models.Dormente", null)
-                        .WithMany()
-                        .HasForeignKey("IdDormente")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ViaPermanente.Dominio.Pessoas.Models.Usuario", null)
-                        .WithMany()
-                        .HasForeignKey("IdUsuarioVinculou")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 

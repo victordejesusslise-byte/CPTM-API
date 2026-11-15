@@ -9,7 +9,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Pecas;
 
-/// <summary>A peça: cadastro (03), verificação de qualidade (04) e entrada no armazém (06).</summary>
+/// <summary>
+/// A peça: cadastro (03), verificação de qualidade (04) e entrada no armazém (06). Rotas em /api/dormentes.
+/// Consultar: qualquer cargo logado. Cadastrar e guardar: Operador de pátio e Supervisor. Verificar: Especialista e Supervisor.
+/// </summary>
 [ApiController]
 [Route("api/dormentes")]
 public class DormenteHandler(PecaService pecas, QualidadeService qualidade, ArmazemService armazem, HistoricoService historico) : ControllerBase
@@ -34,6 +37,7 @@ public class DormenteHandler(PecaService pecas, QualidadeService qualidade, Arma
         return peca is null ? NotFound() : peca;
     }
 
+    /// <summary>A peça pelo id (→ DORMENTE); 404 se não existe.</summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<PecaDto>> Buscar(int id)
     {
@@ -50,6 +54,7 @@ public class DormenteHandler(PecaService pecas, QualidadeService qualidade, Arma
     public async Task<ActionResult<CadastroPecaDto>> Cadastrar(NovaPecaDto nova)
     {
         var resultado = await pecas.Cadastrar(nova, TokenHelper.IdUsuario(User));
+        // "Repetido" (o registro já tinha chegado antes) volta 200; sem peça, 409; com peça, 201.
         return resultado.Peca is null && resultado.Resultado != "Repetido"
             ? Conflict(resultado)
             : StatusCode(resultado.Resultado == "Repetido" ? StatusCodes.Status200OK : StatusCodes.Status201Created, resultado);

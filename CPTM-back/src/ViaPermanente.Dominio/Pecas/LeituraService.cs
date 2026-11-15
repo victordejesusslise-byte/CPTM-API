@@ -14,7 +14,7 @@ public class LeituraService(IPecaRepository pecas)
     /// Confere que a leitura é desta peça, com alvo único. Devolve a leitura pronta para gravar junto com a operação;
     /// se não confere, grava a leitura sozinha e lança a regra.
     /// </summary>
-    public async Task<LeituraDormente> ConferirPeca(int idDormente, Rfid tagAtiva, LeituraDto dto, int idUsuario, int? idConferencia = null)
+    public async Task<LeituraDormente> ConferirPeca(int idDormente, TagDaPeca tagVigente, LeituraDto dto, int idUsuario, int? idConferencia = null)
     {
         var agora = DateTime.Now;
         var lida = (dto.Tag ?? "").Trim();
@@ -36,7 +36,7 @@ public class LeituraService(IPecaRepository pecas)
             await pecas.RegistrarLeitura(leitura);
             throw new RegraDeNegocioException(AlvoUnico.MensagemAmbigua);
         }
-        if (lida != tagAtiva.TagRfid)
+        if (lida != tagVigente.Tag)
         {
             var dona = await pecas.BuscarTag(lida);
             leitura.IdDormente = dona?.IdDormente;

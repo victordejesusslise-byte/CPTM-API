@@ -8,6 +8,7 @@ namespace ViaPermanente.Api.Comum;
 /// <summary>Confere se o back alcança o banco (SQL Server). Usado pelo GET /hc.</summary>
 public class BancoHealthCheck(ViaPermanenteContext db) : IHealthCheck
 {
+    /// <summary>Tenta falar com o banco: respondeu, tudo bem; não respondeu ou deu erro, o /hc volta 503.</summary>
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
         try
@@ -18,6 +19,7 @@ public class BancoHealthCheck(ViaPermanenteContext db) : IHealthCheck
         }
         catch (Exception e)
         {
+            // O erro vai junto no resultado, para o log; a resposta do /hc mostra só a descrição.
             return HealthCheckResult.Unhealthy("O banco não responde.", e);
         }
     }
@@ -29,6 +31,7 @@ public class BancoHealthCheck(ViaPermanenteContext db) : IHealthCheck
 /// </summary>
 public static class Saude
 {
+    /// <summary>A resposta do /hc em JSON: o status geral, o tempo (em ms) e o resultado de cada verificação (hoje, só "banco").</summary>
     public static HealthCheckOptions Opcoes() => new()
     {
         ResponseWriter = async (contexto, relatorio) =>

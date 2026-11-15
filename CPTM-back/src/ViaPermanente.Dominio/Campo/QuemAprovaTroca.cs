@@ -9,10 +9,13 @@ namespace ViaPermanente.Dominio.Campo;
 /// </summary>
 public static class QuemAprovaTroca
 {
+    /// <summary>a chave do parâmetro (→ PARAMETRO), hoje "supervisor,tecnico".</summary>
     public const string Chave = "troca_quem_aprova";
 
+    /// <summary>Recusa a aprovação se o cargo da pessoa não está na lista do parâmetro.</summary>
     public static void Conferir(string? valorDoParametro, Cargo cargo)
     {
+        // A lista vem do parâmetro; sem parâmetro, a lista fica vazia e ninguém aprova.
         var quemAprova = (valorDoParametro ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (!quemAprova.Contains(cargo.ToString(), StringComparer.OrdinalIgnoreCase))
             throw new RegraDeNegocioException($"Quem aprova a troca: {string.Join(", ", quemAprova)} (parâmetro {Chave}).");

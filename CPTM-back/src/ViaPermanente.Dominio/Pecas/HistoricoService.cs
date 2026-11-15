@@ -5,8 +5,8 @@ using ViaPermanente.Dominio.Pecas.Models;
 namespace ViaPermanente.Dominio.Pecas;
 
 /// <summary>
-/// O histórico da peça: o sistema segue a história da peça pelas tabelas de evento (chegada, tag, classificação, qualidade,
-/// movimentações, leituras, alertas, vistorias, inspeções e trocas), em ordem de data. Nada é guardado à parte.
+/// O histórico da peça: o sistema segue a história da peça pelas tabelas de evento (chegada, etiqueta gravada, ligada e desligada,
+/// classificação, qualidade, movimentações, leituras, alertas, vistorias, inspeções e trocas), em ordem de data. Nada é guardado à parte.
 /// </summary>
 public class HistoricoService(IHistoricoRepository historico, IPecaRepository pecas)
 {
@@ -21,14 +21,19 @@ public class HistoricoService(IHistoricoRepository historico, IPecaRepository pe
 
         if (h.Chegada is { } c)
             Add(c.DataRecebimento, "Chegada", $"Chegou no pedido {c.IdPedido}, chegada {c.IdRecebimento}.", c.IdUsuario, $"RECEBIMENTO {c.IdRecebimento}");
-        foreach (var g in h.Gravacoes)
+        foreach (var g in h.Etiquetas.Where(g => g.Tipo == TipoGravacao.Gravada))
             Add(g.Data, "Gravação da tag", $"{g.Resultado}: {g.TagGravada}.", g.IdUsuario, $"GRAVACAO_TAG {g.IdGravacao}");
-        foreach (var t in h.Tags.Where(t => t.VinculadaEm is not null))
-            Add(t.VinculadaEm!.Value, "Vínculo de tag", $"Tag {t.TagRfid} vinculada em campo.", t.IdUsuarioVinculou, $"RFID {t.IdRfid}");
         foreach (var c2 in h.Classificacoes)
             Add(c2.Data, "Classificação", $"Espécie {c2.IdEspecie} ({c2.Metodo}).", c2.IdUsuario, $"CLASSIFICACAO_MADEIRA {c2.IdClassificacao}");
         foreach (var v in h.Verificacoes)
             Add(v.Data, "Verificação de qualidade", v.Resultado == ViaPermanente.Dominio.Chegadas.Models.ResultadoVerificacao.Aprovada ? "Aprovada." : $"Reprovada: {v.Motivo}", v.IdUsuario, $"VERIFICACAO_QUALIDADE {v.IdVerificacao}");
+        // Depois da verificação: na mesma hora, a reprovação vem antes da etiqueta desligada por ela.
+        foreach (var g in h.Etiquetas.Where(g => g.Tipo != TipoGravacao.Gravada))
+            Add(g.Data, g.Tipo == TipoGravacao.Ligada ? "Vínculo de tag" : "Tag desligada",
+                g.Tipo == TipoGravacao.Ligada
+                    ? $"Tag {g.TagGravada} vinculada em campo{(g.Observacao is null ? "" : $" ({g.Observacao})")}."
+                    : $"Tag {g.TagGravada} desligada{(g.Observacao is null ? "" : $": {g.Observacao}")}.",
+                g.IdUsuario, $"GRAVACAO_TAG {g.IdGravacao}");
         foreach (var m in h.Movimentacoes)
             Add(m.Data, "Movimentação", Movimento(m), m.IdUsuario, $"MOVIMENTACAO {m.IdMovimentacao}");
         foreach (var l in h.Leituras.Where(l => l.IdConferencia is null))

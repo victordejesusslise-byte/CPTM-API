@@ -11,7 +11,7 @@ public class VarreduraRepository(ViaPermanenteContext db) : IVarreduraRepository
     public Task<bool> CodigoEmUso(string codigo) => db.Set<Passagem>().AnyAsync(p => p.Codigo == codigo);
 
     public async Task<IReadOnlyDictionary<string, int>> DonosDasTags(IReadOnlyCollection<string> tags)
-        => await db.Set<Rfid>().AsNoTracking().Where(r => r.Ativo && tags.Contains(r.TagRfid)).ToDictionaryAsync(r => r.TagRfid, r => r.IdDormente);
+        => await db.Set<GravacaoTag>().AsNoTracking().Where(g => g.Vigente && tags.Contains(g.TagGravada)).ToDictionaryAsync(g => g.TagGravada, g => g.IdDormente!.Value);
 
     public async Task<IReadOnlyDictionary<int, PosicaoAtual>> Posicoes(IReadOnlyCollection<int> idsDormente)
         => await db.Set<PosicaoAtual>().AsNoTracking().Where(p => idsDormente.Contains(p.IdDormente)).ToDictionaryAsync(p => p.IdDormente);

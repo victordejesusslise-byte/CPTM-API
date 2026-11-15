@@ -7,7 +7,8 @@ namespace ViaPermanente.Dominio.Pecas;
 
 /// <summary>
 /// Tag sem cadastro em campo: o operador da via avisa (a leitura fica com a peça nula e o número lido); o técnico ou o supervisor
-/// vincula a tag à peça, lendo-a no local com o módulo e alvo único. A tag velha fica inativa; a nova entra com quem e quando vinculou.
+/// vincula a tag à peça, lendo-a no local com o módulo e alvo único. Na GRAVACAO_TAG (2026-11-14): a vigente velha perde a marca e entra
+/// uma Desligada ("trocada pela BR…"); a nova entra Ligada e vigente, com quem e quando ligou.
 /// </summary>
 public class VinculoTagService(IArmazemRepository armazem, IPecaRepository pecas, PecaService consulta)
 {
@@ -16,7 +17,7 @@ public class VinculoTagService(IArmazemRepository armazem, IPecaRepository pecas
         var tag = (dto.Tag ?? "").Trim();
         if (tag.Length == 0)
             throw new RegraDeNegocioException("Informe a tag lida.");
-        if (await pecas.BuscarTag(tag) is { Ativo: true })
+        if (await pecas.BuscarTag(tag) is { Vigente: true })
             throw new RegraDeNegocioException($"A tag {tag} já está associada a uma peça: abra a peça pela tag.");
         var agora = DateTime.Now;
         var leitura = new LeituraDormente
@@ -43,15 +44,22 @@ public class VinculoTagService(IArmazemRepository armazem, IPecaRepository pecas
             throw new RegraDeNegocioException("Vincular exige ler a tag no local com o módulo e alvo único.");
         if (await pecas.BuscarTag(tag) is not null)
             throw new RegraDeNegocioException($"A tag {tag} já é de uma peça.");
-        var antiga = await pecas.TagAtiva(dto.IdDormente);
+        var antiga = await pecas.TagVigente(dto.IdDormente);
         var agora = DateTime.Now;
-        await armazem.Vincular(new Rfid { IdDormente = dto.IdDormente, TagRfid = tag, Ativo = true, VinculadaEm = agora, IdUsuarioVinculou = idUsuario },
-            antiga?.IdRfid,
+        await armazem.Vincular(
+            antiga is null ? null : GravacaoTag.Desligada(dto.IdDormente, antiga.Tag, $"trocada pela {tag}", idUsuario, agora),
+            new GravacaoTag
+            {
+                Tipo = TipoGravacao.Ligada, IdDormente = dto.IdDormente, TagGravada = tag, Resultado = ResultadoGravacao.Ok,
+                TagsVistas = 1, RssiDbm = dto.Leitura.RssiDbm, Vigente = true, IdModo = dto.Leitura.IdModo, IdLeitor = dto.Leitura.IdLeitor,
+                Observacao = antiga is null ? "achada em campo" : $"achada em campo, no lugar da {antiga.Tag}",
+                IdUsuario = idUsuario, Data = agora, RegistradoEm = agora, RecebidoEm = agora
+            },
             new LeituraDormente
             {
                 IdDormente = dto.IdDormente, IdLeitor = dto.Leitura.IdLeitor, IdModo = dto.Leitura.IdModo, IdUsuario = idUsuario,
                 MetodoCaptura = MetodoCaptura.ModuloUhf, Leitura = true, DataLeitura = agora, TagLida = tag, TagsVistas = 1,
-                Observacao = antiga is null ? "Tag vinculada em campo" : $"Tag vinculada em campo no lugar da {antiga.TagRfid}", RegistradoEm = agora, RecebidoEm = agora
+                Observacao = antiga is null ? "Tag vinculada em campo" : $"Tag vinculada em campo no lugar da {antiga.Tag}", RegistradoEm = agora, RecebidoEm = agora
             });
         return (await consulta.BuscarPorId(dto.IdDormente))!;
     }

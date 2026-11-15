@@ -6,6 +6,7 @@ namespace ViaPermanente.Api.Helpers;
 /// <summary>Compara a chave recebida com a configurada em tempo constante (não vaza, pelo tempo, quantos caracteres batem).</summary>
 public static class ChaveHelper
 {
+    /// <summary>Verdadeiro só se as duas chaves existem e são iguais; compara o hash das duas, que tem sempre o mesmo tamanho.</summary>
     public static bool Confere(string? recebida, string? configurada)
         => !string.IsNullOrEmpty(recebida) && !string.IsNullOrEmpty(configurada)
            && CryptographicOperations.FixedTimeEquals(SHA256.HashData(Encoding.UTF8.GetBytes(recebida)), SHA256.HashData(Encoding.UTF8.GetBytes(configurada)));
