@@ -6,30 +6,37 @@ import {
 import { NO_APP } from '../ao-vivo/trabalho-da-noite';
 import { LeitorUsb } from './leitor-usb';
 
+/** A cena que o painel monta: só a peça, a peça com vizinhas longe, duas peças parecidas (dúvida) ou nenhuma. */
 export type Cenario = 'uma' | 'vizinhas' | 'duvida' | 'nenhuma';
 
 /**
- * O módulo RFID simulado (até o de verdade existir): o "mundo" são as etiquetas por perto, com o sinal, que o painel do módulo monta.
- * Segue o fluxo do hardware: sem o módulo conectado não lê; a chave A/N/V muda a folga do alvo único; gravar exige a etiqueta
- * sozinha à frente e confere na releitura.
+ * O módulo RFID simulado, usado no site e nos testes: as etiquetas "por perto" são montadas no painel do módulo.
+ * Segue as regras do módulo de verdade: desconectado não lê, a chave A/N/V muda a folga, e gravar confere na releitura.
  */
 @Injectable({ providedIn: 'root' })
 export class LeitorSimulado implements Leitor {
+  /** O módulo está "conectado"? (o painel liga e desliga) */
   readonly conectado = signal(true);
+  /** A posição da chave do módulo (começa no Normal). */
   readonly chave = signal<ChaveModulo>('N');
+  /** Os três modos, com a potência e a folga (os de começo ou os do servidor). */
   readonly modos = signal(MODOS_PADRAO);
+  /** O modo da chave atual. */
   readonly modo = computed<ModoDoModulo>(() => this.modos()[this.chave()]);
   /** As etiquetas por perto (o painel monta). */
   readonly porPerto = signal<TagVista[]>([]);
 
+  /** Liga o módulo simulado. */
   conectar(): void {
     this.conectado.set(true);
   }
 
+  /** Desliga o módulo simulado. */
   desconectar(): void {
     this.conectado.set(false);
   }
 
+  /** Muda a chave do módulo (A, N ou V). */
   trocarModo(chave: ChaveModulo): void {
     this.chave.set(chave);
   }
@@ -37,6 +44,7 @@ export class LeitorSimulado implements Leitor {
   /** Os modos que o servidor tem (o supervisor pode ter mudado a potência ou a folga). */
   usarModosDoServidor(lista: ModoLeituraDto[]): void {
     const atual = { ...this.modos() };
+    // Troca cada modo pelo do servidor com o mesmo id; os que faltam ficam como estão.
     for (const chave of ['A', 'N', 'V'] as ChaveModulo[]) {
       const m = lista.find((x) => x.id === MODOS_PADRAO[chave].idModo);
       if (m) atual[chave] = { chave, idModo: m.id, nome: m.nome, potenciaDbm: m.potenciaDbm, folgaRssiDb: m.folgaRssiDb };
@@ -51,6 +59,7 @@ export class LeitorSimulado implements Leitor {
   montar(cenario: Cenario, tag: string): boolean {
     const alvo = tag.trim();
     if (!alvo && cenario !== 'nenhuma') return false;
+    // As vizinhas usam tags de teste (BR99999999..), com sinal mais fraco que o da peça.
     const lista: Record<Cenario, TagVista[]> = {
       uma: [{ tag: alvo, rssiDbm: -45 }],
       vizinhas: [{ tag: alvo, rssiDbm: -45 }, { tag: 'BR9999999901', rssiDbm: -63 }, { tag: 'BR9999999902', rssiDbm: -71 }],
@@ -61,6 +70,7 @@ export class LeitorSimulado implements Leitor {
     return true;
   }
 
+  /** Lê a etiqueta à frente: guarda a leitura boa e apita. */
   async ler(): Promise<ResultadoLeitura> {
     const r = this.alvo();
     if (r.ok) guardarUltimaLeitura(r.leitura);
@@ -68,7 +78,9 @@ export class LeitorSimulado implements Leitor {
     return r;
   }
 
+  /** Grava o número na etiqueta à frente e relê. */
   async gravarEReler(tag: string): Promise<ResultadoGravacao> {
+    // Sem uma etiqueta clara à frente, não grava.
     const antes = this.alvo();
     if (!antes.ok) {
       bipe(false);
@@ -81,6 +93,7 @@ export class LeitorSimulado implements Leitor {
     return depois.ok ? { ok: true, relida: depois.leitura.tag } : depois;
   }
 
+  /** Escolhe o alvo entre as etiquetas por perto, com a folga do modo atual. */
   private alvo(): ResultadoLeitura {
     if (!this.conectado()) return { ok: false, motivo: 'Conecte o módulo no celular.' };
     const modo = this.modo();

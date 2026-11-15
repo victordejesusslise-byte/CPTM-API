@@ -12,6 +12,7 @@ namespace ViaPermanente.Api.Comum;
 [Route("api/app")]
 public class AppHandler(IConfiguration config) : ControllerBase
 {
+    /// <summary>GET /api/app/versao (qualquer cargo logado): a versão anunciada e o link do APK (vazios se não configurados).</summary>
     [HttpGet("versao")]
     public object Versao() => new { versao = config["App:Versao"] ?? "", baixar = config["App:Baixar"] ?? "" };
 }

@@ -38,7 +38,7 @@ public class ArmazemNoBancoTestes : IAsyncLifetime
     public Task DisposeAsync() => BancoDeTeste.Apagar(db);
 
     private static string Tag(int n) => $"BR{n:D10}";
-    private async Task<int> Peca(int n) => (await db.Set<Rfid>().AsNoTracking().SingleAsync(r => r.TagRfid == Tag(n))).IdDormente;
+    private async Task<int> Peca(int n) => (await db.Set<GravacaoTag>().AsNoTracking().SingleAsync(g => g.TagGravada == Tag(n) && g.Vigente)).IdDormente!.Value;
     private async Task<int> PilhaId(int armazem, string codigo) => (await db.Set<Pilha>().AsNoTracking().SingleAsync(p => p.IdArmazem == armazem && p.Codigo == codigo)).IdPilha;
     private ArmazemService Armazem() { db.ChangeTracker.Clear(); return new(new PecaRepository(db), new CatalogoRepository(db), new LeituraService(new PecaRepository(db)), BancoDeTeste.Pecas(db), new ArmazemRepository(db)); }
     private ConferenciaService Conferencias() { db.ChangeTracker.Clear(); return new(new ArmazemRepository(db), new CatalogoRepository(db)); }
@@ -81,8 +81,10 @@ public class ArmazemNoBancoTestes : IAsyncLifetime
         var vinculada = await vinculos.Vincular(new VincularTagDto { IdDormente = peca3, Leitura = new() { Tag = "BR5555555555" } }, usuario);
 
         Assert.Equal("BR5555555555", vinculada.Tag);
-        Assert.False((await db.Set<Rfid>().AsNoTracking().SingleAsync(r => r.TagRfid == Tag(3))).Ativo);
-        Assert.Equal(usuario, (await db.Set<Rfid>().AsNoTracking().SingleAsync(r => r.TagRfid == "BR5555555555")).IdUsuarioVinculou);
+        Assert.False((await db.Set<GravacaoTag>().AsNoTracking().SingleAsync(g => g.TagGravada == Tag(3) && g.Tipo == TipoGravacao.Gravada)).Vigente);
+        Assert.Equal(peca3, (await db.Set<GravacaoTag>().AsNoTracking().SingleAsync(g => g.TagGravada == Tag(3) && g.Tipo == TipoGravacao.Desligada)).IdDormente);
+        var ligada = await db.Set<GravacaoTag>().AsNoTracking().SingleAsync(g => g.TagGravada == "BR5555555555");
+        Assert.Equal((TipoGravacao.Ligada, true, usuario), (ligada.Tipo, ligada.Vigente, ligada.IdUsuario));
         Assert.Empty(await vinculos.Pendentes());
     }
 }

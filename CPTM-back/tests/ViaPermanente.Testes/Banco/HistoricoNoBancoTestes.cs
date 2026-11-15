@@ -27,7 +27,7 @@ public class HistoricoNoBancoTestes : IAsyncLifetime
 
         var eventos = await servico.DaPeca(1);
 
-        Assert.Equal(["Chegada", "Classificação", "Verificação de qualidade", "Movimentação"], eventos!.Select(e => e.Tipo));
+        Assert.Equal(["Chegada", "Gravação da tag", "Classificação", "Verificação de qualidade", "Movimentação"], eventos!.Select(e => e.Tipo));
         Assert.Null(await servico.DaPeca(9999));
     }
 }

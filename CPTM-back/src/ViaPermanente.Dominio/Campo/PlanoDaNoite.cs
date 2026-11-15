@@ -3,13 +3,14 @@ using System.Globalization;
 namespace ViaPermanente.Dominio.Campo;
 
 /// <summary>
-/// O plano da noite (Victor, 2026-10-24): o supervisor aprova as trocas até o corte (parâmetro troca_plano_horario, 20:00) e elas entram
-/// na troca daquela noite; aprovada depois do corte, vai para a noite seguinte, a não ser que seja urgente. Do corte até o fim da noite
-/// (06:00 do dia seguinte), o plano trava: nada que está nele é cancelado.
+/// O plano da noite (Victor, 2026-10-24): a troca aprovada até o corte (20:00) entra na noite do dia; depois, na noite seguinte,
+/// a não ser que seja urgente. Do corte até as 06:00 do dia seguinte, o plano trava: nada que está nele é cancelado.
 /// </summary>
 public static class PlanoDaNoite
 {
+    /// <summary>a chave do parâmetro com o horário do corte (→ PARAMETRO).</summary>
     public const string ChaveHorario = "troca_plano_horario";
+    /// <summary>o corte quando o parâmetro falta ou está errado: 20:00.</summary>
     public static readonly TimeOnly CortePadrao = new(20, 0);
     /// <summary>Quando a noite do plano acaba (a manhã do dia seguinte).</summary>
     public static readonly TimeOnly FimDaNoite = new(6, 0);

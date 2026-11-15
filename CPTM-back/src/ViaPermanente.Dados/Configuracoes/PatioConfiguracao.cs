@@ -12,7 +12,7 @@ namespace ViaPermanente.Dados.Configuracoes;
 
 /// <summary>
 /// ARMAZEM, CLASSIFICACAO_MADEIRA, CONFERENCIA_ARMAZEM, DORMENTE, GRAVACAO_TAG, LEITOR, LEITURA_DORMENTE,
-/// LOTE, MODO_LEITURA, MOVIMENTACAO, PILHA, RFID, SENSOR e TIPO_LEITOR.
+/// LOTE, MODO_LEITURA, MOVIMENTACAO, PILHA, SENSOR e TIPO_LEITOR. A RFID saiu (2026-11-14): a etiqueta fica na GRAVACAO_TAG.
 /// </summary>
 internal static class PatioConfiguracao
 {
@@ -47,18 +47,28 @@ internal static class PatioConfiguracao
             e.HasKey(x => x.IdDormente);
             // A cópia das linhas no celular pede "o que mudou desde…".
             e.HasIndex(x => x.DataAlteracao);
+            // O código impresso (DM-E01-L01-0028) é único. Nulo só dentro da transação do cadastro, antes de o número da peça existir.
+            e.HasIndex(x => x.Codigo).IsUnique().HasFilter("[codigo] IS NOT NULL");
         });
         mb.Fk<Dormente, Lote>(x => x.IdLote);
         mb.Fk<Dormente, Feixe>(x => x.IdFeixe);
         mb.Fk<Dormente, Trecho>(x => x.IdTrecho);
         mb.Fk<Dormente, Pilha>(x => x.IdPilha);
 
+        // O histórico da etiqueta (Etiqueta na GRAVACAO_TAG, sem a RFID, 2026-11-14). As regras da etiqueta vigente ficam no banco.
         mb.Entity<GravacaoTag>(e =>
         {
             e.HasKey(x => x.IdGravacao);
             e.HasIndex(x => x.TagGravada);
+            // Um BR vigente pertence a uma peça só.
+            e.HasIndex(x => x.TagGravada, "UX_GRAVACAO_TAG_tag_vigente").IsUnique().HasFilter("[vigente] = 1");
+            // Cada peça tem no máximo uma etiqueta vigente.
+            e.HasIndex(x => x.IdDormente, "UX_GRAVACAO_TAG_uma_vigente_por_peca").IsUnique().HasFilter("[vigente] = 1");
+            // Só pode ser vigente a Gravada ok ou a Ligada, e sempre com a peça.
+            e.ToTable(t => t.HasCheckConstraint("CK_GRAVACAO_TAG_vigente",
+                "[vigente] = 0 OR ([id_dormente] IS NOT NULL AND ([tipo] = 'Ligada' OR ([tipo] = 'Gravada' AND [resultado] = 'Ok')))"));
         });
-        mb.Fk<GravacaoTag, Rfid>(x => x.IdRfid);
+        mb.Fk<GravacaoTag, Dormente>(x => x.IdDormente);
         mb.Fk<GravacaoTag, ModoLeitura>(x => x.IdModo);
         mb.Fk<GravacaoTag, Leitor>(x => x.IdLeitor);
         mb.Fk<GravacaoTag, Usuario>(x => x.IdUsuario);
@@ -124,16 +134,6 @@ internal static class PatioConfiguracao
             e.HasData(PilhasDeExemplo());
         });
         mb.Fk<Pilha, Armazem>(x => x.IdArmazem);
-
-        mb.Entity<Rfid>(e =>
-        {
-            e.HasKey(x => x.IdRfid);
-            e.HasIndex(x => x.TagRfid).IsUnique();
-            // Só uma tag ativa por peça.
-            e.HasIndex(x => x.IdDormente).IsUnique().HasFilter("[ativo] = 1").HasDatabaseName("UX_RFID_uma_ativa_por_peca");
-        });
-        mb.Fk<Rfid, Dormente>(x => x.IdDormente);
-        mb.Fk<Rfid, Usuario>(x => x.IdUsuarioVinculou);
 
         mb.Entity<Sensor>(e => e.HasKey(x => x.IdSensor));
         mb.Fk<Sensor, Leitor>(x => x.IdLeitor);

@@ -9,6 +9,7 @@ namespace ViaPermanente.Dominio.Campo;
 /// </summary>
 public static class CompatibilidadeTroca
 {
+    /// <summary>Verdadeiro se a peça candidata serve: mesmo comprimento e classe igual ou melhor (número menor ou igual).</summary>
     public static bool Serve(int idTamanhoDaCandidata, byte classeDaCandidata, int idTamanhoQueSai, byte classeExigida)
         => idTamanhoDaCandidata == idTamanhoQueSai && classeDaCandidata <= classeExigida;
 
@@ -19,9 +20,13 @@ public static class CompatibilidadeTroca
     public static IReadOnlyList<CompativelDto> Ordenar(IEnumerable<PecaDto> estoque, int idTamanho, byte classeExigida, decimal? km,
         IReadOnlyDictionary<int, decimal?> kmDoArmazem, IReadOnlySet<int> fora, DateTime hoje)
         => estoque
+            // Só a peça que está numa pilha, não está reservada e serve na troca.
             .Where(p => p.IdPilha is not null && !fora.Contains(p.Id) && Serve(p.IdTamanho, p.Classe, idTamanho, classeExigida))
+            // A distância do armazém da peça até o km da troca (nula se faltar um dos km).
             .Select(p => (Peca: p, Distancia: km is decimal k && kmDoArmazem.GetValueOrDefault(p.IdArmazem) is decimal ka ? Math.Abs(ka - k) : (decimal?)null))
+            // Primeiro o armazém mais perto; empate: a que entrou primeiro; depois, o id.
             .OrderBy(x => x.Distancia ?? decimal.MaxValue).ThenBy(x => x.Peca.EntradaArmazemEm ?? DateTime.MaxValue).ThenBy(x => x.Peca.Id)
+            // A primeira da lista é a sugerida.
             .Select((x, i) => new CompativelDto(x.Peca, x.Distancia, x.Peca.EntradaArmazemEm is DateTime e ? (int)(hoje - e).TotalDays : 0, i == 0))
             .ToList();
 }

@@ -6,7 +6,10 @@ using ViaPermanente.Dominio.Via.Dtos;
 
 namespace ViaPermanente.Api.Via;
 
-/// <summary>Consulta das passagens (a gravação, do carro, fica no PassagemHandler).</summary>
+/// <summary>
+/// Consulta das passagens (a gravação, do carro, fica no PassagemHandler).
+/// Rotas em /api/passagens; quem chama: Operador da via, Técnico e Supervisor.
+/// </summary>
 [ApiController]
 [Route("api/passagens")]
 [Authorize(Roles = $"{nameof(Cargo.OperadorVia)},{nameof(Cargo.Tecnico)},{nameof(Cargo.Supervisor)}")]

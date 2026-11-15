@@ -28,7 +28,7 @@ public class ArmazemService(IPecaRepository pecas, ICatalogoRepository catalogo,
             throw new RegraDeNegocioException("A peça já está nesta pilha.");
         if (pilha.IdTamanho != peca.IdTamanho || pilha.Classe != peca.Classe)
             throw new RegraDeNegocioException($"A pilha {pilha.Codigo} não é de {FormatoHelper.Metros(peca.ComprimentoM)} de {peca.Classe}ª classe.");
-        var tag = await pecas.TagAtiva(idDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
+        var tag = await pecas.TagVigente(idDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
         var leitura = await leituras.ConferirPeca(idDormente, tag, dto.Leitura, idUsuario);
         var agora = DateTime.Now;
         await armazem.TrocarPilha(idDormente, pilha.IdPilha, new Movimentacao
@@ -49,7 +49,7 @@ public class ArmazemService(IPecaRepository pecas, ICatalogoRepository catalogo,
             throw new RegraDeNegocioException("Só a peça aprovada na verificação de qualidade entra no armazém.");
         if (peca.IdPilha is not null)
             throw new RegraDeNegocioException($"A peça já está na pilha {peca.Pilha} de {peca.Armazem}.");
-        var tag = await pecas.TagAtiva(idDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
+        var tag = await pecas.TagVigente(idDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
 
         var pilhas = (await catalogo.ListarPilhas()).Where(p => p.Ativo).ToList();
         Pilha pilha;

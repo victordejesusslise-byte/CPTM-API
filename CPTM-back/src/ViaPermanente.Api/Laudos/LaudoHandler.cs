@@ -5,7 +5,10 @@ using ViaPermanente.Dominio.Laudos.Models;
 
 namespace ViaPermanente.Api.Laudos;
 
-/// <summary>Os laudos em PDF, gerados na hora a partir das tabelas.</summary>
+/// <summary>
+/// Os laudos em PDF, gerados na hora a partir das tabelas (decisão: Três laudos, gerados na hora).
+/// Rotas em /api/laudos; quem chama: qualquer cargo logado. Registro que não existe volta 404.
+/// </summary>
 [ApiController]
 [Route("api/laudos")]
 public class LaudoHandler(LaudoService laudos) : ControllerBase
@@ -38,5 +41,6 @@ public class LaudoHandler(LaudoService laudos) : ControllerBase
     [HttpGet("{tipo}/{id:int}/documento")]
     public async Task<ActionResult<DocumentoPdf>> Documento(string tipo, int id) => await laudos.Documento(tipo, id) is { } d ? d : NotFound();
 
+    /// <summary>Devolve o PDF para baixar, ou 404 se o registro não existe.</summary>
     private IActionResult Pdf(ArquivoDto? arquivo) => arquivo is null ? NotFound() : File(arquivo.Conteudo, "application/pdf", arquivo.Nome);
 }

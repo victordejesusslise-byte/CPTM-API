@@ -49,7 +49,7 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         db.Add(trecho);
         await db.SaveChangesAsync();
         foreach (var n in new[] { 2, 3 })
-            await db.Set<Dormente>().Where(d => d.IdDormente == db.Set<Rfid>().Where(r => r.TagRfid == Tag(n)).Select(r => r.IdDormente).First())
+            await db.Set<Dormente>().Where(d => d.IdDormente == db.Set<GravacaoTag>().Where(g => g.TagGravada == Tag(n) && g.Vigente).Select(g => g.IdDormente).First())
                 .ExecuteUpdateAsync(s => s.SetProperty(d => d.IdPilha, (int?)null).SetProperty(d => d.IdTrecho, trecho.IdTrecho).SetProperty(d => d.KmProjeto, 219.400m + n / 1000m));
         db.ChangeTracker.Clear();
     }
@@ -58,7 +58,7 @@ public class TrocaNoBancoTestes : IAsyncLifetime
 
     private static string Tag(int n) => $"BR{n:D10}";
     private static LeituraDto Lida(int n) => new() { Tag = Tag(n) };
-    private async Task<int> Peca(int n) => (await db.Set<Rfid>().AsNoTracking().SingleAsync(r => r.TagRfid == Tag(n))).IdDormente;
+    private async Task<int> Peca(int n) => (await db.Set<GravacaoTag>().AsNoTracking().SingleAsync(g => g.TagGravada == Tag(n) && g.Vigente)).IdDormente!.Value;
     private TrocaService Trocas() { db.ChangeTracker.Clear(); return BancoDeTeste.Trocas(db); }
 
     private async Task<InspecaoDto> Reprovar(int n) => await BancoDeTeste.Inspecoes(db).Registrar(new NovaInspecaoDto

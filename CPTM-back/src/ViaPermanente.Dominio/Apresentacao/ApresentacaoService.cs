@@ -36,7 +36,7 @@ public class ApresentacaoService(IApresentacaoRepository repo)
         Etapa(2, "Chegada da carga", "Operador de pátio", ["RECEBIMENTO", "LOTE", "FEIXE"],
             c.Recebimentos + c.Lotes + c.Feixes,
             $"{c.Recebimentos} chegada(s), {c.Lotes} lote(s) e {c.Feixes} feixe(s) com {c.PecasNosFeixes} peças."),
-        Etapa(3, "Cadastro da peça", "Operador de pátio", ["DORMENTE", "RFID", "CLASSIFICACAO_MADEIRA"],
+        Etapa(3, "Cadastro da peça", "Operador de pátio", ["DORMENTE", "GRAVACAO_TAG", "CLASSIFICACAO_MADEIRA"],
             c.Dormentes + c.TagsAtivas + c.TagsDesativadas + c.Classificacoes,
             $"{c.Dormentes} peça(s) com tag UHF; a espécie da placa do fornecedor vira a primeira classificação."),
         Etapa(4, "Verificação de qualidade", "Especialista", ["VERIFICACAO_QUALIDADE"],
@@ -130,13 +130,16 @@ public class ApresentacaoService(IApresentacaoRepository repo)
                 TagFornecedor = $"TG-{sufixo}-{n + 1:00}", TagFornecedorLeitura = MetodoCaptura.Digitado
             }).ToList();
             await repo.AdicionarVarios(dormentes);
+            foreach (var d in dormentes)
+                d.Codigo = Dormente.MontarCodigo(lote.IdEmpresa, lote.IdLote, d.IdDormente); // o código, logo que o número da peça existe
+            await repo.Salvar();
 
             var proxima = await repo.UltimaTag();
-            var tags = new List<Rfid>();
+            var tags = new List<GravacaoTag>();
             foreach (var d in dormentes)
             {
                 proxima = TagHelper.Proxima(proxima);
-                tags.Add(new Rfid { IdDormente = d.IdDormente, TagRfid = proxima, Ativo = true });
+                tags.Add(EtiquetaDoExemplo(d.IdDormente, proxima, idUsuario, agora));
             }
             await repo.AdicionarVarios(tags);
             await repo.AdicionarVarios(dormentes.Select((d, n) => new ClassificacaoMadeira
@@ -149,9 +152,11 @@ public class ApresentacaoService(IApresentacaoRepository repo)
             // 4. Verificação de qualidade: duas reprovadas, uma em cada feixe.
             var verificacoes = dormentes.Select((d, n) => Verificar(d.IdDormente, n, idUsuario, agora, sufixo)).ToList();
             await repo.AdicionarVarios(verificacoes);
-            foreach (var (tag, verificacao) in tags.Zip(verificacoes))
-                if (verificacao.Resultado == ResultadoVerificacao.Reprovada)
-                    tag.Ativo = false; // reprovada: a tag é desativada e a peça volta ao fornecedor
+            // Reprovada: a etiqueta é desligada (perde a marca e ganha a linha Desligada) e a peça volta ao fornecedor.
+            var reprovadas = tags.Zip(verificacoes).Where(p => p.Second.Resultado == ResultadoVerificacao.Reprovada).Select(p => p.First).ToList();
+            foreach (var tag in reprovadas)
+                tag.Vigente = false;
+            await repo.AdicionarVarios(reprovadas.Select(t => GravacaoTag.Desligada(t.IdDormente!.Value, t.TagGravada, "peça reprovada", idUsuario, agora)).ToList());
 
             // 5. Armazém: a aprovada entra na pilha do tamanho e da classe.
             pilha = await repo.Primeiro<Pilha>(p => p.IdArmazem == idArmazem && p.IdTamanho == tamanho.IdTamanho && p.Classe == 1 && p.Ativo)
@@ -174,6 +179,16 @@ public class ApresentacaoService(IApresentacaoRepository repo)
         var etapas = Etapas(await repo.Contar(pedido.IdPedido));
         return new ExemploCriadoDto(pedido.IdPedido, pedido.Codigo, armazem.Nome, pilha.Codigo, etapas);
     }
+
+    /// <summary>
+    /// A etiqueta da peça de exemplo, na GRAVACAO_TAG: Gravada, ok e vigente, sem leitor nem modo (não passou pelo módulo de verdade; o
+    /// indicador de gravação conferida só conta as gravações com leitor).
+    /// </summary>
+    internal static GravacaoTag EtiquetaDoExemplo(int idDormente, string tag, int idUsuario, DateTime quando) => new()
+    {
+        Tipo = TipoGravacao.Gravada, IdDormente = idDormente, TagGravada = tag, Resultado = ResultadoGravacao.Ok, TagsVistas = 1, Vigente = true,
+        IdUsuario = idUsuario, Data = quando, RegistradoEm = quando, RecebidoEm = quando
+    };
 
     /// <summary>A etapa está feita quando tem pelo menos uma linha no banco.</summary>
     private static EtapaFluxoDto Etapa(int numero, string nome, string quemFaz, string[] tabelas, int linhas, string resumo)

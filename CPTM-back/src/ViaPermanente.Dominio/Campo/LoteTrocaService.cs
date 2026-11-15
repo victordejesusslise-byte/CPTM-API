@@ -109,7 +109,7 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
                 : $"O lote já tem as {lote.QuantidadeAprovada} peças aprovadas separadas.");
         var compativel = (await Compativeis(lote)).FirstOrDefault(c => c.Peca.Id == dto.IdDormente)
             ?? throw new RegraDeNegocioException("Esta peça não serve no lote: precisa ter o comprimento do lote e classe igual ou melhor que a do trecho, e estar no estoque.");
-        var tag = await pecas.TagAtiva(dto.IdDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
+        var tag = await pecas.TagVigente(dto.IdDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
         var leitura = await leituras.ConferirPeca(dto.IdDormente, tag, dto.Leitura, idUsuario);
 
         var agora = DateTime.Now;
@@ -212,8 +212,8 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
                     IdDormente = idSaiu, IdUsuario = idUsuario, MetodoCaptura = MetodoCaptura.ModuloUhf, Leitura = false, DataLeitura = hora,
                     RegistradoEm = hora, RecebidoEm = agora, Observacao = $"Tag da peça que sai não respondeu no lote {Codigo(idLote)}"
                 }
-                : NoCampo(await leituras.ConferirPeca(idSaiu, (await pecas.TagAtiva(idSaiu))!, par.LeituraSaiu!, idUsuario), hora));
-            var tagAtiva = await pecas.TagAtiva(idEntrou) ?? throw Erro("a peça que entra não tem tag ativa.");
+                : NoCampo(await leituras.ConferirPeca(idSaiu, (await pecas.TagVigente(idSaiu))!, par.LeituraSaiu!, idUsuario), hora));
+            var tagAtiva = await pecas.TagVigente(idEntrou) ?? throw Erro("a peça que entra não tem tag ativa.");
             var leituraEntrou = NoCampo(await leituras.ConferirPeca(idEntrou, tagAtiva, par.LeituraEntrou!, idUsuario), hora);
 
             var km = par.Km ?? saiu.KmProjeto;
@@ -222,7 +222,7 @@ public class LoteTrocaService(ILoteTrocaRepository lotes, ITrocaRepository troca
                 IdDormenteSaiu = idSaiu, IdDormenteEntrou = idEntrou, IdTrecho = lote.IdTrecho, IdLoteTroca = idLote, Origem = OrigemTroca.Lote, Status = StatusTroca.Feita,
                 IdUsuarioPediu = lote.IdUsuarioPediu, DataPedido = lote.DataPedido, IdUsuarioAprovou = lote.IdUsuarioAprovou, DataAprovacao = lote.DataAprovacao,
                 IdUsuarioSeparou = idSeparou, DataSeparacao = dataSeparacao, IdUsuarioFez = idUsuario, Data = hora, RecebidoEm = agora,
-                Motivo = lote.Motivo, Equipe = dto.Equipe.Trim(), FotoArquivo = par.FotoArquivo.Trim(), TagEntrou = tagAtiva.TagRfid, Km = km,
+                Motivo = lote.Motivo, Equipe = dto.Equipe.Trim(), FotoArquivo = par.FotoArquivo.Trim(), TagEntrou = tagAtiva.Tag, Km = km,
                 NoiteDoPlano = lote.NoiteDoPlano, Urgente = lote.Urgente
             };
             mudancas.TrocasFeitas.Add((troca, new Movimentacao

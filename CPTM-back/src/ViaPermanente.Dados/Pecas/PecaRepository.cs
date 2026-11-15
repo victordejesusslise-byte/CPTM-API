@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using ViaPermanente.Dominio.Armazens.Models;
 using ViaPermanente.Dominio.Chegadas.Models;
@@ -37,16 +38,12 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
         return new PedidoDoFeixe(pedido.IdPedido, pedido.Codigo, pedido.Sigla, cadastradas);
     }
 
-    public async Task<bool> TagEmUso(string tag)
-        => await db.Set<Rfid>().AnyAsync(r => r.TagRfid == tag)
-           || await db.Set<GravacaoTag>().AnyAsync(g => g.TagGravada == tag && NumeroGasto.Contains(g.Resultado));
+    // Na GRAVACAO_TAG, a Ligada e a Desligada ficam com ok: o número delas também está gasto.
+    public Task<bool> TagEmUso(string tag)
+        => db.Set<GravacaoTag>().AnyAsync(g => g.TagGravada == tag && NumeroGasto.Contains(g.Resultado));
 
-    public async Task<string?> MaiorTag()
-    {
-        var nasTags = await db.Set<Rfid>().MaxAsync(r => (string?)r.TagRfid);
-        var nasGravacoes = await db.Set<GravacaoTag>().Where(g => NumeroGasto.Contains(g.Resultado)).MaxAsync(g => (string?)g.TagGravada);
-        return string.CompareOrdinal(nasTags, nasGravacoes) >= 0 ? nasTags : nasGravacoes;
-    }
+    public Task<string?> MaiorTag()
+        => db.Set<GravacaoTag>().Where(g => NumeroGasto.Contains(g.Resultado)).MaxAsync(g => (string?)g.TagGravada);
 
     public Task<GravacaoTag?> GravacaoPorCliente(Guid idCliente)
         => db.Set<GravacaoTag>().AsNoTracking().FirstOrDefaultAsync(g => g.IdCliente == idCliente);
@@ -57,37 +54,40 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
         await db.SaveChangesAsync();
     }
 
-    public async Task Cadastrar(Dormente dormente, Rfid tag, ClassificacaoMadeira classificacao, GravacaoTag? gravacao, LeituraDormente? leitura)
+    public async Task Cadastrar(Dormente dormente, GravacaoTag gravacao, ClassificacaoMadeira classificacao)
     {
         await using var transacao = await db.Database.BeginTransactionAsync();
         db.Add(dormente);
         await db.SaveChangesAsync();
-        tag.IdDormente = dormente.IdDormente;
+        // O código da peça, logo que o número dela existe, na mesma transação.
+        var idEmpresa = await db.Set<Lote>().Where(l => l.IdLote == dormente.IdLote).Select(l => l.IdEmpresa).SingleAsync();
+        dormente.Codigo = Dormente.MontarCodigo(idEmpresa, dormente.IdLote, dormente.IdDormente);
+        gravacao.IdDormente = dormente.IdDormente;
         classificacao.IdDormente = dormente.IdDormente;
-        db.Add(tag);
+        db.Add(gravacao);
         db.Add(classificacao);
-        await db.SaveChangesAsync();
-        if (gravacao is not null)
-        {
-            gravacao.IdRfid = tag.IdRfid;
-            db.Add(gravacao);
-        }
-        if (leitura is not null)
-        {
-            leitura.IdDormente = dormente.IdDormente;
-            db.Add(leitura);
-        }
         await db.SaveChangesAsync();
         await transacao.CommitAsync();
     }
 
     public Task<Dormente?> Buscar(int idDormente) => db.Set<Dormente>().AsNoTracking().FirstOrDefaultAsync(d => d.IdDormente == idDormente);
 
-    public Task<Rfid?> TagAtiva(int idDormente)
-        => db.Set<Rfid>().AsNoTracking().FirstOrDefaultAsync(r => r.IdDormente == idDormente && r.Ativo);
+    public Task<int?> IdPeloCodigo(string codigo)
+        => db.Set<Dormente>().Where(d => d.Codigo == codigo).Select(d => (int?)d.IdDormente).FirstOrDefaultAsync();
 
-    public Task<Rfid?> BuscarTag(string numero)
-        => db.Set<Rfid>().AsNoTracking().OrderByDescending(r => r.Ativo).FirstOrDefaultAsync(r => r.TagRfid == numero);
+    /// <summary>A linha da GRAVACAO_TAG vista como a etiqueta da peça (o EF não filtra depois do construtor: filtre antes).</summary>
+    private static readonly Expression<Func<GravacaoTag, TagDaPeca>> ComoEtiqueta = g => new TagDaPeca(g.IdGravacao, g.IdDormente!.Value, g.TagGravada, g.Vigente);
+
+    public Task<TagDaPeca?> TagVigente(int idDormente)
+        => db.Set<GravacaoTag>().AsNoTracking().Where(g => g.IdDormente == idDormente && g.Vigente).Select(ComoEtiqueta).FirstOrDefaultAsync();
+
+    /// <summary>As etiquetas são a Gravada ok e a Ligada, com a peça; a Desligada é só o registro de que uma deixou de valer.</summary>
+    public Task<TagDaPeca?> BuscarTag(string numero)
+        => db.Set<GravacaoTag>().AsNoTracking()
+            .Where(g => g.TagGravada == numero && g.IdDormente != null
+                && (g.Tipo == TipoGravacao.Ligada || (g.Tipo == TipoGravacao.Gravada && g.Resultado == ResultadoGravacao.Ok)))
+            .OrderByDescending(g => g.Vigente).ThenByDescending(g => g.IdGravacao)
+            .Select(ComoEtiqueta).FirstOrDefaultAsync();
 
     public Task<VerificacaoQualidade?> Verificacao(int idDormente)
         => db.Set<VerificacaoQualidade>().AsNoTracking().OrderBy(v => v.IdVerificacao).FirstOrDefaultAsync(v => v.IdDormente == idDormente);
@@ -98,14 +98,19 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
         await db.SaveChangesAsync();
     }
 
-    public async Task Verificar(VerificacaoQualidade verificacao, LeituraDormente leitura, int? idRfidDesativar)
+    public async Task Verificar(VerificacaoQualidade verificacao, LeituraDormente leitura, GravacaoTag? desligada)
     {
         await using var transacao = await db.Database.BeginTransactionAsync();
         db.Add(leitura);
         db.Add(verificacao);
         await db.SaveChangesAsync();
-        if (idRfidDesativar is int idRfid)
-            await db.Set<Rfid>().Where(r => r.IdRfid == idRfid).ExecuteUpdateAsync(s => s.SetProperty(r => r.Ativo, false));
+        if (desligada is { IdDormente: int idDormente })
+        {
+            // A única mudança numa linha antiga da GRAVACAO_TAG: a marca vigente passa de 1 para 0.
+            await db.Set<GravacaoTag>().Where(g => g.IdDormente == idDormente && g.Vigente).ExecuteUpdateAsync(s => s.SetProperty(g => g.Vigente, false));
+            db.Add(desligada);
+            await db.SaveChangesAsync();
+        }
         await transacao.CommitAsync();
     }
 
@@ -127,7 +132,7 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
         var naVia = db.Set<Dormente>().AsNoTracking().Where(d => d.IdTrecho != null && d.IdDormente > depoisDe);
         naVia = desde is DateTime d0
             ? naVia.Where(d => d.DataAlteracao > d0)
-            : naVia.Where(d => d.RetiradaEm == null && db.Set<Rfid>().Any(t => t.IdDormente == d.IdDormente && t.Ativo));
+            : naVia.Where(d => d.RetiradaEm == null && db.Set<GravacaoTag>().Any(g => g.IdDormente == d.IdDormente && g.Vigente));
         return await naVia.OrderBy(d => d.IdDormente).Select(d => d.IdDormente).Take(limite).ToListAsync();
     }
 
@@ -140,7 +145,7 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
             dormentes = dormentes.Where(d => ids.Contains(d.IdDormente));
         if (soDisponiveis)
             dormentes = dormentes.Where(d => d.RetiradaEm == null && d.IdTrecho == null
-                && db.Set<Rfid>().Any(t => t.IdDormente == d.IdDormente && t.Ativo)
+                && db.Set<GravacaoTag>().Any(g => g.IdDormente == d.IdDormente && g.Vigente)
                 && db.Set<VerificacaoQualidade>().Any(v => v.IdDormente == d.IdDormente && v.Resultado == ResultadoVerificacao.Aprovada));
 
         // Filtra antes de montar o registro: o EF não filtra depois do construtor.
@@ -150,10 +155,10 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
             join r in db.Set<Recebimento>() on f.IdRecebimento equals r.IdRecebimento
             join l in db.Set<Lote>() on d.IdLote equals l.IdLote
             select new PecaResumo(
-                d.IdDormente, d.IdLote, l.IdEmpresa, l.IdPedido,
+                d.IdDormente, d.Codigo, d.IdLote, l.IdEmpresa, l.IdPedido,
                 f.IdFeixe, f.NumeroFeixe, f.IdTamanho, r.IdArmazem,
                 d.TagFornecedor, d.IdPilha, d.EntradaArmazemEm, d.RetiradaEm, d.IdTrecho, d.KmProjeto,
-                db.Set<Rfid>().Where(t => t.IdDormente == d.IdDormente && t.Ativo).Select(t => t.TagRfid).FirstOrDefault(),
+                db.Set<GravacaoTag>().Where(g => g.IdDormente == d.IdDormente && g.Vigente).Select(g => g.TagGravada).FirstOrDefault(),
                 db.Set<ClassificacaoMadeira>().Where(c => c.IdDormente == d.IdDormente)
                     .OrderByDescending(c => c.IdClassificacao).Select(c => (int?)c.IdEspecie).FirstOrDefault() ?? f.IdEspecie,
                 db.Set<VerificacaoQualidade>().Where(v => v.IdDormente == d.IdDormente)

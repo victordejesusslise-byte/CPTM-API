@@ -99,7 +99,7 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
             throw new RegraDeNegocioException("Só a troca aprovada (ou aguardando peça) é separada.");
         var compativel = (await Compativeis(troca)).FirstOrDefault(c => c.Peca.Id == dto.IdDormente)
             ?? throw new RegraDeNegocioException("Esta peça não serve na troca: precisa ter o mesmo comprimento e classe igual ou melhor que a do trecho, e estar no estoque.");
-        var tag = await pecas.TagAtiva(dto.IdDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
+        var tag = await pecas.TagVigente(dto.IdDormente) ?? throw new RegraDeNegocioException("A peça não tem tag ativa.");
         var leitura = await leituras.ConferirPeca(dto.IdDormente, tag, dto.Leitura, idUsuario);
 
         var agora = DateTime.Now;
@@ -145,11 +145,11 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         {
             if (dto.LeituraSaiu is null)
                 throw new RegraDeNegocioException("Leia a tag da peça que sai, ou marque que ela não responde.");
-            var tagSaiu = await pecas.TagAtiva(troca.IdDormenteSaiu) ?? throw new RegraDeNegocioException("A peça que sai não tem tag ativa: marque que ela não responde.");
+            var tagSaiu = await pecas.TagVigente(troca.IdDormenteSaiu) ?? throw new RegraDeNegocioException("A peça que sai não tem tag ativa: marque que ela não responde.");
             mudancas.Leituras.Add(NoCampo(await leituras.ConferirPeca(troca.IdDormenteSaiu, tagSaiu, dto.LeituraSaiu, idUsuario), noCampo));
         }
         // A peça que entra: é a que o pátio separou. A leitura dela fica na movimentação de saída.
-        var tagEntrou = await pecas.TagAtiva(idEntrou) ?? throw new RegraDeNegocioException("A peça que entra não tem tag ativa.");
+        var tagEntrou = await pecas.TagVigente(idEntrou) ?? throw new RegraDeNegocioException("A peça que entra não tem tag ativa.");
         var leituraEntrou = NoCampo(await leituras.ConferirPeca(idEntrou, tagEntrou, dto.LeituraEntrou, idUsuario), noCampo);
 
         var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
@@ -160,7 +160,7 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         troca.RecebidoEm = agora;
         troca.Equipe = dto.Equipe.Trim();
         troca.FotoArquivo = dto.FotoArquivo.Trim();
-        troca.TagEntrou = tagEntrou.TagRfid;
+        troca.TagEntrou = tagEntrou.Tag;
         troca.Km = dto.Km ?? troca.Km;
         mudancas.Movimentacoes.Add((new Movimentacao
         {

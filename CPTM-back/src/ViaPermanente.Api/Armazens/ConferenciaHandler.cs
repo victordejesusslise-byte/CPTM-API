@@ -7,7 +7,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Armazens;
 
-/// <summary>A conferência do armazém com o leitor, pilha a pilha.</summary>
+/// <summary>
+/// A conferência do armazém com o leitor, pilha a pilha (etapa 05). Rotas em /api/armazens e /api/conferencias.
+/// Quem chama: Operador de pátio, Supervisor e Especialista.
+/// </summary>
 [ApiController]
 [Route("api")]
 [Authorize(Roles = $"{nameof(Cargo.OperadorPatio)},{nameof(Cargo.Supervisor)},{nameof(Cargo.Especialista)}")]
@@ -21,6 +24,7 @@ public class ConferenciaHandler(ConferenciaService conferencias) : ControllerBas
         return c is null ? NotFound() : c;
     }
 
+    /// <summary>Uma conferência pelo id (→ CONFERENCIA_ARMAZEM), com o andamento das pilhas.</summary>
     [HttpGet("conferencias/{id:int}")]
     public async Task<ActionResult<ConferenciaDto>> Buscar(int id)
     {

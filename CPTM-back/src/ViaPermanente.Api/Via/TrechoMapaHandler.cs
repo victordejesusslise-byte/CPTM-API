@@ -5,7 +5,10 @@ using ViaPermanente.Dominio.Via.Dtos;
 
 namespace ViaPermanente.Api.Via;
 
-/// <summary>A tela do trecho: as peças assentadas com o ID de posição e a nota, por faixa de km.</summary>
+/// <summary>
+/// A tela do trecho: as peças assentadas com o ID de posição e a nota, por faixa de km.
+/// Rotas em /api/via/trechos; quem chama: qualquer cargo logado.
+/// </summary>
 [ApiController]
 [Route("api/via/trechos")]
 [Authorize]

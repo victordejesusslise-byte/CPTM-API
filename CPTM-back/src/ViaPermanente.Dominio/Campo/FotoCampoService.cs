@@ -6,21 +6,23 @@ using ViaPermanente.Dominio.Pecas;
 namespace ViaPermanente.Dominio.Campo;
 
 /// <summary>
-/// As fotos dos registros de campo (app Android, Etapas 3 e 6, 2026-10-24): a da troca (peça nova no lugar, ou a da recusa), a da
-/// inspeção e a da vistoria. O celular manda a foto primeiro e depois o registro com o caminho que ela devolve, também quando
-/// guardou tudo sem rede. Ficam na pasta das fotos, fora do banco.
+/// Guarda as fotos do campo (troca, lote, inspeção e vistoria) na pasta das fotos, fora do banco.
+/// O celular manda a foto primeiro e depois o registro com o caminho que ela devolve, também quando ficou sem rede.
 /// </summary>
 public class FotoCampoService(IFotoRepository fotos, ITrocaRepository trocas, IAlertaRepository alertas, IPecaRepository pecas, ILoteTrocaRepository? lotes = null)
 {
     // Separada: antes de fazer ou recusar. Feita e Recusada: o celular mandou de novo depois de a rede cair.
     private static readonly StatusTroca[] TrocaAceitaFoto = [StatusTroca.Separada, StatusTroca.Feita, StatusTroca.Recusada];
+    // O mesmo para o lote: com as peças separadas, ou já feito ou recusado (reenvio).
     private static readonly StatusLoteTroca[] LoteAceitaFoto = [StatusLoteTroca.Separado, StatusLoteTroca.Feito, StatusLoteTroca.Recusado];
 
     /// <summary>Uma foto de um dormente do lote (a peça nova no lugar) ou a da recusa do lote; nulo se o lote não existe.</summary>
     public async Task<string?> DoLote(int idLote, byte[] conteudo, string extensao)
     {
+        // Sem o repositório dos lotes, ou lote que não existe: nulo (vira 404).
         var lote = lotes is null ? null : (await lotes.Listar(idLote: idLote)).FirstOrDefault();
         if (lote is null) return null;
+        // A foto do lote só é tirada na via, depois da separação.
         if (!LoteAceitaFoto.Contains(lote.Status)) throw new RegraDeNegocioException("A foto do lote é tirada na via, com as peças separadas.");
         return fotos.Salvar(conteudo, $"lotes/{idLote}", FotoPecaService.ExtensaoDaFoto(conteudo, extensao));
     }
@@ -30,6 +32,7 @@ public class FotoCampoService(IFotoRepository fotos, ITrocaRepository trocas, IA
     {
         var troca = (await trocas.Listar(idTroca: idTroca)).FirstOrDefault();
         if (troca is null) return null;
+        // A foto da troca só é tirada na via, com a peça já separada.
         if (!TrocaAceitaFoto.Contains(troca.Status)) throw new RegraDeNegocioException("A foto da troca é tirada na via, com a peça separada.");
         return fotos.Salvar(conteudo, $"trocas/{idTroca}", FotoPecaService.ExtensaoDaFoto(conteudo, extensao));
     }

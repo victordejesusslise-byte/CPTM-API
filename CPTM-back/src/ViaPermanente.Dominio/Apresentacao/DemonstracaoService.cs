@@ -83,7 +83,9 @@ public class DemonstracaoService(IApresentacaoRepository repo)
                 Destino = n == 3 ? DestinoVerificacao.Devolucao : DestinoVerificacao.Armazem, RegistradoEm = agora, RecebidoEm = agora
             }).ToList();
             await repo.AdicionarVarios(verificacoes);
-            tags1[3].Ativo = false;
+            // A reprovada: a etiqueta perde a marca vigente e ganha a linha Desligada.
+            tags1[3].Vigente = false;
+            await repo.Adicionar(GravacaoTag.Desligada(dormentes1[3].IdDormente, tags1[3].TagGravada, "peça reprovada", idUsuario, agora.AddDays(-13)));
 
             var aprovadas = dormentes1.Where((_, n) => n != 3).ToList();
             foreach (var d in aprovadas) { d.IdPilha = pilha.IdPilha; d.EntradaArmazemEm = agora.AddDays(-12); }
@@ -138,7 +140,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
 
             // As trocas: pedida, aprovada (o pátio separa) e separada (a via troca).
             var reserva = aprovadas.Skip(3).First();
-            var tagReserva = tags1[dormentes1.IndexOf(reserva)].TagRfid;
+            var tagReserva = tags1[dormentes1.IndexOf(reserva)].TagGravada;
             Troca NovaTroca(Dormente sai, string motivo, int dias) => new()
             {
                 IdDormenteSaiu = sai.IdDormente, IdTrecho = trecho.IdTrecho, Km = sai.KmProjeto, IdUsuarioPediu = idUsuario, Origem = OrigemTroca.Requisicao,
@@ -182,7 +184,6 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             var alertas = await repo.Ids<Alerta, int>(a => (a.IdDormente != null && dorm.Contains(a.IdDormente.Value)) || (a.IdLeituraVia != null && leituras.Contains(a.IdLeituraVia.Value)), a => a.IdAlerta);
             var inspecoes = await repo.Ids<Inspecao, int>(i => dorm.Contains(i.IdDormente) || (i.IdAlerta != null && alertas.Contains(i.IdAlerta.Value)), i => i.IdInspecao);
             var trocas = await repo.Ids<Troca, int>(t => dorm.Contains(t.IdDormenteSaiu) || (t.IdDormenteEntrou != null && dorm.Contains(t.IdDormenteEntrou.Value)) || (t.IdInspecao != null && inspecoes.Contains(t.IdInspecao.Value)), t => t.IdTroca);
-            var rfids = await repo.Ids<Rfid, int>(r => dorm.Contains(r.IdDormente), r => r.IdRfid);
 
             apagados += await repo.Apagar<RecusaTroca>(r => r.IdTroca != null && trocas.Contains(r.IdTroca.Value));
             apagados += await repo.Apagar<InspecaoCorrecao>(c => inspecoes.Contains(c.IdInspecao) || (c.IdTrocaCancelada != null && trocas.Contains(c.IdTrocaCancelada.Value)));
@@ -196,10 +197,9 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             apagados += await repo.Apagar<EventoPosicao>(e => dorm.Contains(e.IdDormente) || passagens.Contains(e.IdPassagem));
             apagados += await repo.Apagar<PosicaoAtual>(p => dorm.Contains(p.IdDormente) || passagens.Contains(p.IdPassagem));
             apagados += await repo.Apagar<LeituraDormente>(l => l.IdDormente != null && dorm.Contains(l.IdDormente.Value));
-            apagados += await repo.Apagar<GravacaoTag>(g => g.IdRfid != null && rfids.Contains(g.IdRfid.Value));
+            apagados += await repo.Apagar<GravacaoTag>(g => g.IdDormente != null && dorm.Contains(g.IdDormente.Value));
             apagados += await repo.Apagar<VerificacaoQualidade>(v => dorm.Contains(v.IdDormente));
             apagados += await repo.Apagar<ClassificacaoMadeira>(c => dorm.Contains(c.IdDormente));
-            apagados += await repo.Apagar<Rfid>(r => rfids.Contains(r.IdRfid));
             apagados += pecasApagadas = await repo.Apagar<Dormente>(d => dorm.Contains(d.IdDormente));
             apagados += await repo.Apagar<Feixe>(f => recebimentos.Contains(f.IdRecebimento));
             apagados += await repo.Apagar<Lote>(l => lotes.Contains(l.IdLote));
@@ -235,7 +235,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
     }
 
     /// <summary>A chegada com um feixe por espécie; cadastra as primeiras "cadastradas" peças de cada feixe, com tag e a espécie da placa.</summary>
-    private async Task<(List<Dormente> Dormentes, List<Rfid> Tags)> Chegada(Pedido pedido, int? idNota, int idArmazem, List<Especie> especies, int porFeixe,
+    private async Task<(List<Dormente> Dormentes, List<GravacaoTag> Tags)> Chegada(Pedido pedido, int? idNota, int idArmazem, List<Especie> especies, int porFeixe,
         int cadastradas, DateTime quando, int n, TamanhoDormente tamanho, MedidaFornecedor padrao, Empresa tratadora, Empresa inspetora, Empresa fornecedor, int idUsuario)
     {
         var recebimento = await repo.Adicionar(new Recebimento
@@ -256,12 +256,15 @@ public class DemonstracaoService(IApresentacaoRepository repo)
         var pecas = feixes.SelectMany(f => Enumerable.Range(0, cadastradas).Select(_ => f)).ToList();
         var dormentes = pecas.Select((f, k) => new Dormente { IdLote = lote.IdLote, IdFeixe = f.IdFeixe, TagFornecedor = $"{Marca}TG-{n}-{k + 1:00}", TagFornecedorLeitura = MetodoCaptura.Digitado }).ToList();
         await repo.AdicionarVarios(dormentes);
+        foreach (var d in dormentes)
+            d.Codigo = Dormente.MontarCodigo(lote.IdEmpresa, lote.IdLote, d.IdDormente); // o código, logo que o número da peça existe
+        await repo.Salvar();
         var proxima = await repo.UltimaTag();
-        var tags = new List<Rfid>();
+        var tags = new List<GravacaoTag>();
         foreach (var d in dormentes)
         {
             proxima = TagHelper.Proxima(proxima);
-            tags.Add(new Rfid { IdDormente = d.IdDormente, TagRfid = proxima, Ativo = true });
+            tags.Add(ApresentacaoService.EtiquetaDoExemplo(d.IdDormente, proxima, idUsuario, quando));
         }
         await repo.AdicionarVarios(tags);
         await repo.AdicionarVarios(dormentes.Select((d, k) => new ClassificacaoMadeira

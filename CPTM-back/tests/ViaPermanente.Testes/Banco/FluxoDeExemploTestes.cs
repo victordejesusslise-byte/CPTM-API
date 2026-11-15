@@ -38,8 +38,9 @@ public class FluxoDeExemploTestes : IAsyncLifetime
         Assert.Equal("A01", criado.Pilha);
         Assert.All(criado.Etapas, e => Assert.True(e.Feita, e.Nome));
         Assert.Equal(26, await db.Set<Dormente>().CountAsync(d => d.IdPilha != null));
-        Assert.Equal(2, await db.Set<Rfid>().CountAsync(r => !r.Ativo));
-        Assert.Equal(28, await db.Set<Rfid>().Select(r => r.TagRfid).Distinct().CountAsync());
+        Assert.Equal(2, await db.Set<GravacaoTag>().CountAsync(g => g.Tipo == TipoGravacao.Desligada));
+        Assert.Equal(26, await db.Set<GravacaoTag>().CountAsync(g => g.Vigente));
+        Assert.Equal(28, await db.Set<GravacaoTag>().Select(g => g.TagGravada).Distinct().CountAsync());
     }
 
     [Fact]
@@ -55,7 +56,7 @@ public class FluxoDeExemploTestes : IAsyncLifetime
         await Task.Delay(1100); // o código do pedido usa os segundos
         await new ApresentacaoService(new ApresentacaoRepository(db)).CriarExemplo(supervisor.Id);
 
-        Assert.Equal("BR0000000056", await db.Set<Rfid>().MaxAsync(r => r.TagRfid));
+        Assert.Equal("BR0000000056", await db.Set<GravacaoTag>().MaxAsync(g => g.TagGravada));
         Assert.Equal(56, await db.Set<Dormente>().CountAsync());
     }
 }

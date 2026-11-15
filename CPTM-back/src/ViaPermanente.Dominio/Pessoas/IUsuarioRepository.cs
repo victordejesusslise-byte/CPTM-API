@@ -2,12 +2,18 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Dominio.Pessoas;
 
+/// <summary>O acesso à tabela USUARIO (implementado no Dados pelo UsuarioRepository).</summary>
 public interface IUsuarioRepository
 {
+    /// <summary>A conta pelo e-mail já normalizado; nulo se não existe.</summary>
     Task<Usuario?> BuscarPorEmail(string emailNormalizado);
+    /// <summary>A conta pelo id (→ USUARIO); nulo se não existe.</summary>
     Task<Usuario?> BuscarPorId(int idUsuario);
+    /// <summary>Todas as contas.</summary>
     Task<IReadOnlyList<Usuario>> Listar();
+    /// <summary>Se o banco já tem algum usuário (para criar ou não o supervisor inicial).</summary>
     Task<bool> ExisteAlgum();
+    /// <summary>Se o e-mail (normalizado) já é de alguma conta.</summary>
     Task<bool> EmailEmUso(string emailNormalizado);
     /// <summary>Grava o usuário e o devolve com o id.</summary>
     Task<Usuario> Criar(Usuario usuario);

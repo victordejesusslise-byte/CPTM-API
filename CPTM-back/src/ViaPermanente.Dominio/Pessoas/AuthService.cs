@@ -13,18 +13,24 @@ public record ResultadoLogin(UsuarioDto? Usuario, int VersaoSessao, DateTime? Es
 /// </summary>
 public class AuthService(IUsuarioRepository usuarios)
 {
+    /// <summary>Quantas senhas erradas seguidas passam sem espera.</summary>
     public const int ErrosLivres = 5;
 
+    /// <summary>O login: acha a conta pelo e-mail e confere a senha; senha errada soma uma tentativa.</summary>
     public async Task<ResultadoLogin> Entrar(LoginDto login, DateTime? agora = null)
     {
+        // O relógio pode vir de fora (os testes); sem ele, vale a hora do servidor.
         var instante = agora ?? DateTime.Now;
         var encontrado = await usuarios.BuscarPorEmail(EmailHelper.Normalizar(login.Email));
+        // Sem conta ou com a conta desativada: a mesma resposta da senha errada.
         if (encontrado is null || !encontrado.Ativo)
             return new(null, 0, null);
         var u = encontrado;
+        // Em espera: nem confere a senha.
         if (u.EsperarAte > instante)
             return new(null, 0, u.EsperarAte);
 
+        // Senha certa: zera a contagem e entra.
         if (SenhaHelper.Conferir(login.Senha, u.SenhaHash))
         {
             if (u.TentativasFalhas > 0 || u.EsperarAte is not null)
@@ -32,6 +38,7 @@ public class AuthService(IUsuarioRepository usuarios)
             return new(UsuarioService.ParaDto(u), u.VersaoSessao, null);
         }
 
+        // Senha errada: soma a tentativa; da 5ª em diante, a conta espera.
         var tentativas = u.TentativasFalhas + 1;
         var esperarAte = Espera(tentativas) is { } espera ? instante + espera : (DateTime?)null;
         await usuarios.RegistrarTentativas(u.IdUsuario, tentativas, esperarAte);

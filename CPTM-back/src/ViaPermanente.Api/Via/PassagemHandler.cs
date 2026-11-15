@@ -14,11 +14,12 @@ namespace ViaPermanente.Api.Via;
 [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{ChaveCarroHandler.Esquema}", Roles = $"{nameof(Cargo.Supervisor)},{ChaveCarroHandler.Papel}")]
 public class PassagemHandler(VarreduraService varredura, AvisoAoVivo aoVivo) : ControllerBase
 {
-    /// <summary>Grava a passagem e devolve o resumo: leituras, sem resposta, fora de posição e os alertas abertos.</summary>
+    /// <summary>POST /api/passagens (Carro ou Supervisor): grava a passagem e devolve o resumo: leituras, sem resposta, fora de posição e os alertas abertos.</summary>
     [HttpPost]
     public async Task<ActionResult<PassagemDto>> Registrar(NovaPassagemDto nova)
     {
         var passagem = await varredura.Registrar(nova);
+        // Se a passagem abriu alertas, avisa ao vivo os celulares logados.
         if (passagem.AlertasSensor + passagem.AlertasImagem > 0)
             await aoVivo.Avisar(AvisoAoVivo.AlertaNovo, null);
         return StatusCode(StatusCodes.Status201Created, passagem);

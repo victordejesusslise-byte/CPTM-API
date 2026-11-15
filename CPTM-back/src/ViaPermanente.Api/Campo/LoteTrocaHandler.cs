@@ -10,11 +10,15 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Campo;
 
-/// <summary>O lote de troca (Victor, 2026-11-11): o técnico pede, quem aprova aprova o lote inteiro, o pátio separa e a via fecha o lote, ou recusa.</summary>
+/// <summary>
+/// O lote de troca (Victor, 2026-11-11): o técnico pede, quem aprova aprova o lote inteiro, o pátio separa e a via fecha o lote, ou recusa.
+/// Rotas em /api/lotes-troca; cada passo tem o seu cargo e avisa os celulares ao vivo (decisão: Lote de troca).
+/// </summary>
 [ApiController]
 [Route("api/lotes-troca")]
 public class LoteTrocaHandler(LoteTrocaService lotes, AvisoAoVivo aoVivo) : ControllerBase
 {
+    /// <summary>Os lotes (qualquer cargo logado), com filtro opcional por status.</summary>
     [HttpGet]
     public Task<IReadOnlyList<LoteTrocaDto>> Listar([FromQuery] StatusLoteTroca? status) => lotes.Listar(status);
 
@@ -23,9 +27,11 @@ public class LoteTrocaHandler(LoteTrocaService lotes, AvisoAoVivo aoVivo) : Cont
     public Task<IReadOnlyList<ObrigatoriaDto>> Obrigatorias([FromQuery] int idTrecho, [FromQuery] decimal kmInicio, [FromQuery] decimal kmFim, [FromQuery] int idTamanho)
         => lotes.Obrigatorias(idTrecho, kmInicio, kmFim, idTamanho);
 
+    /// <summary>Um lote pelo id (→ LOTE_TROCA); 404 se não existe.</summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<LoteTrocaDto>> Buscar(int id) => await lotes.BuscarPorId(id) is { } lote ? lote : NotFound();
 
+    /// <summary>Só o Técnico: pede o lote (trecho, faixa de km, quantidade e tamanho).</summary>
     [HttpPost]
     [Authorize(Roles = nameof(Cargo.Tecnico))]
     public async Task<ActionResult<LoteTrocaDto>> Pedir(NovoLoteTrocaDto dto)
@@ -39,6 +45,7 @@ public class LoteTrocaHandler(LoteTrocaService lotes, AvisoAoVivo aoVivo) : Cont
     [HttpPost("{id:int}/decisao")]
     public async Task<ActionResult<LoteTrocaDto>> Decidir(int id, DecisaoLoteTrocaDto dto)
     {
+        // Sem [Authorize] de cargo aqui: o service confere o cargo do token com o parâmetro.
         var cargo = Enum.Parse<Cargo>(User.FindFirstValue(TokenHelper.ClaimCargo)!);
         return await Avisado(await lotes.Decidir(id, dto, cargo, TokenHelper.IdUsuario(User)));
     }
@@ -49,6 +56,7 @@ public class LoteTrocaHandler(LoteTrocaService lotes, AvisoAoVivo aoVivo) : Cont
     public async Task<ActionResult<IReadOnlyList<CompativelDto>>> Compativeis(int id)
         => await lotes.ListarCompativeis(id) is { } lista ? Ok(lista) : NotFound();
 
+    /// <summary>Só o Operador de pátio: separa as peças novas do lote.</summary>
     [HttpPost("{id:int}/separacao")]
     [Authorize(Roles = nameof(Cargo.OperadorPatio))]
     public async Task<ActionResult<LoteTrocaDto>> Separar(int id, SepararTrocaDto dto) => await Avisado(await lotes.Separar(id, dto, TokenHelper.IdUsuario(User)));
@@ -66,10 +74,12 @@ public class LoteTrocaHandler(LoteTrocaService lotes, AvisoAoVivo aoVivo) : Cont
         return arquivo is null ? NotFound() : StatusCode(StatusCodes.Status201Created, new { arquivo });
     }
 
+    /// <summary>Só o Operador da via: fecha o lote com os pares lidos (a peça que sai e a que entra) e as fotos.</summary>
     [HttpPost("{id:int}/fechamento")]
     [Authorize(Roles = nameof(Cargo.OperadorVia))]
     public async Task<ActionResult<LoteTrocaDto>> Fechar(int id, FecharLoteTrocaDto dto) => await Avisado(await lotes.Fechar(id, dto, TokenHelper.IdUsuario(User)));
 
+    /// <summary>Só o Operador da via: recusa o lote no local, com motivo e foto.</summary>
     [HttpPost("{id:int}/recusa")]
     [Authorize(Roles = nameof(Cargo.OperadorVia))]
     public async Task<ActionResult<LoteTrocaDto>> Recusar(int id, RecusarTrocaDto dto) => await Avisado(await lotes.Recusar(id, dto, TokenHelper.IdUsuario(User)));
@@ -80,6 +90,7 @@ public class LoteTrocaHandler(LoteTrocaService lotes, AvisoAoVivo aoVivo) : Cont
     public async Task<ActionResult<LoteTrocaDto>> DecidirRecusa(int id, DecidirRecusaDto dto)
         => await Avisado(await lotes.DecidirRecusa(id, dto, TokenHelper.IdUsuario(User)));
 
+    /// <summary>Avisa ao vivo que o lote mudou e devolve o lote (404 se não existe).</summary>
     private async Task<ActionResult<LoteTrocaDto>> Avisado(LoteTrocaDto? lote)
     {
         await aoVivo.Lote(lote);

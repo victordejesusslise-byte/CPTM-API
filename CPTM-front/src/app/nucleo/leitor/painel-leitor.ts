@@ -7,13 +7,14 @@ import { LeitorUsb } from './leitor-usb';
 import { Pecas } from '../../pecas/servicos/pecas';
 
 /**
- * O painel do módulo simulado (até o de verdade existir): conectar no USB-C, a chave A/N/V e as etiquetas por perto (só a peça,
- * com vizinhas longe, alvo em dúvida, nenhuma). As telas leem pelo botão "Ler com o módulo" do campo da tag.
+ * O painel do módulo, no canto da tela. No app: a conexão, o firmware e "Identificar etiqueta" do módulo de verdade.
+ * No site: o módulo simulado (ligar, a chave A/N/V e as etiquetas por perto). As telas leem pelo botão "Ler com o módulo".
  */
 @Component({
   selector: 'app-painel-leitor',
   imports: [FormsModule],
   template: `
+    <!-- No app: o módulo de verdade no USB-C. -->
     @if (usb; as m) {
       <button type="button" class="modulo" (click)="aberto.set(!aberto())" [attr.aria-expanded]="aberto()" aria-controls="painel-leitor">
         <span class="modulo__ponto" [class.modulo__ponto--ligado]="m.conectado()" aria-hidden="true"></span>
@@ -33,6 +34,7 @@ import { Pecas } from '../../pecas/servicos/pecas';
             <button type="button" (click)="identificar(m)" [disabled]="m.ocupado()">Identificar etiqueta</button>
           </div>
           @if (motivo()) { <p class="painel__aviso" role="alert">{{ motivo() }}</p> }
+          <!-- A última etiqueta identificada: UID, tipo, número e a peça. -->
           @if (m.etiqueta(); as e) {
             <ul class="painel__vistas">
               <li><span>UID</span><span class="mono">{{ e.uid }}</span></li>
@@ -44,6 +46,7 @@ import { Pecas } from '../../pecas/servicos/pecas';
         </section>
       }
     } @else {
+    <!-- No site: o módulo simulado. -->
     <button type="button" class="modulo" (click)="alternar()" [attr.aria-expanded]="aberto()" aria-controls="painel-leitor">
       <span class="modulo__ponto" [class.modulo__ponto--ligado]="leitor.conectado()" aria-hidden="true"></span>
       Módulo · {{ leitor.chave() }}
@@ -57,6 +60,7 @@ import { Pecas } from '../../pecas/servicos/pecas';
         <label class="painel__linha">
           <input type="checkbox" [checked]="leitor.conectado()" (change)="conectar($any($event.target).checked)" /> Conectado no USB-C
         </label>
+        <!-- A chave A/N/V. -->
         <div class="painel__chave" role="radiogroup" aria-label="Chave do módulo">
           @for (c of chaves; track c) {
             <button type="button" role="radio" [attr.aria-checked]="leitor.chave() === c" (click)="leitor.trocarModo(c)">{{ c }} · {{ leitor.modos()[c].nome }}</button>
@@ -66,6 +70,7 @@ import { Pecas } from '../../pecas/servicos/pecas';
         <label class="painel__campo">Tag da peça à frente
           <input class="mono" [ngModel]="tag()" (ngModelChange)="tag.set($event)" autocomplete="off" spellcheck="false" />
         </label>
+        <!-- Os cenários e as etiquetas por perto. -->
         <div class="painel__cenarios">
           @for (c of cenarios; track c.valor) {
             <button type="button" (click)="montar(c.valor)">{{ c.rotulo }}</button>
@@ -107,20 +112,25 @@ import { Pecas } from '../../pecas/servicos/pecas';
   `,
 })
 export class PainelLeitor {
+  /** O módulo simulado (usado no site). */
   protected readonly leitor = inject(LeitorSimulado);
   /** No app, o módulo de verdade no USB-C: o painel mostra a conexão, o firmware e identifica a etiqueta (UID, tipo, número e a peça). */
   protected readonly usb = ((l) => (l instanceof LeitorUsb ? l : null))(inject(LEITOR));
+  /** Por que o módulo não conectou ou não leu (aparece no painel). */
   protected readonly motivo = signal<string | null>(null);
+  /** O código da peça ligada à etiqueta identificada (ex.: DM-E01-L01-0028). */
   protected readonly peca = signal<string | null>(null);
   private readonly pecas = inject(Pecas);
   private readonly catalogos = inject(Catalogos);
 
+  /** Conecta o módulo de verdade; se não responder, explica o que conferir. */
   protected async conectarUsb(m: LeitorUsb): Promise<void> {
     this.motivo.set(null);
     await m.conectar();
     if (!m.conectado()) this.motivo.set('O módulo não respondeu. Confira o cabo USB-C e autorize o acesso quando o Android perguntar.');
   }
 
+  /** Lê a etiqueta à frente e, se ela tem número, procura a peça dela na API. */
   protected async identificar(m: LeitorUsb): Promise<void> {
     this.motivo.set(null);
     this.peca.set(null);
@@ -129,20 +139,28 @@ export class PainelLeitor {
       this.motivo.set(r.motivo);
       return;
     }
+    // Número sem peça: o painel mostra "sem cadastro".
     if (r.id) this.pecas.porTag(r.id).subscribe({ next: (p) => this.peca.set(p.codigo), error: () => this.peca.set(null) });
   }
+  /** O painel está aberto? */
   protected readonly aberto = signal(false);
+  /** A tag da peça à frente, escrita no painel simulado. */
   protected readonly tag = signal('');
+  /** Tentou montar um cenário sem escrever a tag? */
   protected readonly semTag = signal(false);
+  /** As três posições da chave. */
   protected readonly chaves: ChaveModulo[] = ['A', 'N', 'V'];
+  /** Os botões dos cenários do simulado. */
   protected readonly cenarios: { valor: Cenario; rotulo: string }[] = [
     { valor: 'uma', rotulo: 'Só a peça' },
     { valor: 'vizinhas', rotulo: 'Com vizinhas longe' },
     { valor: 'duvida', rotulo: 'Alvo em dúvida' },
     { valor: 'nenhuma', rotulo: 'Nenhuma' },
   ];
+  /** Os modos do servidor já foram buscados? (busca uma vez só) */
   private modosCarregados = false;
 
+  /** Abre ou fecha o painel simulado. */
   protected alternar(): void {
     this.aberto.update((a) => !a);
     // Ao abrir, a potência e a folga que o supervisor deixou no servidor (sem rede, ficam as de começo).
@@ -150,10 +168,12 @@ export class PainelLeitor {
       this.catalogos.modosLeitura().subscribe({ next: (l) => ((this.modosCarregados = true), this.leitor.usarModosDoServidor(l)), error: () => undefined });
   }
 
+  /** Monta o cenário escolhido; sem a tag, mostra o aviso. */
   protected montar(cenario: Cenario): void {
     this.semTag.set(!this.leitor.montar(cenario, this.tag()));
   }
 
+  /** Liga ou desliga o módulo simulado pela caixinha "Conectado no USB-C". */
   protected conectar(ligado: boolean): void {
     if (ligado) this.leitor.conectar();
     else this.leitor.desconectar();

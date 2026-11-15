@@ -23,7 +23,7 @@ public class ApresentacaoRepository(ViaPermanenteContext db) : IApresentacaoRepo
         var idsLote = lotes.Select(l => l.IdLote);
         var dormentes = db.Set<Dormente>().Where(d => idsLote.Contains(d.IdLote));
         var idsDormente = dormentes.Select(d => d.IdDormente);
-        var tags = db.Set<Rfid>().Where(r => idsDormente.Contains(r.IdDormente));
+        var tags = db.Set<GravacaoTag>().Where(g => g.IdDormente != null && idsDormente.Contains(g.IdDormente.Value));
         var verificacoes = db.Set<VerificacaoQualidade>().Where(v => idsDormente.Contains(v.IdDormente));
 
         return new ContagemFluxo(
@@ -36,8 +36,8 @@ public class ApresentacaoRepository(ViaPermanenteContext db) : IApresentacaoRepo
             Feixes: await feixes.CountAsync(),
             PecasNosFeixes: await feixes.SumAsync(f => (int?)f.Quantidade) ?? 0,
             Dormentes: await dormentes.CountAsync(),
-            TagsAtivas: await tags.CountAsync(r => r.Ativo),
-            TagsDesativadas: await tags.CountAsync(r => !r.Ativo),
+            TagsAtivas: await tags.CountAsync(g => g.Vigente),
+            TagsDesativadas: await tags.CountAsync(g => g.Tipo == TipoGravacao.Desligada),
             Classificacoes: await db.Set<ClassificacaoMadeira>().CountAsync(c => idsDormente.Contains(c.IdDormente)),
             Aprovadas: await verificacoes.CountAsync(v => v.Resultado == ResultadoVerificacao.Aprovada),
             Reprovadas: await verificacoes.CountAsync(v => v.Resultado == ResultadoVerificacao.Reprovada),
@@ -63,8 +63,10 @@ public class ApresentacaoRepository(ViaPermanenteContext db) : IApresentacaoRepo
 
     public Task Salvar() => db.SaveChangesAsync();
 
+    // Como no cadastro: o maior número gasto (ok ou divergente) da GRAVACAO_TAG.
     public Task<string?> UltimaTag()
-        => db.Set<Rfid>().AsNoTracking().OrderByDescending(r => r.TagRfid).Select(r => r.TagRfid).FirstOrDefaultAsync();
+        => db.Set<GravacaoTag>().AsNoTracking().Where(g => g.Resultado == ResultadoGravacao.Ok || g.Resultado == ResultadoGravacao.Divergente)
+            .MaxAsync(g => (string?)g.TagGravada);
 
     public Task<List<TId>> Ids<T, TId>(Expression<Func<T, bool>> filtro, Expression<Func<T, TId>> id) where T : class
         => db.Set<T>().AsNoTracking().Where(filtro).Select(id).ToListAsync();

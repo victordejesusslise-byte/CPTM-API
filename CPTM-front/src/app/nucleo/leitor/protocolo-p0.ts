@@ -1,14 +1,16 @@
 /**
- * O protocolo do firmware YBYRA-RFID-P0 v0.5 (ESP32-C3 + PN532, Victor 2026-11-11): linhas de texto pela serial USB, 115200, terminadas
- * por \n. Cada comando pode responder várias linhas (o SCAN, por exemplo); aqui só se interpreta o que o firmware já manda, sem
- * inventar comando. Comandos: PING, SCAN, READ, WRITE BRxxxxxxxxxx, VERIFY.
+ * A conversa com o firmware do módulo YBYRA-RFID-P0 v0.5: linhas de texto pelo USB (comandos PING, SCAN, READ, WRITE e VERIFY).
+ * Aqui só se lê o que o firmware responde; cada comando pode responder várias linhas.
  */
 
 /** O número do YBYRA gravado na etiqueta: BR + 10 dígitos (o mesmo do sistema). */
 export const NUMERO_YBYRA = /^BR\d{10}$/;
 
+/** A etiqueta que o SCAN achou: o UID físico (de fábrica), o tipo e se o firmware deixa gravar nela. */
 export type Etiqueta = { uid: string; tipo: 'MIFARE Classic' | 'NFC Type 2'; gravavel: boolean };
+/** O SCAN: a etiqueta, ou o código do erro. */
 export type ResultadoScan = Etiqueta | { erro: string };
+/** O READ: o número gravado, "sem número do YBYRA" ou o código do erro. */
 export type ResultadoRead = { id: string } | { semId: true } | { erro: string };
 
 /** Quando a resposta de cada comando acabou (a última linha que o firmware manda para ele). */
@@ -28,9 +30,11 @@ const erroDe = (linhas: string[]): string | null => {
 
 /** SCAN: o UID, o tipo da etiqueta e se o firmware deixa gravar nela (no P0, só as etiquetas de teste liberadas por UID). */
 export function lerScan(linhas: string[]): ResultadoScan {
+  // O firmware avisou um erro, ou a etiqueta é de um tipo que ele não lê.
   const erro = erroDe(linhas);
   if (erro) return { erro };
   if (linhas.includes('TAG;TYPE=NAO_SUPORTADO')) return { erro: 'TIPO_NAO_SUPORTADO' };
+  // Pega o UID e o tipo; faltando um dos dois, a resposta veio pela metade.
   const uid = linhas.find((l) => l.startsWith('TAG;UID='))?.slice(8).split(';')[0];
   const tipo = linhas.includes('TAG;TYPE=MIFARE_CLASSIC_COMPATIVEL') ? 'MIFARE Classic' : linhas.includes('TAG;TYPE=NFC_TYPE2_COMPATIVEL') ? 'NFC Type 2' : null;
   if (!uid || !tipo) return { erro: 'RESPOSTA_INCOMPLETA' };
@@ -41,6 +45,7 @@ export function lerScan(linhas: string[]): ResultadoScan {
 export function lerRead(linhas: string[]): ResultadoRead {
   const erro = erroDe(linhas);
   if (erro) return { erro };
+  // Só vale um número no formato do YBYRA; qualquer outra coisa conta como "sem número".
   const id = linhas.find((l) => l.startsWith('READ;ID='))?.slice(8).trim();
   if (id && NUMERO_YBYRA.test(id)) return { id };
   return { semId: true };
@@ -51,6 +56,7 @@ export function gravou(linhas: string[], numero: string): boolean {
   return linhas.includes(`WRITE;OK;ID=${numero}`) && linhas.includes('VERIFY;OK') && !erroDe(linhas);
 }
 
+/** O texto em português de cada código de erro do firmware. */
 const MENSAGENS: Record<string, string> = {
   TAG_AUSENTE: 'Nenhuma etiqueta no alcance. Encoste a peça no módulo (no protótipo, a leitura é de perto).',
   EXECUTE_SCAN: 'O módulo perdeu a etiqueta. Leia de novo.',

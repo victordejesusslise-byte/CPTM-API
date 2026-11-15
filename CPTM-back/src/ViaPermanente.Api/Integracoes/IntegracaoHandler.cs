@@ -8,7 +8,10 @@ using ViaPermanente.Dominio.Pessoas.Models;
 
 namespace ViaPermanente.Api.Integracoes;
 
-/// <summary>Integração só por planilha: importar as notas da planilha que a API deles gera e ver o log.</summary>
+/// <summary>
+/// Integração só por planilha: importar as notas da planilha que a API deles gera e ver o log.
+/// Rotas em /api/integracoes; quem chama: Supervisor e Operador de pátio (decisão: Integração só por planilha).
+/// </summary>
 [ApiController]
 [Route("api/integracoes")]
 [Authorize(Roles = $"{nameof(Cargo.Supervisor)},{nameof(Cargo.OperadorPatio)}")]
@@ -22,6 +25,7 @@ public class IntegracaoHandler(ImportacaoNotaService importacao, ExportacaoServi
         return File(arquivo.Conteudo, ArquivoDto.TipoXlsx, arquivo.Nome);
     }
 
+    /// <summary>Os códigos de material do ERP, um por tamanho e classe.</summary>
     [HttpGet("codigos-material")]
     public Task<IReadOnlyList<CodigoMaterialDto>> CodigosMaterial() => exportacao.CodigosMaterial();
 
@@ -46,6 +50,7 @@ public class IntegracaoHandler(ImportacaoNotaService importacao, ExportacaoServi
     public FileContentResult Modelo()
         => File(importacao.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "modelo-notas.xlsx");
 
+    /// <summary>O log das integrações (→ INTEGRACAO_LOG): cada importação e exportação, com o resultado.</summary>
     [HttpGet("log")]
     public Task<IReadOnlyList<IntegracaoLogDto>> Log() => importacao.Log();
 }

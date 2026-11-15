@@ -9,6 +9,7 @@ import { Fila } from './fila';
 @Component({
   selector: 'app-estado-fila',
   template: `
+    <!-- A faixa só aparece sem rede, com registros esperando ou com não enviados. -->
     @if (!fila.online() || esperando() || fila.meusNaoEnviados().length) {
       <div class="faixa" [class.faixa--sem-rede]="!fila.online()" role="status">
         @if (!fila.online()) {
@@ -17,10 +18,12 @@ import { Fila } from './fila';
           <span>Enviando · {{ esperando() }}</span>
           @if (fila.enviando()) { <span class="faixa__barra" aria-hidden="true"><span></span></span> }
         }
+        <!-- O botão que abre e fecha a lista dos não enviados. -->
         @if (fila.meusNaoEnviados().length) {
           <button type="button" class="faixa__botao" (click)="aberta.set(!aberta())" [attr.aria-expanded]="aberta()">Não enviados · {{ fila.meusNaoEnviados().length }}</button>
         }
       </div>
+      <!-- A lista dos não enviados, com o motivo e os botões. -->
       @if (aberta() && fila.meusNaoEnviados().length) {
         <ul class="lista" aria-label="Não enviados">
           @for (item of fila.meusNaoEnviados(); track item.id) {
@@ -55,8 +58,12 @@ import { Fila } from './fila';
   `,
 })
 export class EstadoFila {
+  /** A fila sem internet. */
   protected readonly fila = inject(Fila);
+  /** Quantos registros meus esperam para subir. */
   protected readonly esperando = computed(() => this.fila.meus().length);
+  /** A lista dos não enviados está aberta? */
   protected readonly aberta = signal(false);
+  /** Mostra a data e a hora do registro. */
   protected readonly dataHora = dataHora;
 }
