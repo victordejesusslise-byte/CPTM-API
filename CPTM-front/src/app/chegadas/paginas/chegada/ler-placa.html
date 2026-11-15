@@ -7,21 +7,25 @@
 </div>
 
 @if (leitura(); as l) {
-  @if (l.campos.length) {
-    <header class="ler-placa__cabeca"><h3>O que o OCR leu</h3><span class="nota">modelo v{{ l.versaoModelo }} · confiança média {{ l.confiancaMedia !== null ? (l.confiancaMedia | number: '1.0-0') + '%' : '—' }}</span></header>
-    <div class="tabela"><table class="simples">
-      <thead><tr><th>Campo</th><th>Valor</th><th class="num">Confiança</th><th>Pedido</th></tr></thead>
-      <tbody>@for (c of l.campos; track c.id) {
-        <tr>
-          <td>{{ nomes[c.campo] ?? c.campo }}</td>
-          <td><input class="mono campo-tabela" [ngModel]="valores[c.campo]" (ngModelChange)="valores[c.campo] = $event" [disabled]="l.confirmada" [attr.aria-label]="nomes[c.campo] ?? c.campo" /></td>
-          <td class="num" [class.vermelho]="!c.pronto">{{ confianca(c) }}</td>
+  <header class="ler-placa__cabeca"><h3>O que o OCR leu</h3><span class="nota">modelo v{{ l.versaoModelo }} · confiança média {{ l.confiancaMedia !== null ? (l.confiancaMedia | number: '1.0-0') + '%' : '—' }}</span></header>
+  <!-- Os 9 campos sempre: o que o OCR não leu vem vazio, marcado "não lido", e o operador digita. -->
+  <div class="tabela"><table class="simples">
+    <thead><tr><th>Campo</th><th>Valor</th><th class="num">Confiança</th><th>Pedido</th></tr></thead>
+    <tbody>@for (c of campos(l); track c.campo) {
+      <tr>
+        <td>{{ nomes[c.campo] ?? c.campo }}</td>
+        <td><input class="mono campo-tabela" [ngModel]="valores[c.campo]" (ngModelChange)="valores[c.campo] = $event" [disabled]="l.confirmada" [attr.aria-label]="nomes[c.campo] ?? c.campo" /></td>
+        <td class="num" [class.vermelho]="!c.pronto">{{ c.valorLido === null ? 'não lido' : confianca(c) }}</td>
+        @if (c.valorLido === null) {
+          <td [class.vermelho]="!l.confirmada">{{ l.confirmada ? 'digitado' : 'preencha' }}</td>
+        } @else {
           <td [class.vermelho]="c.conferePedido === false">{{ c.conferePedido === null ? 'sem pedido' : c.conferePedido ? 'confere' : 'não bate' }}</td>
-        </tr>
-      }</tbody>
-    </table></div>
-    @if (!l.confirmada) {
-      <div class="acoes"><button mat-flat-button type="button" (click)="confirmar(l)" [disabled]="enviando()" [appCarregando]="enviando()">Confirmar a placa</button></div>
-    }
+        }
+      </tr>
+    }</tbody>
+  </table></div>
+  @if (!l.confirmada) {
+    @if (faltando()) { <p class="aviso aviso--erro" role="alert">{{ faltando() }}</p> }
+    <div class="acoes"><button mat-flat-button type="button" (click)="confirmar(l)" [disabled]="enviando()" [appCarregando]="enviando()">Confirmar a placa</button></div>
   }
 }

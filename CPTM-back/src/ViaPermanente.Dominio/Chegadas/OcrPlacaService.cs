@@ -18,6 +18,40 @@ public class OcrPlacaService(IOcrRepository ocr, IFotoRepository fotos, ILeitura
 {
     public const string ChaveConfiancaMinima = "ocr_confianca_minima";
 
+    /// <summary>Quantos caracteres cabem em LEITURA_OCR.texto_lido.</summary>
+    public const int TamanhoDoTextoLido = 1000;
+
+    /// <summary>Quantos caracteres cabem em OCR_CAMPO.valor_lido e valor_confirmado.</summary>
+    public const int TamanhoDoValor = 200;
+
+    /// <summary>
+    /// O texto lido, sem os espaços das pontas e cortado para caber na coluna: a foto inteira da câmera do celular pode render mais de
+    /// 1000 caracteres, e o banco recusava a gravação (erro 500 no app, 2026-11-15). Vazio vira nulo.
+    /// </summary>
+    public static string? TextoParaGuardar(string? texto)
+    {
+        var limpo = texto?.Trim();
+        if (string.IsNullOrEmpty(limpo)) return null;
+        return limpo.Length <= TamanhoDoTextoLido ? limpo : limpo[..TamanhoDoTextoLido];
+    }
+
+    /// <summary>
+    /// O valor de um campo, sem os espaços das pontas e cortado para caber na coluna: na placa fotografada numa tela, o lixo das listras
+    /// pode virar um campo de centenas de caracteres, e o banco recusava a gravação (erro 500 no app, 2026-11-15).
+    /// </summary>
+    public static string ValorParaGuardar(string valor)
+    {
+        var limpo = valor.Trim();
+        return limpo.Length <= TamanhoDoValor ? limpo : limpo[..TamanhoDoValor];
+    }
+
+    /// <summary>O nome do campo como o operador vê na tela (a mensagem de campo faltando).</summary>
+    public static string NomeDoCampo(CampoOcr campo) => campo switch
+    {
+        CampoOcr.EspecieClasse => "Espécie e classe",
+        _ => campo.ToString()
+    };
+
     public async Task<LeituraOcrDto> Ler(byte[] foto, string extensao, int? idPedido, int idUsuario, Guid? idCliente = null, DateTime? registradoEm = null)
     {
         if (foto.Length == 0)
@@ -57,13 +91,13 @@ public class OcrPlacaService(IOcrRepository ocr, IFotoRepository fotos, ILeitura
         var agora = DateTime.Now;
         var leitura = new LeituraOcr
         {
-            Origem = OrigemLeituraOcr.PlacaFeixe, FotoArquivo = fotos.Salvar(foto, "ocr", extensao), TextoLido = melhor.Texto.Trim(),
+            Origem = OrigemLeituraOcr.PlacaFeixe, FotoArquivo = fotos.Salvar(foto, "ocr", extensao), TextoLido = TextoParaGuardar(melhor.Texto),
             ConfiancaMedia = Math.Round(escolhidos.Count > 0 ? escolhidos.Average(c => c.Lido.Confianca) : melhor.ConfiancaMedia, 2),
             IdModelo = modelo.IdModelo, IdPedido = id, IdUsuario = idUsuario, Data = agora, IdCliente = idCliente, RegistradoEm = registradoEm ?? agora, RecebidoEm = agora
         };
         var campos = escolhidos.Select(c => new OcrCampo
         {
-            Campo = c.Lido.Campo, ValorLido = c.Lido.Valor, Confianca = Math.Round(c.Lido.Confianca, 2), ConferePedido = c.Confere,
+            Campo = c.Lido.Campo, ValorLido = ValorParaGuardar(c.Lido.Valor), Confianca = Math.Round(c.Lido.Confianca, 2), ConferePedido = c.Confere,
             CaixaX = c.Lido.Linha.X, CaixaY = c.Lido.Linha.Y, CaixaLargura = c.Lido.Linha.Largura, CaixaAltura = c.Lido.Linha.Altura
         }).ToList();
         await leituras.Gravar(leitura, campos);
@@ -80,13 +114,18 @@ public class OcrPlacaService(IOcrRepository ocr, IFotoRepository fotos, ILeitura
             throw new RegraDeNegocioException("Esta leitura já foi confirmada.");
         var enviados = new Dictionary<CampoOcr, string>();
         foreach (var c in dto.Campos)
-            enviados[Enum.TryParse<CampoOcr>(c.Campo, true, out var campo) ? campo : throw new RegraDeNegocioException($"Campo {c.Campo} não existe.")] = (c.Valor ?? "").Trim();
-        var confirmacoes = campos.Select(c =>
-        {
-            var valor = enviados.TryGetValue(c.Campo, out var v) ? v : c.ValorLido ?? "";
-            return (c.IdCampo, valor, valor != (c.ValorLido ?? ""));
-        }).ToList();
-        await leituras.Confirmar(idLeitura, confirmacoes, dto.IdRecebimento, dto.IdFeixe);
+            enviados[Enum.TryParse<CampoOcr>(c.Campo, true, out var campo) ? campo : throw new RegraDeNegocioException($"Campo {c.Campo} não existe.")] = ValorParaGuardar(c.Valor ?? "");
+        // O valor final de cada um dos 9 campos: o enviado pelo operador ou, sem ele, o que o OCR leu.
+        var finais = Enum.GetValues<CampoOcr>().ToDictionary(c => c, c => enviados.TryGetValue(c, out var v) ? v : campos.FirstOrDefault(x => x.Campo == c)?.ValorLido ?? "");
+        // Os 9 campos da placa são obrigatórios (Victor, 2026-11-15): o que o OCR não leu, o operador digita.
+        var faltam = finais.Where(f => f.Value.Length == 0).Select(f => NomeDoCampo(f.Key)).ToList();
+        if (faltam.Count > 0)
+            throw new RegraDeNegocioException($"Preencha todos os campos da placa. Falta: {string.Join(", ", faltam)}.");
+        var confirmacoes = campos.Select(c => (c.IdCampo, finais[c.Campo], finais[c.Campo] != (c.ValorLido ?? ""))).ToList();
+        // O que o OCR não leu entra como campo novo, sem valor lido e como corrigido (vira amostra de treino).
+        var novos = finais.Where(f => campos.All(c => c.Campo != f.Key))
+            .Select(f => new OcrCampo { IdLeituraOcr = idLeitura, Campo = f.Key, ValorConfirmado = f.Value, Corrigido = true }).ToList();
+        await leituras.Confirmar(idLeitura, confirmacoes, novos, dto.IdRecebimento, dto.IdFeixe);
         return await BuscarPorId(idLeitura);
     }
 

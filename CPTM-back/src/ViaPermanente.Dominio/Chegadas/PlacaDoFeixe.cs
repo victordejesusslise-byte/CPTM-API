@@ -15,6 +15,9 @@ namespace ViaPermanente.Dominio.Chegadas;
 /// </summary>
 public static partial class PlacaDoFeixe
 {
+    /// <summary>O maior valor de texto que um campo da placa pode ter; acima disso é lixo da leitura.</summary>
+    public const int TamanhoMaximoDoValor = 60;
+
     public static IReadOnlyList<CampoLido> Extrair(IReadOnlyList<LinhaOcr> linhas)
     {
         // Cada linha vira (rótulo, valor): pelo ":" ou, sem ":", pelo rótulo conhecido no começo da linha.
@@ -40,7 +43,8 @@ public static partial class PlacaDoFeixe
             // A ordem importa: "tratamento" contém "ata".
             if (rotulo.Contains("fornecedor")) Add(CampoOcr.Fornecedor, valor);
             else if (rotulo.Contains("tratamento")) { var (a, b) = Dividir(valor); Add(CampoOcr.Tratamento, a); Add(CampoOcr.Tratadora, b); }
-            else if (rotulo.Contains("insp")) { var (a, b) = Dividir(valor); Add(CampoOcr.Inspetora, a); Add(CampoOcr.Ano, b); }
+            // O ano é procurado no valor todo: a placa pode trazer só o ano em "INSP. / ANO", sem a inspetora (2026-11-15).
+            else if (rotulo.Contains("insp")) { var (a, _) = Dividir(valor); Add(CampoOcr.Inspetora, a); Add(CampoOcr.Ano, valor); }
             else if (rotulo.Contains("contrato")) Add(CampoOcr.Contrato, valor);
             else if (rotulo.Contains("comprimento")) Add(CampoOcr.Comprimento, valor);
             else if (rotulo.Contains("essencia") || rotulo.Contains("especie")) Add(CampoOcr.EspecieClasse, valor);
@@ -161,7 +165,9 @@ public static partial class PlacaDoFeixe
                 if (codigo.Success) return codigo.Value;
                 break;
             case CampoOcr.Comprimento:
-                return ComprimentoNoTexto().Match(texto) is { Success: true } c ? c.Value : null;
+                if (ComprimentoNoTexto().Match(texto) is { Success: true } c) return c.Value;
+                // "280m": o OCR comeu a vírgula. Três algarismos e "m" só podem ser 2,80 m (dormente não tem 280 m).
+                return ComprimentoSemVirgula().Match(texto) is { Success: true } s ? $"{s.Groups[1].Value},{s.Groups[2].Value} m" : null;
             case CampoOcr.Ano:
                 return AnoNoTexto().Match(texto) is { Success: true } a ? a.Value : null;
         }
@@ -172,6 +178,8 @@ public static partial class PlacaDoFeixe
         texto = string.Join(" ", palavras);
         if (campo == CampoOcr.EspecieClasse)
             texto = ClasseLidaErrada().Replace(texto, "/ 1$1"); // "/ la": o OCR troca o 1 por l
+        // O maior campo da placa (espécie e classe) tem uns 40 caracteres: valor maior que 60 é lixo das listras ou da chapa (2026-11-15).
+        if (texto.Length > TamanhoMaximoDoValor) return null;
         var letras = texto.Count(char.IsLetter);
         return campo switch
         {
@@ -214,6 +222,7 @@ public static partial class PlacaDoFeixe
     [GeneratedRegex(@"[A-Z]{1,4}\d{3,}")] private static partial Regex CodigoAta();
     [GeneratedRegex(@"[A-Z]{1,4}\d{3,}(?:-\d{1,3})?")] private static partial Regex CodigoContrato();
     [GeneratedRegex(@"\d+[.,]\d+(?:\s*m\b)?", RegexOptions.IgnoreCase)] private static partial Regex ComprimentoNoTexto();
+    [GeneratedRegex(@"(?<!\d)(\d)(\d{2})\s*m\b", RegexOptions.IgnoreCase)] private static partial Regex ComprimentoSemVirgula();
     [GeneratedRegex(@"(?:19|20)\d{2}")] private static partial Regex AnoNoTexto();
     [GeneratedRegex(@"/\s*[lI|!]\s*([aªº°]?)$")] private static partial Regex ClasseLidaErrada();
     [GeneratedRegex(@"([12])\s*[ªa°º]?\s*(classe)?\s*$", RegexOptions.IgnoreCase)] private static partial Regex ClasseNoTexto();
