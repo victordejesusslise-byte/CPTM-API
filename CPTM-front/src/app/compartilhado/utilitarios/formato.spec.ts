@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { TimeoutError } from 'rxjs';
 import { consulta } from './consulta';
 import { data, diasDesde, km, m3, mensagemDeErro, nomeDoCargo } from './formato';
 
@@ -24,6 +25,8 @@ describe('formato', () => {
     const e = new HttpErrorResponse({ status: 400, error: { title: 'Regra', detail: 'A 2ª classe passou do limite.' } });
     expect(mensagemDeErro(e)).toBe('A 2ª classe passou do limite.');
     expect(mensagemDeErro(new HttpErrorResponse({ status: 0 }))).toBe('Sem conexão com o servidor.');
+    // O pedido que passou do tempo limite (o celular sem rede ou sem o Tailscale): diz o que conferir.
+    expect(mensagemDeErro(new TimeoutError())).toBe('Sem resposta do servidor: confira a internet e o Tailscale e tente de novo.');
     expect(mensagemDeErro(new HttpErrorResponse({ status: 403 }))).toBe('Seu cargo não pode fazer isso.');
   });
 

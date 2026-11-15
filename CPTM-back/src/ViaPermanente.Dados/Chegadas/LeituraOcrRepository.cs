@@ -29,12 +29,18 @@ public class LeituraOcrRepository(ViaPermanenteContext db) : ILeituraOcrReposito
                 && db.Set<OcrCampo>().Any(c => c.IdLeituraOcr == l.IdLeituraOcr && c.ValorConfirmado != null))
             .OrderBy(l => l.Data).ToListAsync();
 
-    public async Task Confirmar(int idLeitura, IReadOnlyList<(int IdCampo, string Valor, bool Corrigido)> confirmacoes, int? idRecebimento, int? idFeixe)
+    public async Task Confirmar(int idLeitura, IReadOnlyList<(int IdCampo, string Valor, bool Corrigido)> confirmacoes, IReadOnlyList<OcrCampo> novos, int? idRecebimento, int? idFeixe)
     {
         await using var transacao = await db.Database.BeginTransactionAsync();
         foreach (var (idCampo, valor, corrigido) in confirmacoes)
             await db.Set<OcrCampo>().Where(c => c.IdCampo == idCampo && c.ValorConfirmado == null)
                 .ExecuteUpdateAsync(s => s.SetProperty(c => c.ValorConfirmado, valor).SetProperty(c => c.Corrigido, corrigido));
+        // Os campos que o OCR não leu e o operador digitou entram junto, na mesma transação.
+        if (novos.Count > 0)
+        {
+            db.AddRange(novos);
+            await db.SaveChangesAsync();
+        }
         if (idRecebimento is not null || idFeixe is not null)
             await db.Set<LeituraOcr>().Where(l => l.IdLeituraOcr == idLeitura)
                 .ExecuteUpdateAsync(s => s.SetProperty(l => l.IdRecebimento, l => idRecebimento ?? l.IdRecebimento).SetProperty(l => l.IdFeixe, l => idFeixe ?? l.IdFeixe));

@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using Tesseract;
 using ViaPermanente.Dominio.Chegadas;
@@ -10,29 +11,122 @@ namespace ViaPermanente.Dados.Chegadas;
 /// Lê a mesma foto de quatro jeitos, porque a placa real é uma tabela presa numa chapa perfurada e nenhum jeito sozinho pega tudo:
 /// a foto inteira como veio; a tabela célula por célula (com e sem a erosão que solta as células dos rebites), mais as faixas pretas
 /// entre as células (o fornecedor, em letra branca); e a foto ampliada
-/// procurando texto solto, com os pedaços da mesma faixa juntados. Vêm da mais certeira para a menos (a tabela primeiro); o serviço
-/// junta os campos das quatro.
+/// procurando texto solto, com os pedaços da mesma faixa juntados. Os quatro jeitos rodam em duas medidas da foto (1600 e 800 px);
+/// vêm da mais certeira para a menos (a tabela primeiro), e o serviço junta os campos de todas. A leitura tem prazo: passado o prazo,
+/// vale o que já foi lido.
 /// </summary>
-public class TesseractOcrRepository(string pastaTessdata) : IOcrRepository
+public class TesseractOcrRepository(string pastaTessdata, TimeSpan? prazo = null) : IOcrRepository
 {
+    /// <summary>O lado maior da foto lida, em px: a foto de 12 MP do celular (4080 px) ampliada levava de 2 a 5 minutos (2026-11-15).</summary>
+    public const int LadoMaior = 1600;
+
+    /// <summary>O lado maior da segunda medida, em px: na foto menor somem as listras da placa fotografada numa tela (moiré, 2026-11-15).</summary>
+    public const int LadoMenor = 800;
+
+    /// <summary>Quanto a leitura espera o Tesseract: o operador tira a foto, espera e confere (Victor, 2026-11-15: no máximo uns 45 s no app).</summary>
+    public static readonly TimeSpan PrazoPadrao = TimeSpan.FromSeconds(20);
+
     public IReadOnlyList<ResultadoOcr> Ler(byte[] imagem, string modeloBase)
+    {
+        // As leituras rodam numa linha de execução própria; a resposta espera até o prazo e leva as que já terminaram, na ordem de cada uma.
+        var prontas = new List<(int Ordem, ResultadoOcr Lida)>();
+        // Sem using: a leitura que passou do prazo ainda consulta o cancelamento depois que a resposta saiu.
+        var parar = new CancellationTokenSource();
+        var trabalho = Task.Factory.StartNew(() => LerTudo(imagem, modeloBase, prontas, parar.Token), TaskCreationOptions.LongRunning);
+        try { trabalho.Wait(prazo ?? PrazoPadrao); }
+        // Erro antes do prazo (foto que não é imagem): sobe o erro do Tesseract, não o AggregateException da Task.
+        catch (AggregateException erro) when (erro.InnerException is not null) { ExceptionDispatchInfo.Capture(erro.InnerException).Throw(); }
+        // Passou do prazo: a leitura que está rodando termina sozinha e as próximas não começam.
+        parar.Cancel();
+        lock (prontas)
+            return prontas.Count > 0 ? [.. prontas.OrderBy(p => p.Ordem).Select(p => p.Lida)] : [new ResultadoOcr("", 0, [])];
+    }
+
+    /// <summary>A foto com o lado maior de até "ladoMaior" px (nunca aumenta). Foto menor volta como está.</summary>
+    public static Pix Reduzir(Pix foto, int ladoMaior = LadoMaior)
+    {
+        var escala = (float)ladoMaior / Math.Max(foto.Width, foto.Height);
+        return escala < 1 ? foto.Scale(escala, escala) : foto.Clone();
+    }
+
+    /// <summary>As caixas de uma leitura na medida da foto enviada (em pé), como eram antes da redução: a leitura foi feita na foto menor.</summary>
+    public static ResultadoOcr NaFotoEnviada(ResultadoOcr lida, double fator)
+    {
+        int Medida(int valor) => (int)Math.Round(valor * fator);
+        return fator == 1 ? lida : lida with
+        {
+            Linhas = [.. lida.Linhas.Select(l => l with { X = Medida(l.X), Y = Medida(l.Y), Largura = Medida(l.Largura), Altura = Medida(l.Altura) })]
+        };
+    }
+
+    /// <summary>
+    /// As leituras nas duas medidas. Cada uma tem a sua ordem no resultado (a mais certeira antes, para o desempate do serviço), mas
+    /// rodam da mais rápida para a mais lenta, para o prazo cortar só as lentas; cada uma entra em "prontas" ao terminar, e o
+    /// cancelamento para antes da próxima.
+    /// </summary>
+    private void LerTudo(byte[] imagem, string modeloBase, List<(int Ordem, ResultadoOcr Lida)> prontas, CancellationToken parar)
     {
         using var motor = new TesseractEngine(pastaTessdata, modeloBase, EngineMode.Default);
         using var comoVeio = Pix.LoadFromMemory(imagem);
         // A foto do celular vem deitada, com a orientação no EXIF: em pé antes de ler (OrientacaoDaFoto).
-        using var original = OrientacaoDaFoto.Endireitar(comoVeio, OrientacaoDaFoto.Ler(imagem));
-        var inteira = FotoInteira(motor, original, PageSegMode.Auto, 1, emFaixas: false);
+        using var emPe = OrientacaoDaFoto.Endireitar(comoVeio, OrientacaoDaFoto.Ler(imagem));
+        void Guardar(int ordem, ResultadoOcr lida, Pix foto) { lock (prontas) prontas.Add((ordem, NaFotoEnviada(lida, (double)emPe.Width / foto.Width))); }
+        // Duas medidas: até 1600 px (os detalhes da placa) e até 800 px (sem as listras de tela).
+        using var grande = Reduzir(emPe);
+        using var pequena = Reduzir(emPe, LadoMenor);
         // As outras leituras precisam da foto em tons de cinza (8 bits); foto em outro formato fica só com a leitura inteira.
-        if (original.Depth is not (8 or 32))
-            return [inteira];
-        using var cinza = original.Depth == 32 ? original.ConvertRGBToGray() : original.Clone();
-        using var dobro = cinza.Scale(2f, 2f);
-        using var invertido = dobro.Invert();
-        var pixels = Pixels(cinza);
-        var leituras = new[] { false, true }.Select(erodir => Tabela(motor, dobro, invertido, CelulasDaPlaca.Achar(pixels, cinza.Width, cinza.Height, erodir))).ToList();
-        leituras.Add(inteira);
-        leituras.Add(FotoInteira(motor, dobro, PageSegMode.SparseText, 2, emFaixas: true));
-        return leituras;
+        if (grande.Depth is not (8 or 32))
+        {
+            Guardar(0, FotoInteira(motor, grande, PageSegMode.Auto, 1, emFaixas: false), grande);
+            return;
+        }
+        using var g = new Medida(grande);
+        using var p = new Medida(pequena);
+        // A ordem no resultado: a tabela (sem e com erosão) e a foto inteira na grande, as mesmas na pequena, o texto solto na pequena
+        // e, por último, o texto solto na grande. Foto que já é pequena (até 800 px) é lida uma vez só.
+        var leituras = new List<(int Ordem, Func<ResultadoOcr> Ler, Pix Foto)>
+        {
+            (0, () => Tabela(motor, g.Dobro, g.Invertido, g.Celulas(erodir: false)), grande),
+            (1, () => Tabela(motor, g.Dobro, g.Invertido, g.Celulas(erodir: true)), grande),
+            (2, () => FotoInteira(motor, grande, PageSegMode.Auto, 1, emFaixas: false), grande),
+            (7, () => FotoInteira(motor, g.Dobro, PageSegMode.SparseText, 2, emFaixas: true), grande),
+        };
+        if (pequena.Width != grande.Width)
+            leituras.InsertRange(0, [
+                (3, () => Tabela(motor, p.Dobro, p.Invertido, p.Celulas(erodir: false)), pequena),
+                (4, () => Tabela(motor, p.Dobro, p.Invertido, p.Celulas(erodir: true)), pequena),
+                (5, () => FotoInteira(motor, pequena, PageSegMode.Auto, 1, emFaixas: false), pequena),
+                (6, () => FotoInteira(motor, p.Dobro, PageSegMode.SparseText, 2, emFaixas: true), pequena),
+            ]);
+        // Rodam na ordem da lista: a pequena primeiro (rápida, sem as listras de tela), depois a grande; o texto solto na grande, que
+        // na foto de tela leva minutos, é o último.
+        foreach (var (ordem, ler, foto) in leituras)
+        {
+            if (parar.IsCancellationRequested) return;
+            Guardar(ordem, ler(), foto);
+        }
+    }
+
+    /// <summary>Uma medida da foto pronta para as leituras: em cinza (8 bits), ampliada (dobro), invertida e com os pixels para achar as células.</summary>
+    private sealed class Medida : IDisposable
+    {
+        public Pix Cinza { get; }
+        public Pix Dobro { get; }
+        public Pix Invertido { get; }
+        private readonly byte[] pixels;
+
+        public Medida(Pix foto)
+        {
+            Cinza = foto.Depth == 32 ? foto.ConvertRGBToGray() : foto.Clone();
+            Dobro = Cinza.Scale(2f, 2f);
+            Invertido = Dobro.Invert();
+            pixels = Pixels(Cinza);
+        }
+
+        /// <summary>As células da tabela da placa nesta medida (com ou sem a erosão que solta as células dos rebites).</summary>
+        public IReadOnlyList<CelulaDaPlaca> Celulas(bool erodir) => CelulasDaPlaca.Achar(pixels, Cinza.Width, Cinza.Height, erodir);
+
+        public void Dispose() { Invertido.Dispose(); Dobro.Dispose(); Cinza.Dispose(); }
     }
 
     /// <summary>A foto toda de uma vez. Na foto ampliada (escala 2), as caixas voltam para o tamanho da foto enviada.</summary>

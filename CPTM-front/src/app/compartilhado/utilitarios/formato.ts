@@ -43,6 +43,8 @@ export const nomeDoCargo = (cargo: Cargo | null | undefined): string => (cargo ?
 export const mensagemDeErro = (erro: unknown): string => {
   const e = erro as { error?: { detail?: string; title?: string; mensagem?: string; errors?: Record<string, string[]> }; status?: number };
   if (e?.status === 0) return 'Sem conexão com o servidor.';
+  // Passou do tempo limite (o celular sem rede ou sem o Tailscale): diz o que conferir, em vez de carregar para sempre.
+  if ((erro as { name?: string })?.name === 'TimeoutError') return 'Sem resposta do servidor: confira a internet e o Tailscale e tente de novo.';
   if (e?.status === 403) return 'Seu cargo não pode fazer isso.';
   if (e?.error?.detail) return e.error.detail;
   if (e?.error?.mensagem) return e.error.mensagem;

@@ -6,6 +6,7 @@ using ViaPermanente.Dados.Pedidos;
 using ViaPermanente.Dados.Pessoas;
 using ViaPermanente.Dominio.Chegadas;
 using ViaPermanente.Dominio.Chegadas.Dtos;
+using ViaPermanente.Dominio.Chegadas.Models;
 using ViaPermanente.Dominio.Comum;
 using ViaPermanente.Dominio.Pedidos;
 using ViaPermanente.Dominio.Pedidos.Dtos;
@@ -121,6 +122,47 @@ public class OcrNoBancoTestes : IAsyncLifetime
         // Na cópia reduzida da foto, o A do contrato às vezes sai N: o operador corrige na conferência.
         Assert.EndsWith("R00224-03", campos["Contrato"].ValorLido);
         Assert.True(campos["Comprimento"].ConferePedido, lidos);
+    }
+
+    /// <summary>
+    /// A placa fotografada na tela do computador (2026-11-15): as listras da tela (moiré) viravam milhares de letras falsas, a leitura
+    /// levava minutos e não achava nenhum campo. Na foto menor (800 px) as listras somem e a placa sai, rápido.
+    /// </summary>
+    [Fact]
+    public async Task Le_a_placa_fotografada_na_tela_do_computador()
+    {
+        var (servico, idPedido, idUsuario) = await Preparar();
+
+        var relogio = System.Diagnostics.Stopwatch.StartNew();
+        var leitura = await servico.Ler(await Foto("placa-foto-da-tela.jpg"), ".jpg", idPedido, idUsuario);
+        var lidos = string.Join(" · ", leitura.Campos.Select(c => $"{c.Campo}={c.ValorLido}"));
+
+        Assert.True(relogio.Elapsed < TesseractOcrRepository.PrazoPadrao + TimeSpan.FromSeconds(5), $"levou {relogio.Elapsed.TotalSeconds:F1} s");
+        Assert.True(leitura.Campos.Count >= 3, $"campos lidos: {lidos}");
+        Assert.True(leitura.Campos.Count(c => c.ConferePedido == true) >= 2, $"campos lidos: {lidos}");
+    }
+
+    /// <summary>
+    /// Os 9 campos da placa são obrigatórios (Victor, 2026-11-15): o que o OCR não leu, o operador digita na conferência. Sem os 9, não
+    /// confirma; o campo digitado entra sem valor lido e como corrigido (vira amostra de treino).
+    /// </summary>
+    [Fact]
+    public async Task O_operador_preenche_o_que_o_ocr_nao_leu_e_sem_os_9_nao_confirma()
+    {
+        var (servico, idPedido, idUsuario) = await Preparar();
+        var lida = await servico.Ler(await Foto("placa-foto-da-tela.jpg"), ".jpg", idPedido, idUsuario);
+        var faltam = Enum.GetNames<CampoOcr>().Except(lida.Campos.Select(c => c.Campo)).ToList();
+        Assert.NotEmpty(faltam);
+
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(() => servico.Confirmar(lida.Id, new ConfirmarPlacaDto()));
+        Assert.Contains("Preencha", erro.Message);
+
+        var confirmada = (await servico.Confirmar(lida.Id, new ConfirmarPlacaDto { Campos = [.. faltam.Select(c => new CampoConfirmadoDto { Campo = c, Valor = "X" + c })] }))!;
+        Assert.Equal(9, confirmada.Campos.Count);
+        var digitado = confirmada.Campos.Single(c => c.Campo == faltam[0]);
+        Assert.Null(digitado.ValorLido);
+        Assert.Equal("X" + faltam[0], digitado.ValorConfirmado);
+        Assert.True(digitado.Corrigido);
     }
 
     /// <summary>

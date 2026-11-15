@@ -21,6 +21,37 @@ public class PlacaDoFeixeTestes
 
     private static Dictionary<CampoOcr, string> Valores(IReadOnlyList<CampoLido> campos) => campos.ToDictionary(c => c.Campo, c => c.Valor);
 
+    /// <summary>
+    /// As linhas que o Tesseract leu da placa que o Victor fotografou no celular (2026-11-15): o OCR comeu a vírgula do comprimento
+    /// ("280m") e a placa traz só o ano em "INSP. / ANO", sem a inspetora. Os dois campos ficavam de fora.
+    /// </summary>
+    [Fact]
+    public void Comprimento_sem_virgula_e_ano_sem_inspetora()
+    {
+        var campos = Valores(PlacaDoFeixe.Extrair([L("ATA DE REGISTRO: -  A80022 -"), L("COMPRIMENTO: - 280m-"), L("\"TRATAMENTO: DESENGRAXE"),
+            L("| INSP./ANO: 2025 -"), L("-* CONTRATO: - AB0022-03")]));
+
+        Assert.Equal("2,80 m", campos[CampoOcr.Comprimento]);
+        Assert.Equal("2025", campos[CampoOcr.Ano]);
+        Assert.False(campos.ContainsKey(CampoOcr.Inspetora));
+        Assert.True(PlacaDoFeixe.Confere(CampoOcr.Comprimento, campos[CampoOcr.Comprimento], Pedido));
+    }
+
+    /// <summary>
+    /// O maior campo da placa (espécie e classe) tem uns 40 caracteres. Um valor de texto maior que 60 é lixo das listras da tela ou da
+    /// chapa perfurada (2026-11-15: a inspetora veio "OISSorsss…"): fica de fora, e o operador digita.
+    /// </summary>
+    [Fact]
+    public void Valor_longo_demais_e_lixo_e_fica_de_fora()
+    {
+        var lixo = "OISSorssssssssssasssissssssssssssssssossssssrssssssss esse sesprrrerereraaas";
+        var campos = Valores(PlacaDoFeixe.Extrair([L($"EMPRESA INSP./ANO: {lixo} / 2025"), L("Essência / classe: Hymenaea courbaril, Leguminosae / 1ª")]));
+
+        Assert.False(campos.ContainsKey(CampoOcr.Inspetora));
+        Assert.Equal("2025", campos[CampoOcr.Ano]);
+        Assert.Equal("Hymenaea courbaril, Leguminosae / 1ª", campos[CampoOcr.EspecieClasse]);
+    }
+
     /// <summary>Linhas que o Tesseract leu, célula por célula, da foto da placa real: lixo em volta e o valor da célula em duas linhas.</summary>
     [Fact]
     public void Placa_real_lida_celula_por_celula()
