@@ -11,4 +11,8 @@ public interface IPassagemConsultaRepository
     Task<int> MudancasDeFaixa(int idPassagem);
     /// <summary>Alertas da passagem: (de sensor, de imagem), e as detecções da câmera que não viraram alerta.</summary>
     Task<(int Sensor, int Imagem, int DeteccoesSemAlerta)> Alertas(int idPassagem);
+    /// <summary>O nome de cada estação da lista (as que existem).</summary>
+    Task<IReadOnlyDictionary<int, string>> NomesDasEstacoes(IReadOnlyCollection<int> idsEstacao);
+    /// <summary>Quantos pontos o caminho do GPS da passagem tem.</summary>
+    Task<int> PontosDoCaminho(int idPassagem);
 }

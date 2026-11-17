@@ -16,4 +16,8 @@ public class LeituraVia
     public decimal? Umidade { get; set; }
     public decimal? Temperatura { get; set; }
     public bool RachaduraSuspeita { get; set; }
+    /// <summary>Latitude do GPS do veículo na hora da leitura.</summary>
+    public decimal? Latitude { get; set; }
+    /// <summary>Longitude do GPS do veículo na hora da leitura.</summary>
+    public decimal? Longitude { get; set; }
 }

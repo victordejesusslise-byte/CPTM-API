@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
+import { dataHora, gps, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { PassagemDto, Passagens } from '../../servicos/passagens';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
@@ -52,6 +52,7 @@ export class Passagem {
   });
   protected readonly dataHora = dataHora;
   protected readonly km = km;
+  protected readonly gps = gps;
 
   protected abrir(p: PassagemDto): void {
     this.escolhida.set(p.id);

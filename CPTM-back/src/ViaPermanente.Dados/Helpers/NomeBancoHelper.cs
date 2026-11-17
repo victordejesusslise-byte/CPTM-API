@@ -14,6 +14,7 @@ public static class NomeBancoHelper
     /// <summary>Precisão e escala do decimal pela unidade que o nome da coluna indica.</summary>
     public static (int Precisao, int Escala) PrecisaoDecimal(string coluna)
     {
+        if (coluna is "latitude" or "longitude") return (9, 6); // graus do GPS, com 6 casas (cerca de 0,1 m)
         if (coluna.EndsWith("_m")) return (5, 3);              // metros: comprimento, largura, altura
         if (coluna.Contains("km")) return (9, 3);              // quilômetro da linha: 213,120
         if (coluna.Contains("m3")) return (12, 5);             // m³: 0,11424

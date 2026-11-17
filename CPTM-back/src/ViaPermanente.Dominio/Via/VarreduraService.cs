@@ -8,9 +8,8 @@ using ViaPermanente.Dominio.Via.Models;
 namespace ViaPermanente.Dominio.Via;
 
 /// <summary>
-/// Etapa 08: a passagem noturna do carro. Grava as leituras (LEITURA_VIA, 90 dias) e as detecções da câmera,
-/// abre os alertas (sensor: tag muda, rachadura, posição; imagem: acima da confiança mínima), atualiza a posição atual
-/// de cada peça e grava um evento quando ela muda de faixa. A máquina aponta, o técnico decide.
+/// Etapa 08: a passagem noturna do carro. Grava as leituras, as detecções da câmera e o caminho do GPS; com as duas estações,
+/// calcula o km de cada uma pelo GPS. Abre os alertas, atualiza a posição de cada peça e grava o evento quando ela muda de faixa.
 /// </summary>
 public class VarreduraService(IVarreduraRepository varredura, IParametroRepository parametros)
 {
@@ -29,6 +28,11 @@ public class VarreduraService(IVarreduraRepository varredura, IParametroReposito
             throw new RegraDeNegocioException("A passagem não trouxe leitura nem detecção.");
         if (nova.Deteccoes.Any(d => d.Confianca is < 0 or > 1 || d.Grau is < 1 or > 3 || string.IsNullOrWhiteSpace(d.QuadroArquivo)))
             throw new RegraDeNegocioException("Cada detecção precisa do quadro, de grau 1 a 3 e de confiança de 0 a 1.");
+        if (CoordenadaInvalida(nova))
+            throw new RegraDeNegocioException("A latitude vai de −90 a 90 e a longitude de −180 a 180.");
+
+        // As estações da passagem (Victor, 2026-11-17): a A é o começo (o bip 0) e a B o fim. O km delas vem do cadastro, ninguém digita.
+        var (kmInicio, kmFim) = await KmDasEstacoes(nova);
 
         var limite = await Numero(ChaveLimite);
         var atencao = await Numero(ChaveAtencao);
@@ -40,24 +44,32 @@ public class VarreduraService(IVarreduraRepository varredura, IParametroReposito
 
         var passagem = new Passagem
         {
-            Codigo = codigo, Veiculo = nova.Veiculo, DataInicio = nova.DataInicio, DataFim = nova.DataFim, KmInicio = nova.KmInicio, KmFim = nova.KmFim
+            Codigo = codigo, Veiculo = nova.Veiculo, DataInicio = nova.DataInicio, DataFim = nova.DataFim, KmInicio = kmInicio, KmFim = kmFim,
+            IdEstacaoInicio = nova.IdEstacaoInicio, IdEstacaoFim = nova.IdEstacaoFim
         };
         var leituras = nova.Leituras.Select(l => new LeituraVia
         {
             IdDormente = Dono(l.Tag, l.IdDormente), Leitura = l.Leitura, KmMedido = l.KmMedido, DesvioMm = l.DesvioMm,
-            Data = l.Data == default ? nova.DataInicio : l.Data, Umidade = l.Umidade, Temperatura = l.Temperatura, RachaduraSuspeita = l.RachaduraSuspeita
+            Data = l.Data == default ? nova.DataInicio : l.Data, Umidade = l.Umidade, Temperatura = l.Temperatura, RachaduraSuspeita = l.RachaduraSuspeita,
+            Latitude = l.Latitude, Longitude = l.Longitude
         }).ToList();
         var deteccoes = nova.Deteccoes.Select(d => new DeteccaoImagem
         {
             IdDormente = Dono(d.Tag, null), KmMedido = d.KmMedido, QuadroArquivo = d.QuadroArquivo.Trim(), Camera = d.Camera,
             CaixaX = d.CaixaX, CaixaY = d.CaixaY, CaixaLargura = d.CaixaLargura, CaixaAltura = d.CaixaAltura,
-            Defeito = d.Defeito, Grau = d.Grau, Confianca = d.Confianca, VersaoModelo = d.VersaoModelo, Data = d.Data == default ? nova.DataInicio : d.Data
+            Defeito = d.Defeito, Grau = d.Grau, Confianca = d.Confianca, VersaoModelo = d.VersaoModelo, Data = d.Data == default ? nova.DataInicio : d.Data,
+            Latitude = d.Latitude, Longitude = d.Longitude
         }).ToList();
+        var pontos = nova.Pontos.Select(p => new PontoPassagem { Data = p.Data, Latitude = p.Latitude, Longitude = p.Longitude }).ToList();
+
+        // Com as duas estações, o km de cada ponto, leitura e detecção sai do caminho que o GPS andou e vale no lugar do que o carro mandar.
+        if (nova.IdEstacaoInicio is not null)
+            CalcularKm(kmInicio!.Value, kmFim!.Value, pontos, leituras, deteccoes);
 
         var resumo = (Sensor: 0, Imagem: 0, Mudancas: 0);
         await varredura.EmTransacao(async () =>
         {
-            await varredura.GravarPassagem(passagem, leituras, deteccoes);
+            await varredura.GravarPassagem(passagem, leituras, deteccoes, pontos);
             var pecas = leituras.Select(l => l.IdDormente).Concat(deteccoes.Select(d => d.IdDormente)).OfType<int>().Distinct().ToList();
             var abertos = (await varredura.AlertasAbertos(pecas)).Select(a => (a.IdDormente, a.Origem, a.Tipo)).ToHashSet();
             var alertas = new List<Alerta>();
@@ -115,6 +127,45 @@ public class VarreduraService(IVarreduraRepository varredura, IParametroReposito
             leituras.Count(l => l.Leitura && l.DesvioMm is decimal d && Math.Abs(d) > limite),
             nova.Leituras.Count(l => l.IdDormente is null && !string.IsNullOrWhiteSpace(l.Tag) && !donos.ContainsKey(l.Tag.Trim())),
             resumo.Mudancas, resumo.Sensor, resumo.Imagem, deteccoes.Count(d => d.Confianca < confiancaMinima));
+    }
+
+    /// <summary>O km das duas estações da passagem, do cadastro. Sem estações, vale o km que veio na passagem.</summary>
+    private async Task<(decimal? Inicio, decimal? Fim)> KmDasEstacoes(NovaPassagemDto nova)
+    {
+        if (nova.IdEstacaoInicio is null && nova.IdEstacaoFim is null) return (nova.KmInicio, nova.KmFim);
+        if (nova.IdEstacaoInicio is not int inicio || nova.IdEstacaoFim is not int fim)
+            throw new RegraDeNegocioException("Informe as duas estações da passagem: a de início e a de fim.");
+        if (inicio == fim)
+            throw new RegraDeNegocioException("A estação de início e a de fim precisam ser diferentes.");
+        var kms = await varredura.KmDasEstacoes([inicio, fim]);
+        if (!kms.TryGetValue(inicio, out var kmInicio) || !kms.TryGetValue(fim, out var kmFim))
+            throw new RegraDeNegocioException("Não achei uma das estações da passagem.");
+        return (kmInicio, kmFim);
+    }
+
+    /// <summary>Alguma latitude ou longitude fora do mundo? (a latitude vai de −90 a 90, a longitude de −180 a 180).</summary>
+    private static bool CoordenadaInvalida(NovaPassagemDto nova)
+    {
+        static bool Ruim(decimal? latitude, decimal? longitude) => latitude is < -90m or > 90m || longitude is < -180m or > 180m;
+        return nova.Pontos.Any(p => Ruim(p.Latitude, p.Longitude)) || nova.Leituras.Any(l => Ruim(l.Latitude, l.Longitude))
+            || nova.Deteccoes.Any(d => Ruim(d.Latitude, d.Longitude));
+    }
+
+    /// <summary>Calcula o km de cada ponto, leitura e detecção pelo GPS. Onde a conta não dá, fica o km que o carro mandou.</summary>
+    private static void CalcularKm(decimal kmInicio, decimal kmFim, List<PontoPassagem> pontos, List<LeituraVia> leituras, List<DeteccaoImagem> deteccoes)
+    {
+        static PontoGps Ponto(DateTime hora, decimal? latitude, decimal? longitude) => new(hora, (double?)latitude, (double?)longitude);
+        // Todo registro com hora entra na conta: os pontos do caminho, as leituras e as detecções, nessa ordem.
+        var todos = pontos.Select(p => Ponto(p.Data, p.Latitude, p.Longitude))
+            .Concat(leituras.Select(l => Ponto(l.Data, l.Latitude, l.Longitude)))
+            .Concat(deteccoes.Select(d => Ponto(d.Data, d.Latitude, d.Longitude)))
+            .ToList();
+        var km = KmPeloGps.Calcular(kmInicio, kmFim, todos);
+        // Devolve o km a cada um, na mesma ordem.
+        var i = 0;
+        foreach (var p in pontos) p.KmCalculado = km[i++];
+        foreach (var l in leituras) l.KmMedido = km[i++] ?? l.KmMedido;
+        foreach (var d in deteccoes) d.KmMedido = km[i++] ?? d.KmMedido;
     }
 
     private async Task<decimal> Numero(string chave)

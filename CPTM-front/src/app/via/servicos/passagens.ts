@@ -8,8 +8,9 @@ export interface PassagemDto {
   id: number; codigo: string; dataInicio: string; dataFim: string | null; leituras: number; semResposta: number; foraDePosicao: number;
   tagsDesconhecidas: number; mudancasDeFaixa: number; alertasSensor: number; alertasImagem: number; deteccoesAbaixoDoMinimo: number;
 }
-export interface LeituraDaPassagemDto { id: number; idDormente: number | null; codigoPeca: string | null; km: number | null; leitura: boolean; desvioMm: number | null; rachaduraSuspeita: boolean; foraDePosicao: boolean; data: string; notaPeca?: string | null; }
-export interface PassagemDetalheDto { resumo: PassagemDto; veiculo: string | null; kmInicio: number | null; kmFim: number | null; limiteMm: number; leituras: LeituraDaPassagemDto[]; }
+export interface LeituraDaPassagemDto { id: number; idDormente: number | null; codigoPeca: string | null; km: number | null; leitura: boolean; desvioMm: number | null; rachaduraSuspeita: boolean; foraDePosicao: boolean; data: string; notaPeca?: string | null; latitude?: number | null; longitude?: number | null; }
+/** estacaoInicio e estacaoFim: as estações da passagem (o bip 0 e o fim); pontosGps: quantos pontos o caminho do GPS tem. Vazios nas passagens sem GPS. */
+export interface PassagemDetalheDto { resumo: PassagemDto; veiculo: string | null; kmInicio: number | null; kmFim: number | null; limiteMm: number; leituras: LeituraDaPassagemDto[]; estacaoInicio?: string | null; estacaoFim?: string | null; pontosGps?: number; }
 
 /** GET /api/passagens: o que o carro mandou em cada noite (operador da via, técnico, supervisor). */
 @Injectable({ providedIn: 'root' })
