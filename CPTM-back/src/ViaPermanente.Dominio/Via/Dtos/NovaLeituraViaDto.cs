@@ -12,4 +12,8 @@ public class NovaLeituraViaDto
     public decimal? Umidade { get; init; }
     public decimal? Temperatura { get; init; }
     public bool RachaduraSuspeita { get; init; }
+    /// <summary>Latitude do GPS do veículo na hora da leitura. Com as duas estações da passagem, é por ela que o sistema calcula o km.</summary>
+    public decimal? Latitude { get; init; }
+    /// <summary>Longitude do GPS do veículo na hora da leitura.</summary>
+    public decimal? Longitude { get; init; }
 }

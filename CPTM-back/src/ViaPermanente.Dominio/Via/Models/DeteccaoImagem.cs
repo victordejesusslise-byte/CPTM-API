@@ -20,4 +20,8 @@ public class DeteccaoImagem
     public decimal Confianca { get; set; }
     public string VersaoModelo { get; set; } = "";
     public DateTime Data { get; set; }
+    /// <summary>Latitude do GPS do veículo na hora da foto.</summary>
+    public decimal? Latitude { get; set; }
+    /// <summary>Longitude do GPS do veículo na hora da foto.</summary>
+    public decimal? Longitude { get; set; }
 }

@@ -1,9 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TimeoutError } from 'rxjs';
 import { consulta } from './consulta';
-import { data, diasDesde, km, m3, mensagemDeErro, nomeDoCargo } from './formato';
+import { data, diasDesde, gps, km, m3, mensagemDeErro, nomeDoCargo } from './formato';
 
 describe('formato', () => {
+  it('mostra o GPS com 5 casas (cerca de 1 m), ou o traço quando falta', () => {
+    expect(gps(-23.5371, -46.7)).toBe('-23,53710 · -46,70000');
+    expect(gps(null, -46.7)).toBe('—');
+    expect(gps(-23.5371, undefined)).toBe('—');
+  });
+
   it('a data só com o dia mostra o mesmo dia, em qualquer fuso (a compra de 31/10 não vira 30/10)', () => {
     expect(data('2026-10-31')).toBe('31/10/2026');
     expect(data('2026-01-01')).toBe('01/01/2026');

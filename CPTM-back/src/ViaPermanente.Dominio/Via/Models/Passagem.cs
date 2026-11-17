@@ -10,4 +10,8 @@ public class Passagem
     public DateTime? DataFim { get; set; }
     public decimal? KmInicio { get; set; }
     public decimal? KmFim { get; set; }
+    /// <summary>Id da estação onde a passagem começa, o bip 0 (→ ESTACAO). Nulo nas passagens sem GPS.</summary>
+    public int? IdEstacaoInicio { get; set; }
+    /// <summary>Id da estação onde a passagem termina (→ ESTACAO). Nulo nas passagens sem GPS.</summary>
+    public int? IdEstacaoFim { get; set; }
 }

@@ -3512,6 +3512,16 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("decimal(9,3)")
                         .HasColumnName("km_medido");
 
+                    b.Property<decimal?>("Latitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasColumnName("latitude");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasColumnName("longitude");
+
                     b.Property<string>("QuadroArquivo")
                         .IsRequired()
                         .HasMaxLength(260)
@@ -3653,9 +3663,19 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("decimal(9,3)")
                         .HasColumnName("km_medido");
 
+                    b.Property<decimal?>("Latitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasColumnName("latitude");
+
                     b.Property<bool>("Leitura")
                         .HasColumnType("bit")
                         .HasColumnName("leitura");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasColumnName("longitude");
 
                     b.Property<bool>("RachaduraSuspeita")
                         .HasColumnType("bit")
@@ -3703,6 +3723,14 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("data_inicio");
 
+                    b.Property<int?>("IdEstacaoFim")
+                        .HasColumnType("int")
+                        .HasColumnName("id_estacao_fim");
+
+                    b.Property<int?>("IdEstacaoInicio")
+                        .HasColumnType("int")
+                        .HasColumnName("id_estacao_inicio");
+
                     b.Property<decimal?>("KmFim")
                         .HasPrecision(9, 3)
                         .HasColumnType("decimal(9,3)")
@@ -3723,7 +3751,50 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasIndex("Codigo")
                         .IsUnique();
 
+                    b.HasIndex("IdEstacaoFim");
+
+                    b.HasIndex("IdEstacaoInicio");
+
                     b.ToTable("PASSAGEM");
+                });
+
+            modelBuilder.Entity("ViaPermanente.Dominio.Via.Models.PontoPassagem", b =>
+                {
+                    b.Property<long>("IdPonto")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id_ponto");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("IdPonto"));
+
+                    b.Property<DateTime>("Data")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("data");
+
+                    b.Property<int>("IdPassagem")
+                        .HasColumnType("int")
+                        .HasColumnName("id_passagem");
+
+                    b.Property<decimal?>("KmCalculado")
+                        .HasPrecision(9, 3)
+                        .HasColumnType("decimal(9,3)")
+                        .HasColumnName("km_calculado");
+
+                    b.Property<decimal>("Latitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasColumnName("latitude");
+
+                    b.Property<decimal>("Longitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasColumnName("longitude");
+
+                    b.HasKey("IdPonto");
+
+                    b.HasIndex("IdPassagem", "Data");
+
+                    b.ToTable("PONTO_PASSAGEM");
                 });
 
             modelBuilder.Entity("ViaPermanente.Dominio.Via.Models.PosicaoAtual", b =>
@@ -4512,6 +4583,28 @@ namespace ViaPermanente.Dados.Migrations
                         .HasForeignKey("IdDormente")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ViaPermanente.Dominio.Via.Models.Passagem", null)
+                        .WithMany()
+                        .HasForeignKey("IdPassagem")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ViaPermanente.Dominio.Via.Models.Passagem", b =>
+                {
+                    b.HasOne("ViaPermanente.Dominio.Via.Models.Estacao", null)
+                        .WithMany()
+                        .HasForeignKey("IdEstacaoFim")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ViaPermanente.Dominio.Via.Models.Estacao", null)
+                        .WithMany()
+                        .HasForeignKey("IdEstacaoInicio")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("ViaPermanente.Dominio.Via.Models.PontoPassagem", b =>
+                {
                     b.HasOne("ViaPermanente.Dominio.Via.Models.Passagem", null)
                         .WithMany()
                         .HasForeignKey("IdPassagem")

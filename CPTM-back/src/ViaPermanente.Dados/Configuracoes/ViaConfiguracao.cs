@@ -46,6 +46,17 @@ internal static class ViaConfiguracao
             e.HasKey(x => x.IdPassagem);
             e.HasIndex(x => x.Codigo).IsUnique();
         });
+        // A passagem aponta a estação A (o bip 0) e a B (Victor, 2026-11-17).
+        mb.Fk<Passagem, Estacao>(x => x.IdEstacaoInicio);
+        mb.Fk<Passagem, Estacao>(x => x.IdEstacaoFim);
+
+        // O caminho do GPS da passagem: um ponto para cada foto (o bip).
+        mb.Entity<PontoPassagem>(e =>
+        {
+            e.HasKey(x => x.IdPonto);
+            e.HasIndex(x => new { x.IdPassagem, x.Data });
+        });
+        mb.Fk<PontoPassagem, Passagem>(x => x.IdPassagem);
 
         // Uma linha por peça: a chave é a própria peça.
         mb.Entity<PosicaoAtual>(e =>

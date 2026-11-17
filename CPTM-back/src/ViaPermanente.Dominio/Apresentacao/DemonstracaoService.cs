@@ -7,6 +7,7 @@ using ViaPermanente.Dominio.Chegadas.Models;
 using ViaPermanente.Dominio.Comum;
 using ViaPermanente.Dominio.Pecas.Models;
 using ViaPermanente.Dominio.Pedidos.Models;
+using ViaPermanente.Dominio.Via;
 using ViaPermanente.Dominio.Via.Models;
 
 namespace ViaPermanente.Dominio.Apresentacao;
@@ -118,18 +119,40 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             var p3 = await repo.Adicionar(NovoPedido(3, 6, 1));
             await repo.AdicionarVarios(new[] { new PedidoItem { IdPedido = p3.IdPedido, IdTamanho = tamanho.IdTamanho, Classe = 1, Quantidade = 6, IdMedida = padrao.IdMedida } });
 
-            // A passagem da noite: uma peça fora de posição, uma com a tag muda, uma com suspeita de rachadura.
+            // A passagem da noite: uma peça fora de posição, uma com a tag muda, uma com suspeita de rachadura. Ela aponta as duas
+            // estações do trecho (o bip 0 e o fim) e traz o caminho do GPS, de onde sai o km de cada leitura (Victor, 2026-11-17).
             var passagem = await repo.Adicionar(new Passagem
             {
                 Codigo = $"{Marca}PASS-01", Veiculo = "Carro de inspeção (demonstração)", DataInicio = ontem, DataFim = ontem.AddHours(2),
-                KmInicio = 212.000m, KmFim = 215.000m
+                KmInicio = 212.000m, KmFim = 215.000m, IdEstacaoInicio = trecho.IdEstacaoInicio, IdEstacaoFim = trecho.IdEstacaoFim
             });
+
+            // O GPS do carro, só para o exemplo: uma reta de norte a sul (cada km são 0,0089932 grau de latitude). O GPS erra uns metros
+            // em cada leitura (+3, −2 e +4 m), então o km calculado fica perto do km do projeto da peça, mas não igual.
+            static decimal Latitude(decimal km) => Math.Round(-23.55m - (km - 212.000m) * 0.0089932m, 6);
+            const decimal Longitude = -46.7m;
+            var erroDoGps = new[] { 0.003m, -0.002m, 0.004m };
             var leituras = new List<LeituraVia>
             {
-                new() { IdPassagem = passagem.IdPassagem, IdDormente = naVia[0].IdDormente, Leitura = true, KmMedido = naVia[0].KmProjeto, DesvioMm = 52, Data = ontem.AddMinutes(10) },
-                new() { IdPassagem = passagem.IdPassagem, IdDormente = naVia[1].IdDormente, Leitura = false, KmMedido = naVia[1].KmProjeto, Data = ontem.AddMinutes(11) },
-                new() { IdPassagem = passagem.IdPassagem, IdDormente = naVia[2].IdDormente, Leitura = true, KmMedido = naVia[2].KmProjeto, DesvioMm = 4, RachaduraSuspeita = true, Data = ontem.AddMinutes(12) },
+                new() { IdPassagem = passagem.IdPassagem, IdDormente = naVia[0].IdDormente, Leitura = true, DesvioMm = 52, Data = ontem.AddMinutes(10),
+                    Latitude = Latitude(naVia[0].KmProjeto!.Value + erroDoGps[0]), Longitude = Longitude },
+                new() { IdPassagem = passagem.IdPassagem, IdDormente = naVia[1].IdDormente, Leitura = false, Data = ontem.AddMinutes(11),
+                    Latitude = Latitude(naVia[1].KmProjeto!.Value + erroDoGps[1]), Longitude = Longitude },
+                new() { IdPassagem = passagem.IdPassagem, IdDormente = naVia[2].IdDormente, Leitura = true, DesvioMm = 4, RachaduraSuspeita = true, Data = ontem.AddMinutes(12),
+                    Latitude = Latitude(naVia[2].KmProjeto!.Value + erroDoGps[2]), Longitude = Longitude },
             };
+            // O caminho: um ponto do GPS para cada foto (o bip), da Estação A (minuto 0) à B (minuto 27).
+            var caminho = new (int Minuto, decimal Km)[]
+                { (0, 212.000m), (2, 212.220m), (4, 212.440m), (6, 212.660m), (8, 212.880m), (14, 213.400m), (17, 213.900m), (20, 214.300m), (23, 214.650m), (27, 215.000m) }
+                .Select(c => new PontoPassagem { IdPassagem = passagem.IdPassagem, Data = ontem.AddMinutes(c.Minuto), Latitude = Latitude(c.Km), Longitude = Longitude })
+                .ToList();
+            // O km de cada ponto e de cada leitura sai do caminho que o GPS andou, como na passagem do sistema.
+            static PontoGps Gps(DateTime hora, decimal? latitude, decimal? longitude) => new(hora, (double?)latitude, (double?)longitude);
+            var kms = KmPeloGps.Calcular(passagem.KmInicio!.Value, passagem.KmFim!.Value,
+                [.. caminho.Select(p => Gps(p.Data, p.Latitude, p.Longitude)), .. leituras.Select(l => Gps(l.Data, l.Latitude, l.Longitude))]);
+            for (var i = 0; i < caminho.Count; i++) caminho[i].KmCalculado = kms[i];
+            for (var i = 0; i < leituras.Count; i++) leituras[i].KmMedido = kms[caminho.Count + i];
+            await repo.AdicionarVarios(caminho);
             await repo.AdicionarVarios(leituras);
             await repo.AdicionarVarios(new List<Alerta>
             {
@@ -209,6 +232,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             apagados += await repo.Apagar<PedidoHistorico>(h => pedidos.Contains(h.IdPedido));
             apagados += await repo.Apagar<PedidoItem>(i => pedidos.Contains(i.IdPedido));
             apagados += pedidosApagados = await repo.Apagar<Pedido>(p => pedidos.Contains(p.IdPedido));
+            apagados += await repo.Apagar<PontoPassagem>(p => passagens.Contains(p.IdPassagem));
             apagados += await repo.Apagar<Passagem>(p => passagens.Contains(p.IdPassagem));
             var estacoes = await repo.Ids<Estacao, int>(e => e.Nome.StartsWith(EstacaoDemo), e => e.IdEstacao);
             apagados += await repo.Apagar<Trecho>(t => estacoes.Contains(t.IdEstacaoInicio) || estacoes.Contains(t.IdEstacaoFim));

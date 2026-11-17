@@ -19,4 +19,8 @@ public class NovaDeteccaoDto
     public decimal Confianca { get; init; }
     public string VersaoModelo { get; init; } = "";
     public DateTime Data { get; init; }
+    /// <summary>Latitude do GPS do veículo na hora da foto.</summary>
+    public decimal? Latitude { get; init; }
+    /// <summary>Longitude do GPS do veículo na hora da foto.</summary>
+    public decimal? Longitude { get; init; }
 }

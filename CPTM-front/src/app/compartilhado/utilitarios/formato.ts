@@ -14,6 +14,12 @@ export const metros = (valor: number | null | undefined): string =>
 export const km = (valor: number | null | undefined): string =>
   valor == null ? '—' : valor.toLocaleString(br, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 
+/** -23.5371, -46.7 → "-23,53710 · -46,70000" (5 casas, cerca de 1 m); o traço quando falta a latitude ou a longitude. */
+export const gps = (latitude: number | null | undefined, longitude: number | null | undefined): string => {
+  const grau = (valor: number): string => valor.toLocaleString(br, { minimumFractionDigits: 5, maximumFractionDigits: 5 });
+  return latitude == null || longitude == null ? '—' : `${grau(latitude)} · ${grau(longitude)}`;
+};
+
 /** ISO → "11/10/2026 14:05" */
 /** Dias inteiros desde a data (nunca negativo: um relógio um pouco adiantado não vira "-1 dias"). */
 export const diasDesde = (iso: string | null | undefined, agora = Date.now()): number | null =>

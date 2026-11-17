@@ -31,12 +31,19 @@ public class PassagemConsultaService(IPassagemConsultaRepository repo, IParametr
         var detalhe = leituras
             .Select(l => (Leitura: l, Peca: l.IdDormente is int id ? donos.GetValueOrDefault(id) : null))
             .Select(x => new LeituraDaPassagemDto(x.Leitura.IdLeituraVia, x.Leitura.IdDormente, x.Peca?.Codigo,
-                x.Leitura.KmMedido, x.Leitura.Leitura, x.Leitura.DesvioMm, x.Leitura.RachaduraSuspeita, Fora(x.Leitura, limite), x.Leitura.Data, x.Peca?.Nota))
+                x.Leitura.KmMedido, x.Leitura.Leitura, x.Leitura.DesvioMm, x.Leitura.RachaduraSuspeita, Fora(x.Leitura, limite), x.Leitura.Data, x.Peca?.Nota,
+                x.Leitura.Latitude, x.Leitura.Longitude))
             .OrderByDescending(l => !l.Leitura || l.ForaDePosicao || l.RachaduraSuspeita || l.IdDormente is null)
             .ThenBy(l => l.Km)
             .Take(500)
             .ToList();
-        return new PassagemDetalheDto(await Resumo(passagem, leituras, limite), passagem.Veiculo, passagem.KmInicio, passagem.KmFim, limite, detalhe);
+        // As estações da passagem (o bip 0 e o fim) e o tamanho do caminho do GPS; vazios nas passagens sem GPS.
+        var idsEstacao = new[] { passagem.IdEstacaoInicio, passagem.IdEstacaoFim }.OfType<int>().ToList();
+        var estacoes = idsEstacao.Count == 0 ? new Dictionary<int, string>() : await repo.NomesDasEstacoes(idsEstacao);
+        return new PassagemDetalheDto(await Resumo(passagem, leituras, limite), passagem.Veiculo, passagem.KmInicio, passagem.KmFim, limite, detalhe,
+            passagem.IdEstacaoInicio is int ini ? estacoes.GetValueOrDefault(ini) : null,
+            passagem.IdEstacaoFim is int fim ? estacoes.GetValueOrDefault(fim) : null,
+            await repo.PontosDoCaminho(idPassagem));
     }
 
     private async Task<PassagemDto> Resumo(Passagem p, IReadOnlyList<LeituraVia> leituras, decimal limite)

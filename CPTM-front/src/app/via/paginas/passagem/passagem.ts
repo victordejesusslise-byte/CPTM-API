@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { dataHora, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
+import { dataHora, gps, km, mensagemDeErro } from '../../../compartilhado/utilitarios/formato';
 import { PassagemDetalheDto, PassagemDto, Passagens } from '../../servicos/passagens';
 import { TrabalhoDaNoite } from '../../../nucleo/ao-vivo/trabalho-da-noite';
 import { AvisoGuardado } from '../../../nucleo/ao-vivo/aviso-guardado';
@@ -63,6 +63,7 @@ export class Passagem {
   });
   protected readonly dataHora = dataHora;
   protected readonly km = km;
+  protected readonly gps = gps;
 
   /** Sem rede: só o resumo guardado; as leituras uma a uma abrem quando a rede voltar. */
   private soResumo(id: number): PassagemDetalheDto | null {

@@ -21,14 +21,19 @@ public class VarreduraRepository(ViaPermanenteContext db) : IVarreduraRepository
             .Where(a => a.Status == StatusAlerta.Aberto && a.IdDormente != null && idsDormente.Contains(a.IdDormente.Value))
             .ToListAsync();
 
-    public async Task GravarPassagem(Passagem passagem, IReadOnlyList<LeituraVia> leituras, IReadOnlyList<DeteccaoImagem> deteccoes)
+    public async Task<IReadOnlyDictionary<int, decimal>> KmDasEstacoes(IReadOnlyCollection<int> idsEstacao)
+        => await db.Set<Estacao>().AsNoTracking().Where(e => idsEstacao.Contains(e.IdEstacao)).ToDictionaryAsync(e => e.IdEstacao, e => e.Km);
+
+    public async Task GravarPassagem(Passagem passagem, IReadOnlyList<LeituraVia> leituras, IReadOnlyList<DeteccaoImagem> deteccoes, IReadOnlyList<PontoPassagem> pontos)
     {
         db.Add(passagem);
         await db.SaveChangesAsync();
         foreach (var l in leituras) l.IdPassagem = passagem.IdPassagem;
         foreach (var d in deteccoes) d.IdPassagem = passagem.IdPassagem;
+        foreach (var p in pontos) p.IdPassagem = passagem.IdPassagem;
         db.AddRange(leituras);
         db.AddRange(deteccoes);
+        db.AddRange(pontos);
         await db.SaveChangesAsync();
     }
 

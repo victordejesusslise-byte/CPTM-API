@@ -11,8 +11,10 @@ public interface IVarreduraRepository
     Task<IReadOnlyDictionary<int, PosicaoAtual>> Posicoes(IReadOnlyCollection<int> idsDormente);
     /// <summary>Os alertas abertos das peças (para não abrir outro igual).</summary>
     Task<IReadOnlyList<Alerta>> AlertasAbertos(IReadOnlyCollection<int> idsDormente);
-    /// <summary>Grava a passagem, as leituras e as detecções; cada uma volta com o id.</summary>
-    Task GravarPassagem(Passagem passagem, IReadOnlyList<LeituraVia> leituras, IReadOnlyList<DeteccaoImagem> deteccoes);
+    /// <summary>O km de cada estação da lista (as que existem), do cadastro.</summary>
+    Task<IReadOnlyDictionary<int, decimal>> KmDasEstacoes(IReadOnlyCollection<int> idsEstacao);
+    /// <summary>Grava a passagem, as leituras, as detecções e os pontos do caminho do GPS; cada uma volta com o id.</summary>
+    Task GravarPassagem(Passagem passagem, IReadOnlyList<LeituraVia> leituras, IReadOnlyList<DeteccaoImagem> deteccoes, IReadOnlyList<PontoPassagem> pontos);
     Task GravarResultado(IReadOnlyList<Alerta> alertas, IReadOnlyList<PosicaoAtual> posicoesNovas,
         IReadOnlyList<PosicaoAtual> posicoesAlteradas, IReadOnlyList<EventoPosicao> eventos);
     Task EmTransacao(Func<Task> acao);
