@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViaPermanente.Api.Helpers;
+using ViaPermanente.Dominio.Armazens.Dtos;
 using ViaPermanente.Dominio.Armazens;
 using ViaPermanente.Dominio.Chegadas;
 using ViaPermanente.Dominio.Pecas;
@@ -86,4 +87,19 @@ public class DormenteHandler(PecaService pecas, QualidadeService qualidade, Arma
         var peca = await armazem.Guardar(id, dto, TokenHelper.IdUsuario(User));
         return peca is null ? NotFound() : peca;
     }
+
+    /// <summary>O lote da peça da tag lida, separado por tamanho e classe, para guardar tudo de uma vez (Victor, 2026-11-17). 404: tag sem peça.</summary>
+    [HttpGet("lote-da-tag/{tag}")]
+    [Authorize(Roles = $"{nameof(Cargo.Supervisor)},{nameof(Cargo.OperadorPatio)}")]
+    public async Task<ActionResult<LoteParaGuardarDto>> LoteDaTag(string tag)
+    {
+        var lote = await armazem.LoteDaTag(tag);
+        return lote is null ? NotFound() : lote;
+    }
+
+    /// <summary>Guarda o lote: cada grupo (tamanho e classe) na pilha escolhida, todas no mesmo armazém; só as aprovadas sem pilha entram.</summary>
+    [HttpPost("lote/armazem")]
+    [Authorize(Roles = $"{nameof(Cargo.Supervisor)},{nameof(Cargo.OperadorPatio)}")]
+    public async Task<ActionResult<LoteParaGuardarDto>> GuardarLote(GuardarLoteDto dto)
+        => await armazem.GuardarLote(dto, TokenHelper.IdUsuario(User));
 }

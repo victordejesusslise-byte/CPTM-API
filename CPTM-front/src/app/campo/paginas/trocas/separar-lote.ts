@@ -8,11 +8,12 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 import { CompativelDto, LoteTrocaDto } from '../../entidades/campo';
 import { LotesTroca } from '../../servicos/lotes-troca';
 import { ROTULO_LOTE, aSepararNoLote } from './lote-aberto';
+import { TabelaCompativeis } from './tabela-compativeis';
 
 /** Separar peça, no lote de troca (Victor, 2026-11-11): o pátio separa até a quantidade aprovada, lendo a tag de cada peça; o sistema sugere a da frente. */
 @Component({
   selector: 'app-separar-lote',
-  imports: [FORMULARIO, LeituraTag],
+  imports: [FORMULARIO, LeituraTag, TabelaCompativeis],
   styles: `
     .barra { height: 8px; border-radius: 999px; background: var(--superficie-3); overflow: hidden; margin: 10px 0 4px; }
     .barra i { display: block; height: 100%; background: var(--areia); }
@@ -39,18 +40,10 @@ import { ROTULO_LOTE, aSepararNoLote } from './lote-aberto';
       <p class="nota">{{ l.trecho }} · <span class="mono">km {{ km(l.kmInicio) }} a {{ km(l.kmFim) }}</span></p>
 
       @if (faltam() > 0) {
-        <p class="lbl">Peças que servem · {{ metros(l.comprimentoM) }}, classe que o trecho aceita · sai primeiro a mais antiga</p>
+        <p class="lbl">Peças que servem · {{ metros(l.comprimentoM) }} · classe que o trecho aceita · sai primeiro a mais antiga · toque para escolher</p>
         @if (valorDe(compativeis)?.length) {
-          <div class="opcoes">
-            @for (c of (valorDe(compativeis) ?? []).slice(0, verOutras() ? 6 : 1); track c.peca.id) {
-              <label class="opcao" [class.marcada]="escolhida()?.peca?.id === c.peca.id">
-                <input type="radio" name="compativel-lote" [checked]="escolhida()?.peca?.id === c.peca.id" (change)="escolhida.set(c)" />
-                <span class="mono">{{ c.peca.codigo }}</span>
-                <span>{{ c.peca.especie }} · pilha {{ c.peca.pilha ?? '—' }}</span>
-                <span class="nota">{{ c.sugerida ? 'sugerida · ' : '' }}{{ c.idadeDias }} dias no armazém</span>
-              </label>
-            }
-          </div>
+          <!-- A mesma tabela de "Trocas para separar" (Victor, 2026-11-17); mostra a sugerida e, se pedir, mais 5. -->
+          <app-tabela-compativeis [lista]="(valorDe(compativeis) ?? []).slice(0, verOutras() ? 6 : 1)" [(escolhida)]="escolhida" />
           @if (!verOutras() && (valorDe(compativeis)?.length ?? 0) > 1) {
             <button mat-button type="button" (click)="verOutras.set(true)">Ver outras {{ (valorDe(compativeis)?.length ?? 1) - 1 }} peças que servem</button>
           }

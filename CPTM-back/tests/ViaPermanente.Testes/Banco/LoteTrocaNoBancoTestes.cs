@@ -440,4 +440,30 @@ public class LoteTrocaNoBancoTestes : IAsyncLifetime
         Assert.Equal(await Peca(3), Assert.Single(feito.Trocas).IdDormenteSaiu);
         Assert.Contains(await db.Set<LeituraDormente>().AsNoTracking().Where(l => l.IdDormente == feito.Trocas[0].IdDormenteSaiu).ToListAsync(), l => !l.Leitura);
     }
+
+    /// <summary>
+    /// Victor, 2026-11-17: o dormente antigo, posto antes do sistema, nunca teve tag nem cadastro. A via marca "nunca teve tag" e digita o km
+    /// (dentro da faixa do lote); a troca anota só o km, sem criar peça e sem gravar falha de tag. A peça nova entra no lugar.
+    /// </summary>
+    [Fact]
+    public async Task Dormente_antigo_que_nunca_teve_tag_sai_pelo_km_sem_cadastro()
+    {
+        var lote = await Separado(1, 1);
+        var entra = lote.Separadas[0];
+        ParDoLoteDto Antigo(decimal? km, bool naoResponde = false)
+            => new() { SaiuNuncaTeveTag = true, TagSaiuNaoResponde = naoResponde, Km = km, LeituraEntrou = new() { Tag = entra.Tag }, FotoArquivo = "f.jpg" };
+
+        foreach (var errado in new[] { Antigo(null), Antigo(219.410m), Antigo(219.401m, naoResponde: true) }) // sem km, fora da faixa (219,400 a 219,405), as duas caixas
+            await Assert.ThrowsAsync<RegraDeNegocioException>(() => Lotes().Fechar(lote.Id, Fechamento(errado), via));
+        var (pecas, falhas) = (await db.Set<Dormente>().CountAsync(), await db.Set<LeituraDormente>().CountAsync(l => !l.Leitura));
+
+        var feito = (await Lotes().Fechar(lote.Id, Fechamento(Antigo(219.401m)), via))!;
+
+        var troca = Assert.Single(feito.Trocas);
+        Assert.Equal(((int?)null, true, (decimal?)219.401m, (int?)entra.Id), (troca.IdDormenteSaiu, troca.SaiuNuncaTeveTag, troca.Km, troca.IdDormenteEntrou));
+        Assert.Equal(pecas, await db.Set<Dormente>().CountAsync());                                // nenhuma peça falsa
+        Assert.Equal(falhas, await db.Set<LeituraDormente>().CountAsync(l => !l.Leitura));          // nenhuma falha de tag
+        var nova = await BancoDeTeste.Pecas(db).BuscarPorId(entra.Id);
+        Assert.Equal(("NaVia", (int?)idTrecho, (decimal?)219.401m), (nova!.Situacao, nova.IdTrecho, nova.KmProjeto));
+    }
 }

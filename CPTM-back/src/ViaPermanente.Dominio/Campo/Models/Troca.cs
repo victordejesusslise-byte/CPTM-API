@@ -5,8 +5,10 @@ public class Troca
 {
     /// <summary>id da troca (chave de TROCA).</summary>
     public int IdTroca { get; set; }
-    /// <summary>a peça que sai da via (→ DORMENTE).</summary>
-    public int IdDormenteSaiu { get; set; }
+    /// <summary>a peça que sai da via (→ DORMENTE). Nula: um dormente antigo, sem cadastro, que saiu num lote pelo km (Victor, 2026-11-17).</summary>
+    public int? IdDormenteSaiu { get; set; }
+    /// <summary>a peça que sai nunca teve tag (Victor, 2026-11-17): a troca seguiu sem ler a peça e sem gravar falha de tag.</summary>
+    public bool SaiuNuncaTeveTag { get; set; }
     /// <summary>Gravado na separação.</summary>
     public int? IdDormenteEntrou { get; set; }
     /// <summary>a inspeção reprovada que pediu a troca (→ INSPECAO).</summary>

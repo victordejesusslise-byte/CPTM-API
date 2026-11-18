@@ -1382,7 +1382,7 @@ namespace ViaPermanente.Dados.Migrations
                         .HasColumnType("int")
                         .HasColumnName("id_dormente_entrou");
 
-                    b.Property<int>("IdDormenteSaiu")
+                    b.Property<int?>("IdDormenteSaiu")
                         .HasColumnType("int")
                         .HasColumnName("id_dormente_saiu");
 
@@ -1447,6 +1447,10 @@ namespace ViaPermanente.Dados.Migrations
                     b.Property<DateTime?>("RecebidoEm")
                         .HasColumnType("datetime2")
                         .HasColumnName("recebido_em");
+
+                    b.Property<bool>("SaiuNuncaTeveTag")
+                        .HasColumnType("bit")
+                        .HasColumnName("saiu_nunca_teve_tag");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -4090,8 +4094,7 @@ namespace ViaPermanente.Dados.Migrations
                     b.HasOne("ViaPermanente.Dominio.Pecas.Models.Dormente", null)
                         .WithMany()
                         .HasForeignKey("IdDormenteSaiu")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ViaPermanente.Dominio.Campo.Models.Inspecao", null)
                         .WithMany()

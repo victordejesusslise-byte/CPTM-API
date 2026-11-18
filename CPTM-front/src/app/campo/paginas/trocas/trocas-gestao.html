@@ -76,7 +76,7 @@
     }
     @for (t of valorDe(lista) ?? []; track t.id) {
       <button type="button" class="cartao-alerta" [class.urgente]="t.status === 'Pedida' || t.status === 'Recusada'" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
-        <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
+        <span class="topo-alerta"><b class="mono">{{ pecaQueSai(t) }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
         <span class="tipo">{{ rotulo[t.status] }} · {{ t.motivo ?? '' }}</span>
         <span class="nota">pedida há {{ t.diasDesdeOPedido }} dias · laudo LD</span>
       </button>

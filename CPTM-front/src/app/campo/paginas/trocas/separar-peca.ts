@@ -8,12 +8,13 @@ import { CompativelDto, LoteTrocaDto, StatusLoteTroca, TrocaDto } from '../../en
 import { LotesTroca } from '../../servicos/lotes-troca';
 import { ROTULO_LOTE, aSepararNoLote } from './lote-aberto';
 import { SepararLote } from './separar-lote';
+import { TabelaCompativeis } from './tabela-compativeis';
 import { MetodoCaptura, StatusTroca } from '../../../compartilhado/entidades/enums';
 import { Trocas } from '../../servicos/trocas';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
-import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
+import { ROTULO_TROCA, ResumoTroca, pecaQueSai } from './resumo-troca';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
 type Aba = 'fila' | 'separadas';
@@ -26,7 +27,7 @@ const ABAS: Record<Aba, { titulo: string; status: StatusTroca[]; lotes: StatusLo
 /** Separar peça (protótipo YBYRA, etapa 12): o pátio separa uma peça compatível; o sistema sugere a da frente da pilha. */
 @Component({
   selector: 'app-separar-peca',
-  imports: [Esqueleto, FORMULARIO, Estado, LeituraTag, ResumoTroca, SepararLote],
+  imports: [Esqueleto, FORMULARIO, Estado, LeituraTag, ResumoTroca, SepararLote, TabelaCompativeis],
   templateUrl: './separar-peca.html',
 })
 export class SepararPeca {
@@ -75,6 +76,8 @@ export class SepararPeca {
     stream: ({ params }) => this.api.compativeis(params),
   });
   protected readonly rotulo = ROTULO_TROCA;
+  /** o nome da peça que sai: o código, ou "Dormente antigo" sem cadastro (Victor, 2026-11-17) */
+  protected readonly pecaQueSai = pecaQueSai;
   protected readonly km = km;
   protected readonly metros = metros;
   protected readonly aSeparar = aSepararNoLote;

@@ -13,7 +13,7 @@ import { PreviaLaudo } from '../../../laudos/componentes/previa-laudo';
 import { Trocas } from '../../servicos/trocas';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { FORMULARIO } from '../../../compartilhado/ui';
-import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
+import { ROTULO_TROCA, ResumoTroca, pecaQueSai } from './resumo-troca';
 import { PedidosDeTroca } from '../../../nucleo/ao-vivo/pedidos-de-troca';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 import { LotesTroca } from '../../servicos/lotes-troca';
@@ -82,6 +82,8 @@ export class TrocasGestao {
   private readonly pedidos = inject(PedidosDeTroca);
   protected readonly ehTecnico = computed(() => this.sessao.temCargo('Tecnico'));
   protected readonly rotulo = ROTULO_TROCA;
+  /** o nome da peça que sai: o código, ou "Dormente antigo" sem cadastro (Victor, 2026-11-17) */
+  protected readonly pecaQueSai = pecaQueSai;
   protected readonly dataHora = dataHora;
   protected readonly km = km;
 

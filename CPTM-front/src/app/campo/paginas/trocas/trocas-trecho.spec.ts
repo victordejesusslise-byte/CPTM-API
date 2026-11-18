@@ -61,4 +61,43 @@ describe('Trocas do trecho com a fila', () => {
     expect(cartoes(tela)[0]).toContain('DM-E01-L08-0010');
     expect(cartoes(tela)[0]).toContain('Esperando a rede');
   });
+
+  // ---------- o dormente que nunca teve tag (Victor, 2026-11-17) ----------
+
+  it('a troca do dormente antigo, sem cadastro, aparece em "Feitas" como "Dormente antigo"', async () => {
+    const antiga = { ...troca(20, 'Feita'), codigoSaiu: null, idDormenteSaiu: null, saiuNuncaTeveTag: true } as TrocaDto;
+    const tela = await abrir('feitas', 'Feita', [antiga]);
+    expect(cartoes(tela).find((c) => c.includes('Dormente antigo'))).toBeTruthy();
+    expect(cartoes(tela).some((c) => c.includes('null'))).toBe(false);
+  });
+
+  it('"nunca teve tag" desmarca "não responde" e manda a troca sem ler a peça que sai', async () => {
+    localStorage.clear();
+    entrarComo('OperadorVia');
+    const registrar = vi.fn(async () => ({ estado: 'enviado' as const, resposta: {} }));
+    TestBed.configureTestingModule({
+      imports: [TrocasTrecho],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
+        { provide: Fila, useValue: { registrar, meus: signal([]), itens: signal([]), enviando: signal(false) } }],
+    });
+    const fixture = TestBed.createComponent(TrocasTrecho);
+    fixture.detectChanges();
+    type Tela = {
+      marcarNaoResponde(v: boolean): void; marcarNuncaTeveTag(v: boolean): void; executar(t: TrocaDto): void;
+      saiNaoResponde(): boolean; saiNuncaTeveTag(): boolean;
+      tagEntra: { set(v: string): void }; equipe: { set(v: string): void }; foto: { set(v: File): void };
+    };
+    const t = fixture.componentInstance as unknown as Tela;
+
+    t.marcarNaoResponde(true);
+    t.marcarNuncaTeveTag(true);
+    expect([t.saiNaoResponde(), t.saiNuncaTeveTag()]).toEqual([false, true]);
+    t.tagEntra.set('E1');
+    t.equipe.set('Turma de Via 2');
+    t.foto.set(new File(['a'], 'a.jpg', { type: 'image/jpeg' }));
+    t.executar(troca(10));
+    await vi.waitFor(() => expect(registrar).toHaveBeenCalledTimes(1));
+    const [registro] = registrar.mock.calls[0] as unknown as [{ corpo: { leituraSaiu: unknown; tagSaiuNaoResponde: boolean; saiuNuncaTeveTag: boolean } }];
+    expect(registro.corpo).toMatchObject({ leituraSaiu: null, tagSaiuNaoResponde: false, saiuNuncaTeveTag: true });
+  });
 });

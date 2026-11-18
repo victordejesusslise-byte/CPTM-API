@@ -16,7 +16,7 @@ import { Trocas } from '../../servicos/trocas';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-tag/leitura-tag';
 import { FORMULARIO } from '../../../compartilhado/ui';
-import { ROTULO_TROCA, ResumoTroca } from './resumo-troca';
+import { ROTULO_TROCA, ResumoTroca, pecaQueSai } from './resumo-troca';
 import { pecasDoLote } from './lote-aberto';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 
@@ -85,6 +85,8 @@ export class TrocasTrecho {
     return t && naFila ? { ...t, status: naFila.tipo === 'troca' ? 'Feita' : 'Recusada', esperando: true } : t;
   });
   protected readonly rotulo = ROTULO_TROCA;
+  /** o nome da peça que sai: o código, ou "Dormente antigo" sem cadastro (Victor, 2026-11-17) */
+  protected readonly pecaQueSai = pecaQueSai;
   protected readonly dataHora = dataHora;
   protected readonly km = km;
   protected readonly metros = metros;
@@ -122,6 +124,8 @@ export class TrocasTrecho {
   protected readonly tagSai = signal('');
   protected readonly metodoSai = signal<MetodoCaptura>('ModuloUhf');
   protected readonly saiNaoResponde = signal(false);
+  /** A peça que sai nunca teve tag: a troca segue sem ler a peça e sem gravar falha (Victor, 2026-11-17). */
+  protected readonly saiNuncaTeveTag = signal(false);
   protected readonly tagEntra = signal('');
   protected readonly metodoEntra = signal<MetodoCaptura>('ModuloUhf');
   protected readonly equipe = signal('');
@@ -162,17 +166,32 @@ export class TrocasTrecho {
     this.foto.set((e.target as HTMLInputElement).files?.[0] ?? null);
   }
 
+  /** "A tag não responde": marcar desmarca "nunca teve tag" (as duas caixas não marcam juntas). */
+  protected marcarNaoResponde(marcada: boolean): void {
+    this.saiNaoResponde.set(marcada);
+    if (marcada) this.saiNuncaTeveTag.set(false);
+  }
+
+  /** "Este dormente nunca teve tag": marcar desmarca "não responde". */
+  protected marcarNuncaTeveTag(marcada: boolean): void {
+    this.saiNuncaTeveTag.set(marcada);
+    if (marcada) this.saiNaoResponde.set(false);
+  }
+
   protected executar(t: TrocaDto): void {
-    if ((!this.saiNaoResponde() && !this.tagSai().trim()) || !this.tagEntra().trim() || !this.equipe().trim() || !this.foto()) {
-      this.erro.set('Leia a tag da peça que sai (ou marque que não responde), a da peça que entra, informe a equipe e tire a foto.');
+    // Sem leitura da peça que sai só quando a tag não responde ou quando a peça nunca teve tag.
+    const semLerSaiu = this.saiNaoResponde() || this.saiNuncaTeveTag();
+    if ((!semLerSaiu && !this.tagSai().trim()) || !this.tagEntra().trim() || !this.equipe().trim() || !this.foto()) {
+      this.erro.set('Leia a tag da peça que sai (ou marque que não responde ou que nunca teve tag), a da peça que entra, informe a equipe e tire a foto.');
       return;
     }
     void this.registrar(
       {
-        tipo: 'troca', alvo: t.id, resumo: t, rotulo: `Troca da peça ${t.codigoSaiu ?? t.idDormenteSaiu}`,
+        tipo: 'troca', alvo: t.id, resumo: t, rotulo: `Troca da peça ${pecaQueSai(t)}`,
         corpo: {
-          leituraSaiu: this.saiNaoResponde() ? null : leitura(this.tagSai(), this.metodoSai()),
+          leituraSaiu: semLerSaiu ? null : leitura(this.tagSai(), this.metodoSai()),
           tagSaiuNaoResponde: this.saiNaoResponde(),
+          saiuNuncaTeveTag: this.saiNuncaTeveTag(),
           leituraEntrou: leitura(this.tagEntra(), this.metodoEntra()),
           equipe: this.equipe().trim(),
           km: this.kmFeito() ?? t.km,
@@ -190,7 +209,7 @@ export class TrocasTrecho {
     }
     void this.registrar(
       {
-        tipo: 'recusa', alvo: t.id, resumo: t, rotulo: `Recusa da troca da peça ${t.codigoSaiu ?? t.idDormenteSaiu}`,
+        tipo: 'recusa', alvo: t.id, resumo: t, rotulo: `Recusa da troca da peça ${pecaQueSai(t)}`,
         corpo: { motivo: this.motivo().trim(), descricao: this.descricao().trim() || null },
       },
       'Recusa enviada ao técnico.',

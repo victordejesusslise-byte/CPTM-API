@@ -143,4 +143,45 @@ describe('TrocarLote (a via troca dormente por dormente e fecha o lote)', () => 
     expect(fotos).toHaveLength(2); // a do par e a do não deu, nessa ordem
     expect(t.naoDeu()).toEqual([]);
   });
+
+  // ---------- o dormente antigo que nunca teve tag (Victor, 2026-11-17) ----------
+
+  it('o dormente antigo sai pelo km digitado, dentro da faixa, e o mesmo km não sai duas vezes', () => {
+    const antigo = conferirPar(LOTE_SEPARADO, [], { kmAntigo: 23.25 }, 'E1');
+    expect(antigo).toMatchObject({ saiu: { codigo: 'Dormente antigo', kmProjeto: 23.25, tag: null }, entrou: LOTE_SEPARADO.separadas[0] });
+    expect(conferirPar(LOTE_SEPARADO, [], { kmAntigo: 23.5 }, 'E1')).toContain('fora da faixa');
+    const feito = antigo as Exclude<typeof antigo, string>;
+    expect(conferirPar(LOTE_SEPARADO, [feito], { kmAntigo: 23.25 }, 'E2')).toContain('já saiu');
+  });
+
+  it('marcar "nunca teve tag" pede o km, desmarca "não responde" e manda o par sem a peça que sai', async () => {
+    localStorage.clear();
+    entrarComo('OperadorVia');
+    const registrar = vi.fn(async () => ({ estado: 'enviado' as const, resposta: {} }));
+    await TestBed.configureTestingModule({
+      imports: [TrocarLote],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Fila, useValue: { registrar, meus: signal([]), itens: signal([]), enviando: signal(false) } }],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(TrocarLote);
+    fixture.componentRef.setInput('lote', LOTE_SEPARADO);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const t = fixture.componentInstance;
+
+    t.marcarNaoResponde(true);
+    t.marcarNuncaTeveTag(true);
+    expect([t.saiNaoResponde(), t.saiNuncaTeveTag()]).toEqual([false, true]); // as duas caixas não marcam juntas
+    t.tagEntra.set('E1');
+    t.foto.set(new File(['a'], 'a.jpg', { type: 'image/jpeg' }));
+    await t.guardar(); // sem km: não guarda
+    expect(t.rascunho()).toHaveLength(0);
+    t.kmAntigo.set(23.25);
+    await t.guardar();
+    expect(t.rascunho().map((p) => [p.saiu.codigo, p.entrou.codigo, p.saiuNuncaTeveTag])).toEqual([['Dormente antigo', 'DOR-11', true]]);
+
+    t.equipe.set('Turma de Via 3');
+    await t.confirmar();
+    const [registro] = registrar.mock.calls[0] as unknown as [{ corpo: { pares: { saiuNuncaTeveTag: boolean; idDormenteSaiu: number | null; leituraSaiu: unknown; km: number }[] } }];
+    expect(registro.corpo.pares[0]).toMatchObject({ saiuNuncaTeveTag: true, idDormenteSaiu: null, leituraSaiu: null, km: 23.25 });
+  });
 });

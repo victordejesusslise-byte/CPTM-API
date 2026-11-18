@@ -26,8 +26,10 @@
       @switch (acao()) {
         @case ('executar') {
           <p class="lbl">Fazer a troca</p>
-          @if (!saiNaoResponde()) { <app-leitura-tag rotulo="Tag da peça que sai" [(tag)]="tagSai" [(metodo)]="metodoSai" /> }
-          <mat-checkbox [checked]="saiNaoResponde()" (change)="saiNaoResponde.set($event.checked)">A tag da peça que sai não responde</mat-checkbox>
+          @if (!saiNaoResponde() && !saiNuncaTeveTag()) { <app-leitura-tag rotulo="Tag da peça que sai" [(tag)]="tagSai" [(metodo)]="metodoSai" /> }
+          <!-- As duas caixas não marcam juntas: "não responde" é falha da tag; "nunca teve tag" não é falha (Victor, 2026-11-17). -->
+          <mat-checkbox [checked]="saiNaoResponde()" (change)="marcarNaoResponde($event.checked)">A tag da peça que sai não responde</mat-checkbox>
+          <mat-checkbox [checked]="saiNuncaTeveTag()" (change)="marcarNuncaTeveTag($event.checked)">Este dormente nunca teve tag</mat-checkbox>
           <app-leitura-tag rotulo="Tag da peça que entra" [(tag)]="tagEntra" [(metodo)]="metodoEntra" />
           <div class="campos">
             <mat-form-field appearance="outline"><mat-label>Equipe</mat-label><input matInput [ngModel]="equipe()" (ngModelChange)="equipe.set($event)" /></mat-form-field>
@@ -73,7 +75,7 @@
     }
     @for (t of visiveis(); track t.id) {
       <button type="button" class="cartao-alerta" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
-        <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
+        <span class="topo-alerta"><b class="mono">{{ pecaQueSai(t) }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
         <span class="tipo">{{ rotulo[t.status] }}@if (t.codigoEntrou) { · entra {{ t.codigoEntrou }} }</span>
         @if (t.esperando) {
           <span class="etiqueta" [class.etiqueta--enviando]="enviandoFila()">{{ enviandoFila() ? 'Enviando…' : 'Esperando a rede' }}</span>

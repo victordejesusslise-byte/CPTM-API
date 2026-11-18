@@ -52,12 +52,17 @@ public interface IPecaRepository
     Task Verificar(VerificacaoQualidade verificacao, LeituraDormente leitura, GravacaoTag? desligada);
     /// <summary>Grava a leitura, a movimentação de entrada e a pilha da peça, juntas.</summary>
     Task Guardar(int idDormente, int idPilha, DateTime entradaEm, Movimentacao movimentacao, LeituraDormente leitura);
+    /// <summary>
+    /// Guarda o lote de uma vez (Victor, 2026-11-17): grava a leitura da peça lida, uma movimentação de entrada por peça (só a da lida
+    /// leva a leitura) e a pilha de cada peça. Tudo junto: se falhar, nada fica gravado.
+    /// </summary>
+    Task GuardarVarias(IReadOnlyList<Movimentacao> entradas, DateTime entradaEm, LeituraDormente leitura);
 
     /// <summary>
     /// Os ids da cópia das linhas, em ordem e a partir de depoisDe: as peças cadastradas (com tag vigente) que estão na via. Com desde, só as
     /// que mudaram depois (e também as que saíram da via, para o celular apagar).
     /// </summary>
     Task<IReadOnlyList<int>> IdsDaLinha(DateTime? desde, int depoisDe, int limite);
-    /// <summary>As peças com tudo o que a tela mostra. soDisponiveis: aprovadas, com tag vigente, fora da via.</summary>
-    Task<IReadOnlyList<PecaResumo>> Resumos(int? idDormente = null, int? idFeixe = null, bool soDisponiveis = false, IReadOnlyCollection<int>? ids = null);
+    /// <summary>As peças com tudo o que a tela mostra. soDisponiveis: aprovadas, com tag vigente, fora da via. idLote: só as peças desse lote.</summary>
+    Task<IReadOnlyList<PecaResumo>> Resumos(int? idDormente = null, int? idFeixe = null, bool soDisponiveis = false, IReadOnlyCollection<int>? ids = null, int? idLote = null);
 }
