@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { ambiente } from '../../../environments/ambiente';
 import { consulta } from '../../compartilhado/utilitarios/consulta';
-import { CadastroPecaDto, EventoDaPecaDto, FotosDaPecaDto, GuardarPecaDto, NovaPecaDto, PecaDto, TrocarPilhaDto, VerificarPecaDto } from '../entidades/peca';
+import { CadastroPecaDto, EventoDaPecaDto, FotosDaPecaDto, GuardarLoteDto, GuardarPecaDto, LoteParaGuardarDto, NovaPecaDto, PecaDto, TrocarPilhaDto, VerificarPecaDto } from '../entidades/peca';
 
 /** A peça: tag, cadastro, qualidade, entrada na pilha, troca de pilha, estoque e histórico. */
 @Injectable({ providedIn: 'root' })
@@ -55,6 +55,14 @@ export class Pecas {
   }
   guardar(id: number, dto: GuardarPecaDto): Observable<PecaDto> {
     return this.http.post<PecaDto>(`${this.api}/dormentes/${id}/armazem`, dto);
+  }
+  /** O lote da peça da tag lida, separado por tamanho e classe (Victor, 2026-11-17). */
+  loteDaTag(tag: string): Observable<LoteParaGuardarDto> {
+    return this.http.get<LoteParaGuardarDto>(`${this.api}/dormentes/lote-da-tag/${encodeURIComponent(tag.trim())}`);
+  }
+  /** Guarda o lote: cada grupo na pilha escolhida; devolve o lote como ficou. */
+  guardarLote(dto: GuardarLoteDto): Observable<LoteParaGuardarDto> {
+    return this.http.post<LoteParaGuardarDto>(`${this.api}/dormentes/lote/armazem`, dto);
   }
   trocarPilha(id: number, dto: TrocarPilhaDto): Observable<PecaDto> {
     return this.http.post<PecaDto>(`${this.api}/dormentes/${id}/pilha`, dto);

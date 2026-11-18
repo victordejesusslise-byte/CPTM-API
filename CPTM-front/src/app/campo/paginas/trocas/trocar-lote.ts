@@ -14,11 +14,21 @@ export interface ParNoRascunho {
   saiu: PecaDoLoteDto;
   entrou: PecaDoLoteDto;
   tagSaiuNaoResponde?: boolean;
+  /** o dormente que saiu é antigo e nunca teve tag: saiu tem id negativo e só o km (Victor, 2026-11-17) */
+  saiuNuncaTeveTag?: boolean;
   leituraSaiu?: LeituraDto | null;
   leituraEntrou?: LeituraDto;
   foto?: string;
   registradoEm?: string;
 }
+
+/**
+ * O dormente antigo, sem cadastro, que sai pelo km (Victor, 2026-11-17). Não tem peça no sistema: o id negativo vem do km (em metros), só
+ * para o celular não deixar o mesmo km sair duas vezes; o servidor recebe só o km.
+ */
+export const dormenteAntigo = (kmAntigo: number, idTamanho: number): PecaDoLoteDto => ({
+  id: -Math.round(kmAntigo * 1000), codigo: 'Dormente antigo', tag: null, kmProjeto: kmAntigo, idTamanho, pilha: null,
+});
 
 /** Uma obrigatória que não deu para trocar, guardada no celular até fechar o lote (a foto fica guardada à parte). */
 export interface NaoDeuNoRascunho {
@@ -38,10 +48,15 @@ export const obrigatoriasAbertas = (lote: LoteTrocaDto): ObrigatoriaDto[] => (lo
  * A conferência de um par no celular, a mesma do servidor (que confere de novo): a peça que sai está na via dentro da faixa do lote (pela
  * tag, ou escolhida pelo km quando a tag não responde), a que entra é uma das separadas, nenhuma se repete e não passa do aprovado mais
  * as obrigatórias (Victor, 2026-11-12). A peça separada para um avulso obrigatório só entra no lugar dele, e os últimos lugares são das
- * obrigatórias que faltam (as marcadas como "não deu", em naoDeu, liberam o lugar). Devolve o par ou o porquê não serve.
+ * obrigatórias que faltam (as marcadas como "não deu", em naoDeu, liberam o lugar). O dormente antigo que nunca teve tag (kmAntigo) sai
+ * pelo km digitado, dentro da faixa (Victor, 2026-11-17). Devolve o par ou o porquê não serve.
  */
-export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'saiu' | 'entrou'>[], sai: { tag?: string; idDormente?: number | null },
+export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'saiu' | 'entrou'>[],
+  sai: { tag?: string; idDormente?: number | null; kmAntigo?: number | null },
   tagEntra: string, naoDeu: number[] = []): { saiu: PecaDoLoteDto; entrou: PecaDoLoteDto } | string => {
+  // O dormente antigo: o km tem que estar na faixa do lote (a mesma conta do servidor).
+  if (sai.kmAntigo != null && (sai.kmAntigo < lote.kmInicio || sai.kmAntigo > lote.kmFim))
+    return `O km ${km(sai.kmAntigo)} está fora da faixa do lote (km ${km(lote.kmInicio)} a ${km(lote.kmFim)}).`;
   const aprovadas = lote.quantidadeAprovada ?? 0;
   const abertas = obrigatoriasAbertas(lote);
   const limite = aprovadas + abertas.length;
@@ -49,9 +64,11 @@ export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'sai
     return abertas.length
       ? `O lote aprovou ${aprovadas} peças e tem ${abertas.length} obrigatórias: as ${limite} já foram trocadas. Feche o lote.`
       : `O lote aprovou ${aprovadas} peças: todas já foram trocadas. Feche o lote.`;
-  const saiu = sai.tag !== undefined ? lote.pecasDaFaixa.find((p) => p.tag === sai.tag!.trim()) : lote.pecasDaFaixa.find((p) => p.id === sai.idDormente);
+  const saiu = sai.kmAntigo != null ? dormenteAntigo(sai.kmAntigo, lote.idTamanho)
+    : sai.tag !== undefined ? lote.pecasDaFaixa.find((p) => p.tag === sai.tag!.trim()) : lote.pecasDaFaixa.find((p) => p.id === sai.idDormente);
   if (!saiu) return 'A peça que sai não está na via dentro da faixa do lote. Confira se é o dormente certo.';
-  if (feitos.some((f) => f.saiu.id === saiu.id)) return `A peça ${saiu.codigo} já saiu neste lote.`;
+  if (feitos.some((f) => f.saiu.id === saiu.id))
+    return sai.kmAntigo != null ? `O dormente antigo do km ${km(sai.kmAntigo)} já saiu neste lote.` : `A peça ${saiu.codigo} já saiu neste lote.`;
   const daPeca = abertas.find((o) => o.peca.id === saiu.id);
   if (daPeca && naoDeu.includes(daPeca.idTroca)) return `Você marcou que não deu a peça ${saiu.codigo}: desfaça o "não deu" para trocar.`;
   const pendentes = abertas.filter((o) => !naoDeu.includes(o.idTroca) && !feitos.some((f) => f.saiu.id === o.peca.id));
@@ -117,16 +134,23 @@ export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'sai
           }
           @if (rascunho().length < limite()) {
             <p class="lbl">Dormente {{ rascunho().length + 1 }} de {{ limite() }}</p>
-            @if (!saiNaoResponde()) {
-              <app-leitura-tag rotulo="Tag da peça que sai" [compacta]="true" [(tag)]="tagSai" [(metodo)]="metodoSai" />
-              @if (saiLida(); as s) { <p class="nota conferida">✓ {{ s.codigo }} · está na via, <span class="mono">km {{ km(s.kmProjeto) }}</span>, na faixa do lote</p> }
-            } @else {
+            @if (saiNaoResponde()) {
               <mat-form-field appearance="outline"><mat-label>Peça que sai (pelo km)</mat-label>
                 <mat-select [value]="idSaiEscolhida()" (selectionChange)="idSaiEscolhida.set($event.value)"><app-busca-opcoes />
                   @for (p of l.pecasDaFaixa; track p.id) { <mat-option [value]="p.id">km {{ km(p.kmProjeto) }} · {{ p.codigo }}</mat-option> }
                 </mat-select></mat-form-field>
+            } @else if (!saiNuncaTeveTag()) {
+              <app-leitura-tag rotulo="Tag da peça que sai" [compacta]="true" [(tag)]="tagSai" [(metodo)]="metodoSai" />
+              @if (saiLida(); as s) { <p class="nota conferida">✓ {{ s.codigo }} · está na via, <span class="mono">km {{ km(s.kmProjeto) }}</span>, na faixa do lote</p> }
             }
-            <mat-checkbox [checked]="saiNaoResponde()" (change)="saiNaoResponde.set($event.checked)">A tag da peça que sai não responde</mat-checkbox>
+            <!-- As duas caixas não marcam juntas: "não responde" é falha da tag; "nunca teve tag" é o dormente antigo, sem cadastro (Victor, 2026-11-17). -->
+            <mat-checkbox [checked]="saiNaoResponde()" (change)="marcarNaoResponde($event.checked)">A tag da peça que sai não responde</mat-checkbox>
+            <mat-checkbox [checked]="saiNuncaTeveTag()" (change)="marcarNuncaTeveTag($event.checked)">Este dormente nunca teve tag</mat-checkbox>
+            @if (saiNuncaTeveTag()) {
+              <mat-form-field appearance="outline"><mat-label>Km do dormente que sai</mat-label>
+                <input matInput type="number" step="0.001" inputmode="decimal" class="mono" [ngModel]="kmAntigo()" (ngModelChange)="kmAntigo.set($event)" /></mat-form-field>
+              <p class="nota">Dormente antigo, sem cadastro: a troca anota só o km. O km tem que estar na faixa do lote (<span class="mono">km {{ km(l.kmInicio) }} a {{ km(l.kmFim) }}</span>).</p>
+            }
             <app-leitura-tag rotulo="Tag da peça que entra" [compacta]="true" [(tag)]="tagEntra" [(metodo)]="metodoEntra" />
             <div class="acoes">
               <label class="btn-foto"><input type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" /> {{ foto() ? 'Foto: ' + foto()!.name : 'Tirar a foto deste dormente' }}</label>
@@ -145,7 +169,7 @@ export const conferirPar = (lote: LoteTrocaDto, feitos: Pick<ParNoRascunho, 'sai
           <div class="cartoes-alerta">
             @for (p of rascunho(); track p.saiu.id; let i = $index) {
               <div class="cartao-alerta"><span class="topo-alerta"><b class="mono">{{ p.saiu.codigo }} → {{ p.entrou.codigo }}</b><button mat-button type="button" (click)="tirar(i)">Tirar</button></span>
-                <span class="nota"><span class="mono">km {{ km(p.saiu.kmProjeto) }}</span> · foto ✓@if (p.tagSaiuNaoResponde) { · tag da que sai não respondeu }</span></div>
+                <span class="nota"><span class="mono">km {{ km(p.saiu.kmProjeto) }}</span> · foto ✓@if (p.tagSaiuNaoResponde) { · tag da que sai não respondeu }@if (p.saiuNuncaTeveTag) { · nunca teve tag }</span></div>
             } @empty { <p class="nota">Nenhum dormente trocado ainda.</p> }
             @for (n of naoDeu(); track n.idTroca) {
               <div class="cartao-alerta"><span class="topo-alerta"><b class="mono">{{ n.codigo }}</b><span class="nota">não deu</span></span>
@@ -203,6 +227,9 @@ export class TrocarLote {
   readonly tagSai = signal('');
   readonly metodoSai = signal<MetodoCaptura>('ModuloUhf');
   readonly saiNaoResponde = signal(false);
+  /** O dormente que sai é antigo e nunca teve tag: sai pelo km digitado (Victor, 2026-11-17). */
+  readonly saiNuncaTeveTag = signal(false);
+  readonly kmAntigo = signal<number | null>(null);
   readonly idSaiEscolhida = signal<number | null>(null);
   readonly tagEntra = signal('');
   readonly metodoEntra = signal<MetodoCaptura>('ModuloUhf');
@@ -281,12 +308,29 @@ export class TrocarLote {
     this.foto.set((e.target as HTMLInputElement).files?.[0] ?? null);
   }
 
+  /** "A tag não responde": marcar desmarca "nunca teve tag" (as duas caixas não marcam juntas). */
+  marcarNaoResponde(marcada: boolean): void {
+    this.saiNaoResponde.set(marcada);
+    if (marcada) this.saiNuncaTeveTag.set(false);
+  }
+
+  /** "Este dormente nunca teve tag": marcar desmarca "não responde" e pede o km do dormente antigo. */
+  marcarNuncaTeveTag(marcada: boolean): void {
+    this.saiNuncaTeveTag.set(marcada);
+    if (marcada) this.saiNaoResponde.set(false);
+  }
+
   /** Confere o dormente e guarda no celular (com a foto); limpa os campos para o próximo. */
   async guardar(): Promise<void> {
     this.ok.set(null);
-    const sai = this.saiNaoResponde() ? { idDormente: this.idSaiEscolhida() } : { tag: this.tagSai() };
-    if ((!this.saiNaoResponde() && !this.tagSai().trim()) || (this.saiNaoResponde() && !this.idSaiEscolhida()) || !this.tagEntra().trim()) {
-      this.erro.set('Leia a tag da peça que sai (ou, se ela não responde, escolha pelo km) e a da peça que entra.');
+    const antigo = this.saiNuncaTeveTag();
+    // A peça que sai: o km do dormente antigo, a escolhida pelo km (tag que não responde) ou a da tag lida.
+    const sai = antigo ? { kmAntigo: this.kmAntigo() } : this.saiNaoResponde() ? { idDormente: this.idSaiEscolhida() } : { tag: this.tagSai() };
+    const faltaSai = antigo ? this.kmAntigo() == null : this.saiNaoResponde() ? !this.idSaiEscolhida() : !this.tagSai().trim();
+    if (faltaSai || !this.tagEntra().trim()) {
+      this.erro.set(antigo
+        ? 'Digite o km do dormente antigo que sai e leia a tag da peça que entra.'
+        : 'Leia a tag da peça que sai (ou, se ela não responde, escolha pelo km) e a da peça que entra.');
       return;
     }
     if (!this.foto()) {
@@ -302,8 +346,8 @@ export class TrocarLote {
     const nome = `${this.chave()}.${par.saiu.id}.jpg`;
     await this.guardado.gravarFoto(nome, this.foto()!);
     this.rascunho.update((l) => [...l, {
-      ...par, foto: nome, registradoEm: new Date().toISOString(), tagSaiuNaoResponde: this.saiNaoResponde(),
-      leituraSaiu: this.saiNaoResponde() ? null : leitura(this.tagSai(), this.metodoSai()), leituraEntrou: leitura(this.tagEntra(), this.metodoEntra()),
+      ...par, foto: nome, registradoEm: new Date().toISOString(), tagSaiuNaoResponde: this.saiNaoResponde(), saiuNuncaTeveTag: antigo,
+      leituraSaiu: this.saiNaoResponde() || antigo ? null : leitura(this.tagSai(), this.metodoSai()), leituraEntrou: leitura(this.tagEntra(), this.metodoEntra()),
     }]);
     await this.salvar();
     this.guardando.set(false);
@@ -313,6 +357,8 @@ export class TrocarLote {
     this.tagEntra.set('');
     this.idSaiEscolhida.set(null);
     this.saiNaoResponde.set(false);
+    this.saiNuncaTeveTag.set(false);
+    this.kmAntigo.set(null);
     this.foto.set(null);
   }
 
@@ -360,7 +406,9 @@ export class TrocarLote {
       corpo: {
         equipe: this.equipe().trim(),
         pares: pares.map((p) => ({
-          leituraSaiu: p.leituraSaiu ?? null, tagSaiuNaoResponde: !!p.tagSaiuNaoResponde, idDormenteSaiu: p.tagSaiuNaoResponde ? p.saiu.id : null,
+          // O dormente antigo vai só com o km (o id negativo é só do celular).
+          leituraSaiu: p.leituraSaiu ?? null, tagSaiuNaoResponde: !!p.tagSaiuNaoResponde, saiuNuncaTeveTag: !!p.saiuNuncaTeveTag,
+          idDormenteSaiu: p.tagSaiuNaoResponde ? p.saiu.id : null,
           leituraEntrou: p.leituraEntrou, km: p.saiu.kmProjeto, registradoEm: p.registradoEm,
         })),
         ...(naoDeu.length ? { naoDeu: naoDeu.map((n) => ({ idTroca: n.idTroca, motivo: n.motivo, descricao: n.descricao, registradoEm: n.registradoEm })) } : {}),

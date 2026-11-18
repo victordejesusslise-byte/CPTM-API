@@ -109,11 +109,11 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             return null;
         if (troca.Status is "Pedida" or "Reprovada")
             throw new RegraDeNegocioException("A liberação sai depois que a troca é aprovada.");
-        var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
+        var (codigoSaiu, secaoSaiu) = await PecaQueSai(troca);
         var nomes = await Nomes();
-        return new DocumentoPdf("Liberação para troca", $"LB-{idTroca:0000}", $"{saiu.Codigo} · km {Km(troca.Km)}", DateTime.Now,
-        [
-            SecaoPeca(saiu, "Peça que sai"),
+        var secoes = new List<SecaoPdf>
+        {
+            secaoSaiu,
             new("Pedido e aprovação",
             [
                 new("Origem", troca.Origem), new("Motivo", troca.Motivo ?? (troca.IdInspecao is int i ? $"inspeção reprovada (LI-{i:0000})" : "—")),
@@ -124,9 +124,24 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             new("Peça separada", troca.IdDormenteEntrou is null
                 ? [new("Peça", troca.Status == "AguardandoPeca" ? "aguardando peça compatível no armazém" : "ainda não separada")]
                 : [new("Peça", troca.CodigoEntrou ?? ""), new("Tag", troca.TagEntrou ?? ""),
-                   new("Separada por", troca.IdUsuarioSeparou is int s ? $"{Nome(nomes, s)} em {Data(troca.DataSeparacao)}" : "—")]),
-            await SecaoVistorias(troca.IdDormenteSaiu, nomes)
-        ]);
+                   new("Separada por", troca.IdUsuarioSeparou is int s ? $"{Nome(nomes, s)} em {Data(troca.DataSeparacao)}" : "—")])
+        };
+        // As vistorias são da peça cadastrada; o dormente antigo sem cadastro não tem.
+        if (troca.IdDormenteSaiu is int idSaiu)
+            secoes.Add(await SecaoVistorias(idSaiu, nomes));
+        return new DocumentoPdf("Liberação para troca", $"LB-{idTroca:0000}", $"{codigoSaiu} · km {Km(troca.Km)}", DateTime.Now, secoes);
+    }
+
+    /// <summary>
+    /// A peça que sai, para o laudo: a cadastrada, ou o dormente antigo sem cadastro que saiu num lote só pelo km (Victor, 2026-11-17).
+    /// Devolve o código para o subtítulo e a seção da peça.
+    /// </summary>
+    private async Task<(string Codigo, SecaoPdf Secao)> PecaQueSai(TrocaDto troca)
+    {
+        if (troca.IdDormenteSaiu is int id && await consulta.BuscarPorId(id) is { } saiu)
+            return (saiu.Codigo ?? "", SecaoPeca(saiu, "Peça que sai"));
+        return ("Dormente antigo", new SecaoPdf("Peça que sai",
+            [new("Peça", "dormente antigo, sem cadastro"), new("Tag", "nunca teve tag"), new("Km", Km(troca.Km))]));
     }
 
     /// <summary>O laudo da troca: cresce a cada passo, e a versão sobe junto.</summary>
@@ -145,13 +160,13 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
         if (troca.Data is not null)
             passos.Add(new[] { "Feita", Nome(nomes, troca.IdUsuarioFez), Data(troca.Data), $"equipe {troca.Equipe}" });
         var versao = passos.Count + recusas.Count;
-        var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
+        var (codigoSaiu, secaoSaiu) = await PecaQueSai(troca);
         var campos = new List<CampoPdf> { new("Situação", troca.Status), new("Dias desde o pedido", troca.DiasDesdeOPedido.ToString()) };
         if (troca.IdLoteTroca is int idLote)
             campos.Add(new("Lote", LoteTrocaService.Codigo(idLote))); // a troca feita num lote de troca: o laudo do lote tem as outras
         var secoes = new List<SecaoPdf>
         {
-            SecaoPeca(saiu, "Peça que sai"),
+            secaoSaiu,
             new("Passos", campos, new TabelaPdf(["Passo", "Quem", "Quando", "Detalhe"], passos)),
             new("Recusas da via", [], new TabelaPdf(["Data", "Quem", "Motivo", "Decisão do técnico"],
                 recusas.Select(r => (IReadOnlyList<string>)[Data(r.Data), Nome(nomes, r.IdUsuario), r.Motivo,
@@ -166,8 +181,10 @@ public class LaudoService(IDocumentoPdfRepository pdf, IPecaRepository pecas, IH
             secoes.Add(new SecaoPdf("Fotos", [], null, fotosDaTroca));
         if (troca.IdInspecao is int idInspecao && await inspecoes.BuscarPorId(idInspecao) is { IdAlerta: int idAlerta } && await alertas.BuscarPorId(idAlerta) is { } alerta)
             secoes.Add(SecaoAlerta(alerta));
-        secoes.Add(await SecaoVistorias(troca.IdDormenteSaiu, nomes));
-        return new DocumentoPdf("Laudo da troca", $"LD-{idTroca:0000}-v{versao}", $"{saiu.Codigo} · km {Km(troca.Km)}", DateTime.Now, secoes);
+        // As vistorias são da peça cadastrada; o dormente antigo sem cadastro não tem.
+        if (troca.IdDormenteSaiu is int idSaiu)
+            secoes.Add(await SecaoVistorias(idSaiu, nomes));
+        return new DocumentoPdf("Laudo da troca", $"LD-{idTroca:0000}-v{versao}", $"{codigoSaiu} · km {Km(troca.Km)}", DateTime.Now, secoes);
     }
 
     // ---------- lote de troca (Victor, 2026-11-11: um laudo para o lote inteiro) ----------

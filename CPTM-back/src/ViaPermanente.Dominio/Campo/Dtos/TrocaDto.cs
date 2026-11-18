@@ -4,7 +4,7 @@ namespace ViaPermanente.Dominio.Campo.Dtos;
 /// <param name="Id">id da troca (→ TROCA); nos laudos, LB-0001 e LD-0001.</param>
 /// <param name="Status">Pedida, Aprovada, AguardandoPeca, Separada, Feita, Reprovada, Recusada ou Cancelada.</param>
 /// <param name="Origem">Inspecao (inspeção reprovada), Requisicao (pedido com motivo) ou Lote (feita num lote de troca).</param>
-/// <param name="IdDormenteSaiu">id da peça que sai da via (→ DORMENTE).</param>
+/// <param name="IdDormenteSaiu">id da peça que sai da via (→ DORMENTE); nulo: dormente antigo, sem cadastro, que saiu num lote pelo km.</param>
 /// <param name="CodigoSaiu">código impresso da peça que sai: DM-E(empresa)-L(lote)-(id da peça), ex.: DM-E01-L01-0028.</param>
 /// <param name="TagSaiu">a tag UHF ativa da peça que sai.</param>
 /// <param name="IdDormenteEntrou">id da peça que entra (→ DORMENTE); nulo antes da separação.</param>
@@ -32,9 +32,10 @@ namespace ViaPermanente.Dominio.Campo.Dtos;
 /// <param name="NoiteDoPlano">a noite em que a troca será feita.</param>
 /// <param name="Urgente">aprovada depois do corte para entrar na mesma noite.</param>
 /// <param name="IdLoteTroca">o lote de troca em que esta troca foi feita (→ LOTE_TROCA); nulo na troca avulsa.</param>
+/// <param name="SaiuNuncaTeveTag">a peça que sai nunca teve tag (Victor, 2026-11-17): saiu sem leitura e sem falha de tag.</param>
 public record TrocaDto(int Id, string Status, string Origem,
-    int IdDormenteSaiu, string? CodigoSaiu, string? TagSaiu, int? IdDormenteEntrou, string? CodigoEntrou, string? TagEntrou,
+    int? IdDormenteSaiu, string? CodigoSaiu, string? TagSaiu, int? IdDormenteEntrou, string? CodigoEntrou, string? TagEntrou,
     int? IdInspecao, int? IdTrecho, decimal? Km, string? Motivo, string? Observacao,
     int IdUsuarioPediu, DateTime DataPedido, int? IdUsuarioAprovou, DateTime? DataAprovacao, string? MotivoReprovacao,
     int? IdUsuarioSeparou, DateTime? DataSeparacao, int? IdUsuarioFez, DateTime? Data, string? Equipe, string? FotoArquivo,
-    string? Cancelamento, int DiasDesdeOPedido, RecusaDto? UltimaRecusa, DateOnly? NoiteDoPlano, bool Urgente, int? IdLoteTroca = null);
+    string? Cancelamento, int DiasDesdeOPedido, RecusaDto? UltimaRecusa, DateOnly? NoiteDoPlano, bool Urgente, int? IdLoteTroca = null, bool SaiuNuncaTeveTag = false);

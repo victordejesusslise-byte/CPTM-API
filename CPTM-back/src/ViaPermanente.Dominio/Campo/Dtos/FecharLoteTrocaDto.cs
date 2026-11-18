@@ -15,6 +15,11 @@ public class ParDoLoteDto
     public bool TagSaiuNaoResponde { get; init; }
     /// <summary>Só com a tag da peça que sai sem responder: a peça escolhida na lista da faixa.</summary>
     public int? IdDormenteSaiu { get; init; }
+    /// <summary>
+    /// verdadeiro quando o dormente que sai é antigo e nunca teve tag nem cadastro (Victor, 2026-11-17): aí o Km é obrigatório e tem que estar
+    /// na faixa do lote; a troca anota só o km. Não marca junto com TagSaiuNaoResponde.
+    /// </summary>
+    public bool SaiuNuncaTeveTag { get; init; }
     /// <summary>a leitura da tag da peça que entra (uma das separadas); obrigatória.</summary>
     [Required] public LeituraDto LeituraEntrou { get; init; } = new();
     /// <summary>o caminho da foto da peça nova no lugar (uma por dormente); obrigatória.</summary>

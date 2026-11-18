@@ -206,7 +206,7 @@ public class DemonstracaoService(IApresentacaoRepository repo)
             var leituras = await repo.Ids<LeituraVia, long>(l => passagens.Contains(l.IdPassagem) || (l.IdDormente != null && dorm.Contains(l.IdDormente.Value)), l => l.IdLeituraVia);
             var alertas = await repo.Ids<Alerta, int>(a => (a.IdDormente != null && dorm.Contains(a.IdDormente.Value)) || (a.IdLeituraVia != null && leituras.Contains(a.IdLeituraVia.Value)), a => a.IdAlerta);
             var inspecoes = await repo.Ids<Inspecao, int>(i => dorm.Contains(i.IdDormente) || (i.IdAlerta != null && alertas.Contains(i.IdAlerta.Value)), i => i.IdInspecao);
-            var trocas = await repo.Ids<Troca, int>(t => dorm.Contains(t.IdDormenteSaiu) || (t.IdDormenteEntrou != null && dorm.Contains(t.IdDormenteEntrou.Value)) || (t.IdInspecao != null && inspecoes.Contains(t.IdInspecao.Value)), t => t.IdTroca);
+            var trocas = await repo.Ids<Troca, int>(t => (t.IdDormenteSaiu != null && dorm.Contains(t.IdDormenteSaiu.Value)) || (t.IdDormenteEntrou != null && dorm.Contains(t.IdDormenteEntrou.Value)) || (t.IdInspecao != null && inspecoes.Contains(t.IdInspecao.Value)), t => t.IdTroca);
 
             apagados += await repo.Apagar<RecusaTroca>(r => r.IdTroca != null && trocas.Contains(r.IdTroca.Value));
             apagados += await repo.Apagar<InspecaoCorrecao>(c => inspecoes.Contains(c.IdInspecao) || (c.IdTrocaCancelada != null && trocas.Contains(c.IdTrocaCancelada.Value)));

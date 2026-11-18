@@ -49,7 +49,8 @@
       <app-leitura-tag [(tag)]="tag" [(metodo)]="metodo" (lida)="buscar()" />
       <div class="acoes"><button mat-stroked-button type="button" (click)="buscar()">Buscar peça</button></div>
       @if (buscando()) { <app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Buscando a peça…" /> }
-      @if (!buscando() && peca(); as p) {
+      <!-- A peça sozinha: para trocar de pilha a que já está numa, ou quando o lote não tem nada a guardar (a API diz o porquê). -->
+      @if (!buscando() && peca(); as p) { @if (p.idPilha || !aGuardarNoLote()) {
         <div class="cartao">
           <h2 class="mono">{{ p.codigo }}</h2>
           <p class="rotulo">{{ p.especie }} · {{ metros(p.comprimentoM) }} · {{ p.classe }}ª · {{ p.armazem }} · pilha {{ p.pilha ?? 'nenhuma' }} · {{ p.situacao | legivel }} <app-nota [nota]="p.nota" /></p>
@@ -66,7 +67,54 @@
             <button mat-flat-button type="button" (click)="guardar()" [disabled]="enviando()" [appCarregando]="enviando()">{{ p.entradaArmazemEm && p.idPilha ? 'Trocar de pilha' : 'Guardar na pilha' }}</button>
           </div>
         </div>
-      }
+      } }
+
+      <!-- O lote inteiro (Victor, 2026-11-17): um grupo por tamanho e classe, um armazém para todos e a pilha de cada grupo já sugerida. -->
+      @if (!buscando() && lote(); as lt) { @if (aGuardarNoLote()) {
+        <div class="cartao pilha lote">
+          <header><h2>Lote <span class="mono">{{ lt.codigoLote }}</span></h2>
+            <span class="nota">da peça <span class="mono">{{ lt.codigoLido }}</span> · {{ lt.pecas }} dormentes · {{ aGuardarNoLote() }} a guardar</span></header>
+          <mat-form-field appearance="outline">
+            <mat-label>Armazém (o lote todo vai para ele)</mat-label>
+            <mat-select [value]="armazemDoLote()" (selectionChange)="armazemDoLote.set($event.value)"><app-busca-opcoes />
+              @for (a of valorDe(armazens) ?? []; track a.id) { <mat-option [value]="a.id">{{ a.nome }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          <div class="tabela">
+            <table class="simples">
+              <thead><tr><th>Tamanho e classe</th><th>Peças</th><th>Pilha</th></tr></thead>
+              <tbody>
+                @for (g of lt.grupos; track chave(g)) {
+                  <tr>
+                    <td>{{ metros(g.comprimentoM) }} · {{ g.classe }}ª</td>
+                    <td>@if (g.aGuardar) {<b>{{ g.aGuardar }} a guardar</b>} @else {nada a guardar}@if (g.jaNaPilha) { · {{ g.jaNaPilha }} já na pilha }@if (g.naoAprovadas) { · {{ g.naoAprovadas }} {{ g.naoAprovadas === 1 ? 'não aprovada' : 'não aprovadas' }} }</td>
+                    <td>
+                      <!-- Só o grupo com peça esperando escolhe pilha; sem pilha desse tamanho e classe no armazém, o grupo fica de fora. -->
+                      @if (g.aGuardar) {
+                        @if (pilhasDoGrupo(g).length) {
+                          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pilha-do-grupo">
+                            <mat-select [value]="pilhaDoGrupo(g)" (selectionChange)="escolherPilha(g, $event.value)" [attr.aria-label]="'Pilha de ' + metros(g.comprimentoM) + ' de ' + g.classe + 'ª'">
+                              @for (pl of pilhasDoGrupo(g); track pl.id) { <mat-option [value]="pl.id">{{ pl.codigo }} · {{ pl.pecas }} peças</mat-option> }
+                            </mat-select>
+                          </mat-form-field>
+                        } @else { <span class="vermelho">sem pilha deste tamanho e classe neste armazém</span> }
+                      }
+                    </td>
+                  </tr>
+                }
+                <tr class="total">
+                  <td>Lote inteiro</td>
+                  <td><b>{{ aGuardarNoLote() }} a guardar</b>@if (totais().jaNaPilha) { · {{ totais().jaNaPilha }} já na pilha }@if (totais().naoAprovadas) { · {{ totais().naoAprovadas }} {{ totais().naoAprovadas === 1 ? 'não aprovada' : 'não aprovadas' }} }</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="acoes">
+            <button mat-flat-button type="button" (click)="guardarLote()" [disabled]="enviando() || !aGuardarComPilha()" [appCarregando]="enviando()">Guardar as {{ aGuardarComPilha() }} peças nas pilhas</button>
+          </div>
+        </div>
+      } }
     </div>
   }
   }

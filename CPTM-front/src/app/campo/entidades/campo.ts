@@ -15,13 +15,16 @@ export interface AvisoTagDto { idLeitura: number; tag: string; km: number | null
 export interface RecusaDto { id: number; data: string; idUsuario: number; motivo: string; descricao: string | null; fotoArquivo: string; decisao: string | null; dataDecisao: string | null; resposta: string | null; }
 export interface TrocaDto {
   id: number; status: StatusTroca; origem: string;
-  idDormenteSaiu: number; codigoSaiu: string | null; tagSaiu: string | null; idDormenteEntrou: number | null; codigoEntrou: string | null; tagEntrou: string | null;
+  /** idDormenteSaiu nulo: dormente antigo, sem cadastro, que saiu num lote pelo km (Victor, 2026-11-17). */
+  idDormenteSaiu: number | null; codigoSaiu: string | null; tagSaiu: string | null; idDormenteEntrou: number | null; codigoEntrou: string | null; tagEntrou: string | null;
   idInspecao: number | null; idTrecho: number | null; km: number | null; motivo: string | null; observacao: string | null;
   idUsuarioPediu: number; dataPedido: string; idUsuarioAprovou: number | null; dataAprovacao: string | null; motivoReprovacao: string | null;
   idUsuarioSeparou: number | null; dataSeparacao: string | null; idUsuarioFez: number | null; data: string | null; equipe: string | null; fotoArquivo: string | null;
   cancelamento: string | null; diasDesdeOPedido: number; ultimaRecusa: RecusaDto | null;
   /** A troca feita num lote de troca. */
   idLoteTroca?: number | null;
+  /** A peça que sai nunca teve tag: saiu sem leitura e sem falha de tag (Victor, 2026-11-17). */
+  saiuNuncaTeveTag?: boolean;
 }
 
 /** Lote de troca (Victor, 2026-11-11): várias trocas de uma vez; as peças só aparecem na noite, pela tag. */
@@ -43,9 +46,9 @@ export interface LoteTrocaDto {
 }
 export interface NovoLoteTrocaDto { idTrecho: number; kmInicio: number; kmFim: number; quantidade: number; idTamanho: number; motivo: string; observacao?: string | null; }
 /** Um dormente trocado no lote; a foto vai pela fila, no par da mesma posição. */
-export interface ParDoLoteDto { leituraSaiu: LeituraDto | null; tagSaiuNaoResponde: boolean; idDormenteSaiu: number | null; leituraEntrou: LeituraDto; km?: number | null; registradoEm?: string; }
+export interface ParDoLoteDto { leituraSaiu: LeituraDto | null; tagSaiuNaoResponde: boolean; /** o dormente antigo nunca teve tag: vale o km */ saiuNuncaTeveTag?: boolean; idDormenteSaiu: number | null; leituraEntrou: LeituraDto; km?: number | null; registradoEm?: string; }
 /** A obrigatória do lote que a via não conseguiu trocar: motivo e foto (a foto vai pela fila, depois das dos pares). */
 export interface NaoDeuDto { idTroca: number; motivo: string; descricao?: string | null; registradoEm?: string; }
 export interface CompativelDto { peca: PecaDto; distanciaKm: number | null; idadeDias: number; sugerida: boolean; }
-export interface ExecutarTrocaDto { leituraSaiu?: LeituraDto | null; tagSaiuNaoResponde: boolean; leituraEntrou: LeituraDto; equipe: string; fotoArquivo: string; km?: number | null; idCliente?: string; registradoEm?: string; }
+export interface ExecutarTrocaDto { leituraSaiu?: LeituraDto | null; tagSaiuNaoResponde: boolean; /** a peça que sai nunca teve tag */ saiuNuncaTeveTag?: boolean; leituraEntrou: LeituraDto; equipe: string; fotoArquivo: string; km?: number | null; idCliente?: string; registradoEm?: string; }
 export interface RecusarTrocaDto { motivo: string; descricao?: string | null; fotoArquivo: string; idCliente?: string; registradoEm?: string; }

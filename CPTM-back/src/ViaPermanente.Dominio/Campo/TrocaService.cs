@@ -134,25 +134,38 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         var agora = DateTime.Now;
         var noCampo = HoraDoCampo.De(dto.RegistradoEm, agora);
 
+        // A troca avulsa sempre tem a peça do pedido; só o lote anota a saída de um dormente antigo sem cadastro.
+        var idSaiu = troca.IdDormenteSaiu ?? throw new RegraDeNegocioException("A troca não tem a peça que sai.");
+        // As duas caixas não marcam juntas: "não responde" é falha da tag; "nunca teve tag" não é falha (Victor, 2026-11-17).
+        if (dto.TagSaiuNaoResponde && dto.SaiuNuncaTeveTag)
+            throw new RegraDeNegocioException("Marque só uma caixa: a tag da peça que sai não responde, ou o dormente nunca teve tag.");
+
         // A peça que sai: é a do pedido, não a vizinha. Se a tag não responde, vai pelo km e pela foto.
-        if (dto.TagSaiuNaoResponde)
+        if (dto.SaiuNuncaTeveTag)
+        {
+            // Nunca teve tag: segue sem ler e sem gravar falha. A peça com tag ativa tem que ser lida (ou marcada como "não responde").
+            if (await pecas.TagVigente(idSaiu) is not null)
+                throw new RegraDeNegocioException("A peça que sai tem tag: leia a tag, ou marque que ela não responde.");
+            troca.SaiuNuncaTeveTag = true;
+        }
+        else if (dto.TagSaiuNaoResponde)
             mudancas.Leituras.Add(new LeituraDormente
             {
-                IdDormente = troca.IdDormenteSaiu, IdUsuario = idUsuario, MetodoCaptura = MetodoCaptura.ModuloUhf, Leitura = false,
+                IdDormente = idSaiu, IdUsuario = idUsuario, MetodoCaptura = MetodoCaptura.ModuloUhf, Leitura = false,
                 DataLeitura = noCampo, RegistradoEm = noCampo, RecebidoEm = agora, Observacao = "Tag da peça que sai não respondeu na troca"
             });
         else
         {
             if (dto.LeituraSaiu is null)
                 throw new RegraDeNegocioException("Leia a tag da peça que sai, ou marque que ela não responde.");
-            var tagSaiu = await pecas.TagVigente(troca.IdDormenteSaiu) ?? throw new RegraDeNegocioException("A peça que sai não tem tag ativa: marque que ela não responde.");
-            mudancas.Leituras.Add(NoCampo(await leituras.ConferirPeca(troca.IdDormenteSaiu, tagSaiu, dto.LeituraSaiu, idUsuario), noCampo));
+            var tagSaiu = await pecas.TagVigente(idSaiu) ?? throw new RegraDeNegocioException("A peça que sai não tem tag ativa: marque que ela não responde.");
+            mudancas.Leituras.Add(NoCampo(await leituras.ConferirPeca(idSaiu, tagSaiu, dto.LeituraSaiu, idUsuario), noCampo));
         }
         // A peça que entra: é a que o pátio separou. A leitura dela fica na movimentação de saída.
         var tagEntrou = await pecas.TagVigente(idEntrou) ?? throw new RegraDeNegocioException("A peça que entra não tem tag ativa.");
         var leituraEntrou = NoCampo(await leituras.ConferirPeca(idEntrou, tagEntrou, dto.LeituraEntrou, idUsuario), noCampo);
 
-        var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
+        var saiu = (await consulta.BuscarPorId(idSaiu))!;
         troca.Status = StatusTroca.Feita;
         troca.IdUsuarioFez = idUsuario;
         troca.Data = noCampo;
@@ -169,10 +182,10 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
         }, leituraEntrou));
         // A nova herda o km e o trecho; a velha ganha retirada_em.
         mudancas.Pecas.Add((idEntrou, d => { d.IdTrecho = saiu.IdTrecho ?? troca.IdTrecho; d.KmProjeto = troca.Km ?? saiu.KmProjeto; d.IdPilha = null; }));
-        mudancas.Pecas.Add((troca.IdDormenteSaiu, d => d.RetiradaEm = noCampo));
+        mudancas.Pecas.Add((idSaiu, d => d.RetiradaEm = noCampo));
         await trocas.Gravar(new MudancasDaTroca
         {
-            TrocaAlterada = mudancas.TrocaAlterada, FecharAlertas = (troca.IdDormenteSaiu, idUsuario, noCampo)
+            TrocaAlterada = mudancas.TrocaAlterada, FecharAlertas = (idSaiu, idUsuario, noCampo)
         }.Com(mudancas));
         return await BuscarPorId(idTroca);
     }
@@ -324,7 +337,8 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
 
     private async Task<IReadOnlyList<CompativelDto>> Compativeis(Troca troca)
     {
-        var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu))!;
+        // Só a troca avulsa (com a peça do pedido) separa peça compatível.
+        var saiu = (await consulta.BuscarPorId(troca.IdDormenteSaiu ?? throw new RegraDeNegocioException("A troca não tem a peça que sai.")))!;
         var classeExigida = troca.IdTrecho is int idTrecho && await trocas.BuscarTrecho(idTrecho) is { } trecho ? trecho.ClasseExigida : saiu.Classe;
         var fora = (await trocas.PecasReservadas()).Append(saiu.Id).ToHashSet();
         var armazens = (await catalogo.ListarArmazens()).ToDictionary(a => a.IdArmazem, a => a.Km);
@@ -335,13 +349,14 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
     {
         if (lista.Count == 0)
             return [];
-        var ids = lista.SelectMany(t => new[] { t.IdDormenteSaiu, t.IdDormenteEntrou ?? 0 }).Where(i => i > 0).Distinct().ToList();
+        // A peça que sai pode faltar (dormente antigo sem cadastro, num lote): só entram os ids que existem.
+        var ids = lista.SelectMany(t => new[] { t.IdDormenteSaiu ?? 0, t.IdDormenteEntrou ?? 0 }).Where(i => i > 0).Distinct().ToList();
         var porPeca = await consulta.PorIds(ids);
         var recusas = (await trocas.Recusas(lista.Select(t => t.IdTroca).ToList())).GroupBy(r => r.IdTroca).ToDictionary(g => g.Key, g => g.Last());
         var agora = DateTime.Now;
         return lista.Select(t =>
         {
-            var saiu = porPeca.GetValueOrDefault(t.IdDormenteSaiu);
+            var saiu = t.IdDormenteSaiu is int s ? porPeca.GetValueOrDefault(s) : null;
             var entrou = t.IdDormenteEntrou is int e ? porPeca.GetValueOrDefault(e) : null;
             var r = recusas.GetValueOrDefault(t.IdTroca);
             return new TrocaDto(t.IdTroca, t.Status.ToString(), t.Origem.ToString(), t.IdDormenteSaiu, saiu?.Codigo, saiu?.Tag,
@@ -350,7 +365,7 @@ public class TrocaService(ITrocaRepository trocas, IPecaRepository pecas, IInspe
                 t.IdUsuarioSeparou, t.DataSeparacao, t.IdUsuarioFez, t.Data, t.Equipe, t.FotoArquivo, t.Cancelamento,
                 (int)((t.Data ?? agora) - t.DataPedido).TotalDays,
                 r is null ? null : new RecusaDto(r.IdRecusa, r.Data, r.IdUsuario, r.Motivo, r.Descricao, r.FotoArquivo,
-                    r.Decisao?.ToString(), r.IdUsuarioDecisao, r.DataDecisao, r.Resposta), t.NoiteDoPlano, t.Urgente, t.IdLoteTroca);
+                    r.Decisao?.ToString(), r.IdUsuarioDecisao, r.DataDecisao, r.Resposta), t.NoiteDoPlano, t.Urgente, t.IdLoteTroca, t.SaiuNuncaTeveTag);
         }).ToList();
     }
 

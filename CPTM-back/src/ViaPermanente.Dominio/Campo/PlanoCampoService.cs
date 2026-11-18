@@ -42,7 +42,8 @@ public class PlanoCampoService(TrocaService trocas, AlertaService alertas, PecaS
         var abertos = await alertas.Listar(null, StatusAlerta.Aberto);
         // As peças que o celular precisa: a que sai em cada troca e a de cada alerta.
         var daPeca = new List<PecaDto>();
-        foreach (var id in daNoite.Select(t => t.IdDormenteSaiu).Concat(abertos.Where(a => a.IdDormente is not null).Select(a => a.IdDormente!.Value)).Distinct())
+        // O dormente antigo sem cadastro (troca feita no lote) não tem peça para baixar: só entram os ids que existem.
+        foreach (var id in daNoite.Select(t => t.IdDormenteSaiu).OfType<int>().Concat(abertos.Where(a => a.IdDormente is not null).Select(a => a.IdDormente!.Value)).Distinct())
             if (await pecas.BuscarPorId(id) is { } peca)
                 daPeca.Add(peca);
         return new PlanoCampoDto(noite, agora, daNoite.OrderBy(t => t.IdTrecho).ThenBy(t => t.Km).ToList(), abertos, daPeca, await Lotes(noite));

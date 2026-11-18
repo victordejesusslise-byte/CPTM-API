@@ -8,6 +8,7 @@ import { PreviaLaudo } from '../../../laudos/componentes/previa-laudo';
 import { TipoLaudo } from '../../../laudos/servicos/laudos';
 import { LoteTrocaDto, ObrigatoriaDto, StatusLoteTroca } from '../../entidades/campo';
 import { LotesTroca } from '../../servicos/lotes-troca';
+import { pecaQueSai } from './resumo-troca';
 
 /** As peças do lote: as aprovadas (ou pedidas) mais as trocas obrigatórias ainda a trocar (Victor, 2026-11-12). */
 export const pecasDoLote = (l: LoteTrocaDto): number =>
@@ -99,7 +100,7 @@ export const ROTULO_LOTE: Record<StatusLoteTroca, string> = {
         <p class="lbl">Trocas do lote · conferidas pela tag</p>
         <div class="cartoes-alerta">
           @for (t of l.trocas; track t.id) {
-            <div class="cartao-alerta"><span class="topo-alerta"><b class="mono">{{ t.codigoSaiu }} → {{ t.codigoEntrou }}</b><span class="mono nota">km {{ km(t.km) }}</span></span>
+            <div class="cartao-alerta"><span class="topo-alerta"><b class="mono">{{ pecaQueSai(t) }} → {{ t.codigoEntrou }}</b><span class="mono nota">km {{ km(t.km) }}</span></span>
               <span class="nota">{{ dataHora(t.data) }} · equipe {{ t.equipe }}</span></div>
           }
         </div>
@@ -132,6 +133,8 @@ export class LoteAberto {
   protected readonly ehTecnico = computed(() => this.sessao.temCargo('Tecnico'));
   protected readonly rotulo = ROTULO_LOTE;
   protected readonly km = km;
+  /** o nome da peça que sai: o código, ou "Dormente antigo" sem cadastro (Victor, 2026-11-17) */
+  protected readonly pecaQueSai = pecaQueSai;
   protected readonly metros = metros;
   protected readonly dataHora = dataHora;
 

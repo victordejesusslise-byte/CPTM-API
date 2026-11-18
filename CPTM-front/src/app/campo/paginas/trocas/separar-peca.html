@@ -16,18 +16,11 @@
     </header>
     <app-resumo-troca [t]="t" />
     @if (aba() === 'fila' && (t.status === 'Aprovada' || t.status === 'AguardandoPeca')) {
-      <p class="lbl">Peças compatíveis · mesmo comprimento, classe que o trecho aceita · sai primeiro a mais antiga</p>
-      @if (valorDe(compativeis)?.length) {
-        <div class="opcoes">
-          @for (c of valorDe(compativeis) ?? []; track c.peca.id) {
-            <label class="opcao" [class.marcada]="escolhida()?.peca?.id === c.peca.id">
-              <input type="radio" name="compativel" [checked]="escolhida()?.peca?.id === c.peca.id" (change)="escolhida.set(c)" />
-              <span class="mono">{{ c.peca.codigo }}</span>
-              <span>{{ c.peca.especie }} · {{ metros(c.peca.comprimentoM) }} · {{ c.peca.classe }}ª · pilha {{ c.peca.pilha ?? '—' }}</span>
-              <span class="nota">{{ c.sugerida ? 'sugerida · ' : '' }}{{ c.idadeDias }} dias no armazém</span>
-            </label>
-          }
-        </div>
+      @let pecas = valorDe(compativeis) ?? [];
+      <!-- Todas as compatíveis têm o mesmo comprimento: o tamanho sai da primeira (Victor, 2026-11-17: a lista virou tabela). -->
+      <p class="lbl">Peças compatíveis · {{ pecas.length ? metros(pecas[0].peca.comprimentoM) : 'mesmo comprimento' }} · classe que o trecho aceita · sai primeiro a mais antiga · toque para escolher</p>
+      @if (pecas.length) {
+        <app-tabela-compativeis [lista]="pecas" [(escolhida)]="escolhida" />
         @if (escolhida(); as c) {
           <app-leitura-tag [rotulo]="'Leia a tag da peça ' + c.peca.codigo" [(tag)]="tag" [(metodo)]="metodo" (lida)="separar(t)" />
           <div class="acoes"><button mat-flat-button type="button" (click)="separar(t)" [disabled]="enviando()" [appCarregando]="enviando()">Separar esta peça</button></div>
@@ -52,7 +45,7 @@
     }
     @for (t of valorDe(lista) ?? []; track t.id) {
       <button type="button" class="cartao-alerta" [class.selecionado]="idAberta() === t.id" (click)="abrir(t)">
-        <span class="topo-alerta"><b class="mono">{{ t.codigoSaiu ?? 'peça ' + t.idDormenteSaiu }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
+        <span class="topo-alerta"><b class="mono">{{ pecaQueSai(t) }}</b><span class="mono nota">{{ t.km !== null ? 'km ' + km(t.km) : '' }}</span></span>
         <span class="tipo">{{ rotulo[t.status] }}@if (t.codigoEntrou) { · separada {{ t.codigoEntrou }} }</span>
         <span class="nota">pedida há {{ t.diasDesdeOPedido }} dias</span>
       </button>

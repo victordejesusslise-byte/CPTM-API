@@ -13,6 +13,8 @@ public class ExecutarTrocaDto
     public LeituraDto? LeituraSaiu { get; init; }
     /// <summary>verdadeiro quando a tag da peça que sai não responde: a troca vai pelo km e pela foto.</summary>
     public bool TagSaiuNaoResponde { get; init; }
+    /// <summary>verdadeiro quando a peça que sai nunca teve tag (Victor, 2026-11-17): não lê a peça e não grava falha; não marca junto com TagSaiuNaoResponde.</summary>
+    public bool SaiuNuncaTeveTag { get; init; }
     /// <summary>a leitura da tag da peça que entra (a separada pelo pátio); obrigatória.</summary>
     [Required] public LeituraDto LeituraEntrou { get; init; } = new();
     /// <summary>a equipe de campo que fez a troca (ex.: "Equipe A"); obrigatória.</summary>

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { finalize } from 'rxjs';
 import { Esqueleto } from '../../../compartilhado/componentes/esqueleto/esqueleto';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
@@ -6,7 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { dataHora, diasDesde, mensagemDeErro, metros } from '../../../compartilhado/utilitarios/formato';
 import { novoIdCliente } from '../../../compartilhado/utilitarios/arquivo';
 import { MetodoCaptura } from '../../../compartilhado/entidades/enums';
-import { ConferenciaDto, PecaDto } from '../../../pecas/entidades/peca';
+import { ConferenciaDto, GrupoDoLoteDto, LoteParaGuardarDto, PecaDto } from '../../../pecas/entidades/peca';
+import { PilhaDto } from '../../../catalogos/entidades/catalogo';
 import { Catalogos } from '../../../catalogos/servicos/catalogos';
 import { Conferencias } from '../../servicos/conferencias';
 import { Pecas } from '../../../pecas/servicos/pecas';
@@ -77,8 +78,56 @@ export class Armazem {
       next: (p) => {
         this.peca.set(p);
         this.idPilha.set(p.idPilha);
+        this.buscarLote();
       },
       error: (e) => this.erro.set(e?.status === 404 ? 'Nenhuma peça com essa tag.' : mensagemDeErro(e)),
+    });
+  }
+
+  // O lote inteiro (Victor, 2026-11-17): a tag lida acha o lote, separado por tamanho e classe; cada grupo vai para a pilha dele.
+  protected readonly lote = signal<LoteParaGuardarDto | null>(null);
+  /** O armazém do lote todo: começa no da chegada da peça lida e pode trocar. */
+  protected readonly armazemDoLote = linkedSignal(() => this.lote()?.idArmazem ?? null);
+  /** A pilha escolhida à mão para cada grupo (chave tamanho-classe); trocar de armazém ou de lote volta para as sugeridas. */
+  private readonly pilhasEscolhidas = linkedSignal<{ lote: LoteParaGuardarDto | null; armazem: number | null }, Record<string, number>>({
+    source: () => ({ lote: this.lote(), armazem: this.armazemDoLote() }),
+    computation: () => ({}),
+  });
+  protected readonly chave = (g: GrupoDoLoteDto) => `${g.idTamanho}-${g.classe}`;
+  /** As pilhas do armazém escolhido que servem para o grupo: mesmo comprimento e mesma classe. */
+  protected pilhasDoGrupo(g: GrupoDoLoteDto): PilhaDto[] {
+    const armazem = valorDe(this.armazens)?.find((a) => a.id === this.armazemDoLote());
+    return armazem?.pilhas.filter((p) => p.comprimentoM === g.comprimentoM && p.classe === g.classe) ?? [];
+  }
+  /** A pilha do grupo: a escolhida à mão ou, sem ela, a primeira que serve (a mesma que a API sugere). */
+  protected pilhaDoGrupo(g: GrupoDoLoteDto): number | null {
+    return this.pilhasEscolhidas()[this.chave(g)] ?? this.pilhasDoGrupo(g)[0]?.id ?? null;
+  }
+  protected escolherPilha(g: GrupoDoLoteDto, idPilha: number): void {
+    this.pilhasEscolhidas.update((e) => ({ ...e, [this.chave(g)]: idPilha }));
+  }
+  /** Quantas peças do lote esperam pilha, e quantas delas o botão guarda (as dos grupos que têm pilha neste armazém). */
+  protected readonly aGuardarNoLote = computed(() => (this.lote()?.grupos ?? []).reduce((s, g) => s + g.aGuardar, 0));
+  protected readonly aGuardarComPilha = computed(() => (this.lote()?.grupos ?? []).filter((g) => g.aGuardar && this.pilhaDoGrupo(g)).reduce((s, g) => s + g.aGuardar, 0));
+  protected readonly totais = computed(() => (this.lote()?.grupos ?? []).reduce((s, g) => ({ jaNaPilha: s.jaNaPilha + g.jaNaPilha, naoAprovadas: s.naoAprovadas + g.naoAprovadas }), { jaNaPilha: 0, naoAprovadas: 0 }));
+
+  /** Busca o lote da peça lida; sem lote (ou sem permissão), a tela fica só com a peça, como antes. */
+  private buscarLote(): void {
+    this.pecas.loteDaTag(this.tag()).subscribe({ next: (l) => this.lote.set(l), error: () => this.lote.set(null) });
+  }
+
+  protected guardarLote(): void {
+    const l = this.lote();
+    const idArmazem = this.armazemDoLote();
+    if (!l || !idArmazem) return;
+    // Só os grupos com peça esperando e com pilha neste armazém vão no pedido.
+    const grupos = l.grupos.filter((g) => g.aGuardar && this.pilhaDoGrupo(g))
+      .map((g) => ({ idTamanho: g.idTamanho, classe: g.classe, idPilha: this.pilhaDoGrupo(g)! }));
+    const quantas = this.aGuardarComPilha();
+    this.executar(this.pecas.guardarLote({ idArmazem, leitura: leitura(this.tag(), this.metodo()), grupos }), (r) => {
+      this.lote.set(r);
+      this.peca.set(null);
+      return `${quantas} peças do lote ${r.codigoLote} guardadas nas pilhas.`;
     });
   }
 
@@ -132,6 +181,7 @@ export class Armazem {
 
   private limpar(): void {
     this.peca.set(null);
+    this.lote.set(null);
     this.mensagem.set(null);
     this.erro.set(null);
   }

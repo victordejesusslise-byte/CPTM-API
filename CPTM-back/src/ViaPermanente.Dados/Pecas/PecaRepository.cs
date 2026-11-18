@@ -127,11 +127,33 @@ public class PecaRepository(ViaPermanenteContext db) : IPecaRepository
         await transacao.CommitAsync();
     }
 
-    public async Task<IReadOnlyList<PecaResumo>> Resumos(int? idDormente = null, int? idFeixe = null, bool soDisponiveis = false, IReadOnlyCollection<int>? ids = null)
+    public async Task GuardarVarias(IReadOnlyList<Movimentacao> entradas, DateTime entradaEm, LeituraDormente leitura)
+    {
+        // Uma transação só: o lote entra inteiro ou nada entra.
+        await using var transacao = await db.Database.BeginTransactionAsync();
+        db.Add(leitura);
+        await db.SaveChangesAsync();
+        // Só a movimentação da peça lida leva a leitura; as outras peças não tiveram a tag lida.
+        foreach (var entrada in entradas)
+            entrada.IdLeitura = entrada.IdDormente == leitura.IdDormente ? leitura.IdLeitura : null;
+        db.AddRange(entradas);
+        await db.SaveChangesAsync();
+        // A pilha de agora fica na peça: uma atualização por pilha, com todas as peças que vão para ela.
+        foreach (var pilha in entradas.GroupBy(e => e.IdPilhaDestino!.Value))
+        {
+            var ids = pilha.Select(e => e.IdDormente).ToList();
+            await db.Set<Dormente>().Where(d => ids.Contains(d.IdDormente))
+                .ExecuteUpdateAsync(s => s.SetProperty(d => d.IdPilha, pilha.Key).SetProperty(d => d.EntradaArmazemEm, entradaEm));
+        }
+        await transacao.CommitAsync();
+    }
+
+    public async Task<IReadOnlyList<PecaResumo>> Resumos(int? idDormente = null, int? idFeixe = null, bool soDisponiveis = false, IReadOnlyCollection<int>? ids = null, int? idLote = null)
     {
         var dormentes = db.Set<Dormente>().AsNoTracking()
             .Where(d => idDormente == null || d.IdDormente == idDormente)
-            .Where(d => idFeixe == null || d.IdFeixe == idFeixe);
+            .Where(d => idFeixe == null || d.IdFeixe == idFeixe)
+            .Where(d => idLote == null || d.IdLote == idLote);
         if (ids is not null)
             dormentes = dormentes.Where(d => ids.Contains(d.IdDormente));
         if (soDisponiveis)

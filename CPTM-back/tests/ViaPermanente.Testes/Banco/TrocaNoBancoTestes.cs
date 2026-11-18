@@ -79,7 +79,7 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         var inspecao = await Reprovar(2);
         var pedida = await Trocas().Pedir(new NovaTrocaDto { IdDormente = await Peca(2), IdInspecao = inspecao.Id }, tecnico);
         Assert.Equal(("Pedida", "Inspecao"), (pedida.Status, pedida.Origem));
-        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Pedir(new NovaTrocaDto { IdDormente = pedida.IdDormenteSaiu, Motivo = "de novo" }, tecnico));
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Pedir(new NovaTrocaDto { IdDormente = pedida.IdDormenteSaiu!.Value, Motivo = "de novo" }, tecnico));
 
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.OperadorVia, via));
         var aprovada = await Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Supervisor, 1);
@@ -280,5 +280,37 @@ public class TrocaNoBancoTestes : IAsyncLifetime
         Assert.Contains("Reprovadas (tag desativada, devolução): 2", pdf.Texto);
         Assert.Contains("Resultado: Confere", pdf.Texto);
         Assert.Null(await BancoDeTeste.Laudos(db, pdf).BoletimRecebimento(999));
+    }
+
+    /// <summary>
+    /// Victor, 2026-11-17: a caixa "Este dormente nunca teve tag" deixa a troca seguir sem ler a peça que sai e sem gravar falha de tag
+    /// (diferente de "não responde"). A peça com tag ativa não pode usar a caixa, e as duas caixas não marcam juntas.
+    /// </summary>
+    [Fact]
+    public async Task Peca_que_nunca_teve_tag_sai_sem_leitura_e_sem_falha()
+    {
+        var idSaiu = await Peca(2);
+        var pedida = await Trocas().Pedir(new NovaTrocaDto { IdDormente = idSaiu, Motivo = "Dormente podre" }, tecnico);
+        await Trocas().Decidir(pedida.Id, new DecisaoTrocaDto { Aprovar = true }, Cargo.Supervisor, 1);
+        var entra = 5;
+        await Trocas().Separar(pedida.Id, new SepararTrocaDto { IdDormente = await Peca(entra), Leitura = Lida(entra) }, patio);
+        ExecutarTrocaDto SemTag(bool naoResponde = false) => new()
+        {
+            SaiuNuncaTeveTag = true, TagSaiuNaoResponde = naoResponde, LeituraEntrou = Lida(entra), Equipe = "Turma de Via 2", FotoArquivo = "fotos/troca.jpg"
+        };
+
+        // A peça 2 tem tag ativa: a caixa é recusada; as duas caixas juntas também.
+        var comTag = await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Executar(pedida.Id, SemTag(), via));
+        Assert.Contains("tem tag", comTag.Message);
+        await Assert.ThrowsAsync<RegraDeNegocioException>(() => Trocas().Executar(pedida.Id, SemTag(naoResponde: true), via));
+
+        // Sem tag ativa, a troca segue e nenhuma falha de leitura é gravada para a peça que sai.
+        await db.Set<GravacaoTag>().Where(g => g.IdDormente == idSaiu).ExecuteUpdateAsync(s => s.SetProperty(g => g.Vigente, false));
+        var falhas = await db.Set<LeituraDormente>().CountAsync(l => l.IdDormente == idSaiu && !l.Leitura);
+        var feita = (await Trocas().Executar(pedida.Id, SemTag(), via))!;
+
+        Assert.Equal(("Feita", true), (feita.Status, feita.SaiuNuncaTeveTag));
+        Assert.Equal(falhas, await db.Set<LeituraDormente>().CountAsync(l => l.IdDormente == idSaiu && !l.Leitura));
+        Assert.Equal("Retirada", (await BancoDeTeste.Pecas(db).BuscarPorId(idSaiu))!.Situacao);
     }
 }
