@@ -9,6 +9,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
+import { RolarAoAbrir } from '../../../compartilhado/componentes/rolar-ao-abrir/rolar-ao-abrir';
 
 type Aba = 'noite' | 'anteriores' | 'numeros';
 const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: 'Passagens anteriores', numeros: 'Números do período' };
@@ -19,7 +20,7 @@ const TITULOS: Record<Aba, string> = { noite: 'Passagem da noite', anteriores: '
  */
 @Component({
   selector: 'app-passagem',
-  imports: [CartoesNoCelular, Esqueleto, FORMULARIO, Estado, Nota],
+  imports: [RolarAoAbrir, CartoesNoCelular, Esqueleto, FORMULARIO, Estado, Nota],
   templateUrl: './passagem.html',
 })
 export class Passagem {

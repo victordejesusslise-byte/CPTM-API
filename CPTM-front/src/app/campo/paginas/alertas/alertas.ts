@@ -19,6 +19,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 import { Nota } from '../../../compartilhado/componentes/nota/nota';
 import { LegivelPipe } from '../../../compartilhado/utilitarios/legivel';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
+import { RolarAoAbrir } from '../../../compartilhado/componentes/rolar-ao-abrir/rolar-ao-abrir';
 
 type Aba = 'imagem' | 'sensores' | 'tags';
 const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: 'Alertas dos sensores', tags: 'Tags sem cadastro' };
@@ -29,7 +30,7 @@ const TITULOS: Record<Aba, string> = { imagem: 'Alertas da câmera', sensores: '
  */
 @Component({
   selector: 'app-alertas',
-  imports: [LegivelPipe, Esqueleto, FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag, Nota],
+  imports: [RolarAoAbrir, LegivelPipe, Esqueleto, FormsModule, RouterLink, FORMULARIO, Estado, LeituraTag, Nota],
   templateUrl: './alertas.html',
 })
 export class Alertas {

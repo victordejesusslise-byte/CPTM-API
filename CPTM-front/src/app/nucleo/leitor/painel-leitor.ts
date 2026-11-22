@@ -16,9 +16,11 @@ import { Pecas } from '../../pecas/servicos/pecas';
   template: `
     <!-- No app: o módulo de verdade no USB-C. -->
     @if (usb; as m) {
-      <button type="button" class="modulo" (click)="aberto.set(!aberto())" [attr.aria-expanded]="aberto()" aria-controls="painel-leitor">
+      <!-- No celular o selo fica só com a bolinha e a letra (o nome inteiro vai no aria-label, para o leitor de tela). -->
+      <button type="button" class="modulo" (click)="aberto.set(!aberto())" [attr.aria-expanded]="aberto()" aria-controls="painel-leitor"
+        [attr.aria-label]="'Módulo · ' + (m.conectado() ? 'N' : 'desconectado')">
         <span class="modulo__ponto" [class.modulo__ponto--ligado]="m.conectado()" aria-hidden="true"></span>
-        Módulo · {{ m.conectado() ? 'N' : 'desconectado' }}
+        <span class="modulo__longo">Módulo · {{ m.conectado() ? 'N' : 'desconectado' }}</span><span class="modulo__curto">{{ m.conectado() ? 'N' : '' }}</span>
       </button>
       @if (aberto()) {
         <section id="painel-leitor" class="painel" aria-label="Módulo RFID no USB-C">
@@ -47,9 +49,9 @@ import { Pecas } from '../../pecas/servicos/pecas';
       }
     } @else {
     <!-- No site: o módulo simulado. -->
-    <button type="button" class="modulo" (click)="alternar()" [attr.aria-expanded]="aberto()" aria-controls="painel-leitor">
+    <button type="button" class="modulo" (click)="alternar()" [attr.aria-expanded]="aberto()" aria-controls="painel-leitor" [attr.aria-label]="'Módulo · ' + leitor.chave()">
       <span class="modulo__ponto" [class.modulo__ponto--ligado]="leitor.conectado()" aria-hidden="true"></span>
-      Módulo · {{ leitor.chave() }}
+      <span class="modulo__longo">Módulo · {{ leitor.chave() }}</span><span class="modulo__curto">{{ leitor.chave() }}</span>
     </button>
     @if (aberto()) {
       <section id="painel-leitor" class="painel" aria-label="Módulo RFID simulado">
@@ -94,6 +96,19 @@ import { Pecas } from '../../pecas/servicos/pecas';
       background: var(--superficie); color: var(--tinta); font: inherit; font-size: 13px; box-shadow: var(--sombra); cursor: pointer; opacity: .9; }
     .modulo__ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--vinho); }
     .modulo__ponto--ligado { background: var(--verde); }
+    /*
+     * No celular (casca de celular, até 820 px) o selo sai do canto de baixo e fica na barra do alto, só com a bolinha e a letra,
+     * do jeito dos outros botões da barra; assim não cobre nenhum cartão (Victor, 2026-11-22). O painel abre logo abaixo da barra.
+     */
+    .modulo__curto { display: none; }
+    @media (max-width: 820px) {
+      :host { position: static; flex-shrink: 0; }
+      .modulo__longo { display: none; }
+      .modulo__curto { display: inline; }
+      .modulo { min-height: 44px; min-width: 44px; padding: 0 10px; justify-content: center; border-color: var(--sobre-escuro-3); border-radius: 8px;
+        background: transparent; color: inherit; box-shadow: none; opacity: 1; }
+      .painel { position: fixed; top: calc(64px + var(--topo-seguro)); right: 8px; }
+    }
     .painel { order: 1; width: min(320px, calc(100vw - 24px)); max-height: 70vh; overflow: auto; padding: 12px; border: 1px solid var(--linha); border-radius: 8px;
       background: var(--superficie); color: var(--tinta); box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
     .painel__topo { display: flex; align-items: center; gap: 8px; }

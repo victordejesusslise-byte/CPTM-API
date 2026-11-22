@@ -7,6 +7,7 @@ import { PreviaLaudo } from '../../../laudos/componentes/previa-laudo';
 import { Pedidos } from '../../../pedidos/servicos/pedidos';
 import { Estado } from '../../../compartilhado/componentes/estado/estado';
 import { CartoesNoCelular } from '../../../compartilhado/componentes/tabela/cartoes';
+import { RolarAoAbrir } from '../../../compartilhado/componentes/rolar-ao-abrir/rolar-ao-abrir';
 
 type Modo = 'entregas' | 'andamento' | 'boletins';
 interface Carga { pedido: PedidoDto; chegada: ChegadaDto; }
@@ -20,7 +21,7 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
 /** As cargas que chegaram, de todos os pedidos: entregas (Chegada), andamento (Cadastro) e boletins (Qualidade). */
 @Component({
   selector: 'app-lista-chegadas',
-  imports: [CartoesNoCelular, Estado, PreviaLaudo],
+  imports: [RolarAoAbrir, CartoesNoCelular, Estado, PreviaLaudo],
   template: `
     <p class="sobre">{{ texto().sobre }}</p>
     <h1>{{ texto().titulo }}</h1>
@@ -59,7 +60,7 @@ const TEXTOS: Record<Modo, { sobre: string; titulo: string; nota: string }> = {
             </tbody>
           </table>
         </div>
-        @if (boletimDe(); as id) { <app-previa-laudo tipo="recebimento" [id]="id" [podeFechar]="true" (fechar)="boletimDe.set(null)" /> }
+        @if (boletimDe(); as id) { <app-previa-laudo tipo="recebimento" [id]="id" [rolarAoAbrir]="id" [podeFechar]="true" (fechar)="boletimDe.set(null)" /> }
       }
     </section>
   `,

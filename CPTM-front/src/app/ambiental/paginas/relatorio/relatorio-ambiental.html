@@ -3,7 +3,7 @@
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
-<section class="cartao pilha">
+<section class="cartao pilha" [rolarAoAbrir]="relatorio()?.id">
   <header><h2>Mês de referência</h2><span class="nota">o rascunho pode ser gerado de novo até o envio</span></header>
   <div class="filtros">
     <mat-form-field appearance="outline" subscriptSizing="dynamic">

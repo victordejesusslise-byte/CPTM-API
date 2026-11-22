@@ -5,7 +5,7 @@
   <p class="aviso aviso--ok" role="status">Pedido registrado.</p>
 }
 @if (idAberto(); as id) {
-  <app-pedido-aberto [id]="id" (fechar)="fechar()" (mudou)="pedidos.reload()" />
+  <app-pedido-aberto [id]="id" [rolarAoAbrir]="id" (fechar)="fechar()" (mudou)="pedidos.reload()" />
 }
 
 <section class="cartao">

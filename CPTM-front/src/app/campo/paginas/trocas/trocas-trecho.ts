@@ -18,6 +18,7 @@ import { FORMULARIO } from '../../../compartilhado/ui';
 import { ROTULO_TROCA, ResumoTroca, pecaQueSai } from './resumo-troca';
 import { pecasDoLote } from './lote-aberto';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
+import { RolarAoAbrir } from '../../../compartilhado/componentes/rolar-ao-abrir/rolar-ao-abrir';
 
 type Aba = 'trocar' | 'recusas' | 'feitas';
 const ABAS: Record<Aba, { titulo: string; status: StatusTroca[] }> = {
@@ -29,7 +30,7 @@ const ABAS: Record<Aba, { titulo: string; status: StatusTroca[] }> = {
 /** Trocas do trecho (protótipo YBYRA, etapa 13): o operador da via troca a peça pela separada, ou recusa com motivo e foto. */
 @Component({
   selector: 'app-trocas-trecho',
-  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag, ResumoTroca, TrocarLote],
+  imports: [RolarAoAbrir, Esqueleto, FormsModule, FORMULARIO, Estado, LeituraTag, ResumoTroca, TrocarLote],
   templateUrl: './trocas-trecho.html',
 })
 export class TrocasTrecho {

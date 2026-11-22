@@ -24,7 +24,7 @@
     <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="5" rotulo="Carregando a passagem…" /></section>
   }
   @if (valorDe(detalhe); as d) {
-    <section class="cartao pilha">
+    <section class="cartao pilha" [rolarAoAbrir]="d.resumo.id">
       <header><h2 class="mono">{{ d.resumo.codigo }}</h2><span class="nota">{{ d.veiculo ?? 'carro de inspeção' }} · {{ dataHora(d.resumo.dataInicio) }}@if (d.estacaoInicio) { · {{ d.estacaoInicio }} → {{ d.estacaoFim }} }@if (d.kmInicio !== null) { · km {{ km(d.kmInicio) }} a {{ km(d.kmFim) }} }</span></header>
       <div class="totais">
         <div class="t">Leituras<b>{{ d.resumo.leituras }}</b></div>

@@ -16,6 +16,7 @@ import { LeituraTag, leitura } from '../../../compartilhado/componentes/leitura-
 import { FORMULARIO } from '../../../compartilhado/ui';
 import { ROTULO_TROCA, ResumoTroca, pecaQueSai } from './resumo-troca';
 import { valorDe } from '../../../compartilhado/utilitarios/recurso';
+import { RolarAoAbrir } from '../../../compartilhado/componentes/rolar-ao-abrir/rolar-ao-abrir';
 
 type Aba = 'fila' | 'separadas';
 /** Os lotes de troca (Victor, 2026-11-11): para separar, os aprovados que ainda não têm todas as peças; separados, os que já têm alguma. */
@@ -27,7 +28,7 @@ const ABAS: Record<Aba, { titulo: string; status: StatusTroca[]; lotes: StatusLo
 /** Separar peça (protótipo YBYRA, etapa 12): o pátio separa uma peça compatível; o sistema sugere a da frente da pilha. */
 @Component({
   selector: 'app-separar-peca',
-  imports: [Esqueleto, FORMULARIO, Estado, LeituraTag, ResumoTroca, SepararLote, TabelaCompativeis],
+  imports: [RolarAoAbrir, Esqueleto, FORMULARIO, Estado, LeituraTag, ResumoTroca, SepararLote, TabelaCompativeis],
   templateUrl: './separar-peca.html',
 })
 export class SepararPeca {

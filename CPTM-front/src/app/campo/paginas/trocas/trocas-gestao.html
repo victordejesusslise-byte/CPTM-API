@@ -7,13 +7,13 @@
 @if (idLote() && loteAberto.isLoading() && !valorDe(loteAberto)) {
   <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando o lote…" /></section>
 }
-@if (idLote() && valorDe(loteAberto); as l) { <app-lote-aberto [lote]="l" (mudou)="loteMudou($event)" (fechar)="fechar()" /> }
+@if (idLote() && valorDe(loteAberto); as l) { <app-lote-aberto [lote]="l" [rolarAoAbrir]="l.id" (mudou)="loteMudou($event)" (fechar)="fechar()" /> }
 
 @if (idAberta() && troca.isLoading() && !valorDe(troca)) {
   <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando a troca…" /></section>
 }
 @if (idAberta() && valorDe(troca); as t) {
-  <section class="cartao pilha">
+  <section class="cartao pilha" [rolarAoAbrir]="t.id">
     <header>
       <h2>Troca {{ t.id }}</h2><span class="pilula" [class.pilula--solida]="t.status === 'Feita'" [class.pilula--alerta]="t.status === 'Recusada' || t.status === 'Reprovada'">{{ rotulo[t.status] }}</span>
       <span class="nota"><button mat-button type="button" (click)="fechar()">Fechar</button></span>
