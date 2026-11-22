@@ -19,6 +19,7 @@ import { valorDe } from '../../../compartilhado/utilitarios/recurso';
 import { LotesTroca } from '../../servicos/lotes-troca';
 import { PedirLote } from './pedir-lote';
 import { LoteAberto, ROTULO_LOTE, pecasDoLote } from './lote-aberto';
+import { RolarAoAbrir } from '../../../compartilhado/componentes/rolar-ao-abrir/rolar-ao-abrir';
 
 type Aba = 'aprovar' | 'decididas' | 'andamento' | 'recusas' | 'feitas';
 /** Cada aba mostra as trocas avulsas e os lotes de troca do mesmo passo (Victor, 2026-11-11). */
@@ -36,7 +37,7 @@ const ABAS: Record<Aba, { sobre: string; titulo: string; status: StatusTroca[]; 
  */
 @Component({
   selector: 'app-trocas-gestao',
-  imports: [Esqueleto, FormsModule, FORMULARIO, Estado, ResumoTroca, PreviaLaudo, PedirLote, LoteAberto],
+  imports: [RolarAoAbrir, Esqueleto, FormsModule, FORMULARIO, Estado, ResumoTroca, PreviaLaudo, PedirLote, LoteAberto],
   templateUrl: './trocas-gestao.html',
   styles: `
     .pilula--lote { background: color-mix(in srgb, var(--areia) 22%, transparent); color: var(--tinta); border-color: var(--areia); }

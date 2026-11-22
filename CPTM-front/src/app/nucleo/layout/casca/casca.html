@@ -7,6 +7,8 @@
     <span class="topo__nome">{{ usuario()?.nome }}</span>
     <span class="topo__cargo">{{ cargo() }}</span>
   </div>
+  <!-- O selo do módulo RFID: no celular fica aqui na barra do alto (Victor, 2026-11-22); no computador flutua no canto de baixo. -->
+  <app-painel-leitor />
   <button type="button" class="topo__tema" (click)="tema.alternar()" [attr.aria-label]="'Tema: ' + tema.rotulo() + '. Toque para ' + tema.proximo()">
     @switch (tema.preferencia()) {
       @case ('claro') { <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
@@ -73,4 +75,3 @@
     <div [hidden]="navegando() || precisaDeRede()"><router-outlet /></div>
   </main>
 </div>
-<app-painel-leitor />

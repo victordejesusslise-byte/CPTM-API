@@ -35,7 +35,8 @@
     <p class="rotulo">{{ valorDe(estoque)?.length ?? 0 }} peças em estoque.</p>
     }
     @if (valorDe(estoque)?.length) {
-      <app-tabela [colunas]="colunasEstoque" [linhas]="valorDe(estoque) ?? []" />
+      <!-- No celular, cada peça vira um cartão compacto de 3 linhas (estoque-celular, em styles.scss). -->
+      <app-tabela class="estoque-celular" [colunas]="colunasEstoque" [linhas]="valorDe(estoque) ?? []" />
     }
   }
   }
@@ -125,11 +126,12 @@
       <section class="cartao">
         <header><h2>{{ a.nome }}</h2><span class="nota">{{ a.linha }} · {{ a.pecas }} peças</span></header>
         <div class="tabela">
-          <table class="simples">
+          <!-- No celular, cada pilha vira um cartão compacto de 2 linhas (pilhas-celular, em styles.scss); "peças" só aparece lá. -->
+          <table class="simples pilhas-celular">
             <thead><tr><th>Pilha</th><th>Setor</th><th>Tamanho</th><th>Classe</th><th class="num">Peças</th></tr></thead>
             <tbody>
               @for (pl of a.pilhas; track pl.id) {
-                <tr><td class="mono">{{ pl.codigo }}</td><td>{{ pl.setor }}</td><td>{{ metros(pl.comprimentoM) }}</td><td>{{ pl.classe }}ª</td><td class="num">{{ pl.pecas }}</td></tr>
+                <tr><td class="mono">{{ pl.codigo }}</td><td>{{ pl.setor }}</td><td>{{ metros(pl.comprimentoM) }}</td><td>{{ pl.classe }}ª</td><td class="num">{{ pl.pecas }}<span class="unidade"> {{ pl.pecas === 1 ? 'peça' : 'peças' }}</span></td></tr>
               }
             </tbody>
           </table>

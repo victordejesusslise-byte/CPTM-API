@@ -4,13 +4,13 @@
 @if (mensagem()) { <p class="aviso aviso--ok" role="status">{{ mensagem() }}</p> }
 @if (erro()) { <p class="aviso aviso--erro" role="alert">{{ erro() }}</p> }
 
-@if (idLote() && loteVisivel(); as l) { <app-trocar-lote [lote]="l" (mudou)="loteMudou($event)" (fechar)="fechar()" /> }
+@if (idLote() && loteVisivel(); as l) { <app-trocar-lote [lote]="l" [rolarAoAbrir]="l.id" (mudou)="loteMudou($event)" (fechar)="fechar()" /> }
 
 @if (idAberta() && troca.isLoading() && !trocaVisivel()) {
   <section class="cartao pilha"><app-esqueleto tipo="pagina" [quantidade]="4" rotulo="Carregando a troca…" /></section>
 }
 @if (idAberta() && trocaVisivel(); as t) {
-  <section class="cartao pilha">
+  <section class="cartao pilha" [rolarAoAbrir]="t.id">
     <header>
       <h2>Troca {{ t.id }}</h2><span class="pilula" [class.pilula--solida]="t.status === 'Feita'" [class.pilula--alerta]="t.status === 'Recusada'">{{ rotulo[t.status] }}</span>
       @if (t.esperando) { <span class="etiqueta" [class.etiqueta--enviando]="enviandoFila()">{{ enviandoFila() ? 'Enviando…' : 'Esperando a rede' }}</span> }
